@@ -1,0 +1,2 @@
+class CircleWorldItem_Static extends CircleWorldItem
+	placeable;
