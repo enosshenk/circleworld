@@ -148,6 +148,27 @@ event Tick(float DeltaTime)
 	bForceFloorCheck = true;
 	
 	super.Tick(DeltaTime);
+}
+
+simulated function StartFire(byte FireModeNum)
+{
+	local CircleWorldItemProjectile Projectile;
+	local vector ProjectileLocation;
+	local rotator ProjectileRotation;
+	
+	ProjectileLocation = self.Location;
+	if (Rotation.Yaw == 0)
+		ProjectileLocation.X -= 64;
+	if (Rotation.Yaw == 32768)
+		ProjectileLocation.X += 64;
+		
+	ProjectileRotation = self.Rotation;
+	
+	Projectile = spawn(class'CircleWorldItemProjectile', self, , ProjectileLocation, ProjectileRotation, , true);
+	if (Rotation.Yaw == 0)
+		Projectile.TravelDirection = -1;
+	if (Rotation.Yaw == 32768)
+		Projectile.TravelDirection = 1;
 }	
 	
 simulated function bool CalcCamera( float fDeltaTime, out vector out_CamLoc, out rotator out_CamRot, out float out_FOV )
