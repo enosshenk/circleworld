@@ -91,6 +91,21 @@ exec function CircleCamThree()
 	CircleWorldGameInfo(WorldInfo.Game).CameraMode = 2;
 }
 
+exec function SprintDown()
+{
+	CircleWorldHUD(myHUD).CircleWorldPawn.Sprinting = true;
+}
+
+exec function SprintUp()
+{
+	CircleWorldHUD(myHUD).CircleWorldPawn.Sprinting = false;
+}
+
+exec function DropDown()
+{
+	CircleWorldHUD(myHUD).CircleWorldPawn.DropDown();
+}
+
 state PlayerWalking
 {
 ignores SeePlayer, HearNoise, Bump;

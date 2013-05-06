@@ -23,6 +23,8 @@ var bool CirclePawnMoving;									// True if the character is moving
 var bool CirclePawnJumping;									// True if the character is jumping at all
 var bool CirclePawnJumpUp;									// True if the character is jumping up (Hasn't hit top of jump yet)
 var bool CirclePawnJumpDown;								// True when the character is falling
+var bool Sprinting;											// True when the sprint key is held
+var bool LedgeHanging;										// True when we're hanging on a ledge.
 
 var CircleWorld_LevelBase LevelBase;						// Ref to the cylinder base
 var array<CircleWorld_LevelBackground> LevelBackgrounds;	// Array of background items to rotate with the cylinder
@@ -75,7 +77,7 @@ event Tick(float DeltaTime)
 	TraceExtent.X = 64;
 	TraceExtent.Y = 64;	
 	
-	// Do the trace
+	// Trace in our direction of motion. This is used to detect if the pawn is colliding with a wall.
 	TraceEnd = Location;
 	if (Rotation.Yaw == 0)
 	{
@@ -88,7 +90,6 @@ event Tick(float DeltaTime)
 		TraceStart = Location + vect(-32,0,0);
 	}
 	
-	FlushPersistentDebugLines();
 	if (CircleWorldGameInfo(WorldInfo.Game).DebugHUD)
 		DrawDebugLine(TraceStart, TraceEnd, 255, 0, 0);
 		
@@ -99,6 +100,28 @@ event Tick(float DeltaTime)
 		CircleVelocity.X = 0;
 		LevelBase.PawnVelocity.X = 0;
 		LastVelocity.X = 0;
+	}
+
+	if (!Sprinting)
+	{
+		// Set up for our below feet trace.
+		TraceStart = Location;
+		TraceStart.Z -= (Mesh.Bounds.BoxExtent.Z / 2) - 32;
+		TraceEnd = TraceStart;
+		TraceEnd.Z -= 256;
+		
+		if (CircleWorldGameInfo(WorldInfo.Game).DebugHUD)
+			DrawDebugLine(TraceStart, TraceEnd, 255, 0, 0);
+		
+		// Trace straight down from our feet. This is used to see if the pawn is standing on geometry or if the world has rotated past our feet and we should fall.
+		HitActor = Trace(HitLocation, HitNormal, TraceEnd, TraceStart, true, TraceExtent);
+		if (CircleWorld_LevelBase(HitActor) == none)
+		{
+			// We didn't hit any level geometry. Set our physics to falling and give the pawn a nudge to begin falling.
+			`log("Below feet trace hit nothing!");
+			SetPhysics(PHYS_Falling);
+			Velocity.Z -= 16;
+		}	
 	}
 	
 	// Check some flags
@@ -144,10 +167,58 @@ event Tick(float DeltaTime)
 		B.PawnLocation = Location;
 	}
 	
-	// Needs to be set every frame to make sure we have a floor to stand on
-	bForceFloorCheck = true;
+	if (Sprinting)
+	{
+		// We are sprinting. Use old floor detection and modify our groundspeed.
+		bForceFloorCheck = true;
+		GroundSpeed = default.GroundSpeed * 2;
+	}
+	else
+	{
+		bForceFloorCheck = false;
+		GroundSpeed = default.GroundSpeed;	
+	}
 	
 	super.Tick(DeltaTime);
+}
+
+function DropDown()
+{
+	// Function to check and see if we can do a drop down move. If so, execute the move.
+	local vector TraceStart, TraceEnd, HitLocation, HitNormal;
+	local actor HitActor;
+	
+	TraceStart = Location;
+	TraceEnd = TraceStart;
+	TraceEnd.Z -= Mesh.Bounds.BoxExtent.Z * 2;
+	
+	if (Rotation.Yaw == 0)
+	{
+		TraceEnd.X += Mesh.Bounds.BoxExtent.Z * 2;
+	}
+	else
+	{
+		TraceEnd.X -= Mesh.Bounds.BoxExtent.Z * 2;
+	}
+	
+	if (CircleWorldGameInfo(WorldInfo.Game).DebugHUD)
+		DrawDebugLine(TraceStart, TraceEnd, 255, 0, 0, true);	
+		
+	HitActor = Trace(HitLocation, HitNormal, TraceEnd, TraceStart, true);
+	if (CircleWorld_LevelBase(HitActor) != none)
+	{
+		`log("Cannot drop down");
+	}		
+	else
+	{
+		`log("Can drop down");
+	}
+}
+
+function PullUp()
+{
+	// Function to pull us back up if we're ledge hanging
+	
 }
 
 simulated function StartFire(byte FireModeNum)
@@ -179,26 +250,16 @@ simulated function bool CalcCamera( float fDeltaTime, out vector out_CamLoc, out
 
 	if (CircleWorldGameInfo(WorldInfo.Game).CameraMode == 0)
 	{
-		DesiredOffset.X = Clamp(CircleVelocity.X, CameraTranslateDistance * -1, CameraTranslateDistance);
+		CameraOffset.X += Clamp(CircleVelocity.X, CameraTranslateDistance * -1, CameraTranslateDistance) / CameraAdjustSpeed;
 		
-		// X axis
-		if (CameraAlpha >= 1)
-		{
-			CameraOffset.X = DesiredOffset.X;
-			CameraAlpha = 0;
-		}
-		else
-		{
-			CameraOffset.X = Lerp(CameraOffset.X, DesiredOffset.X, CameraAlpha);
-		}
+		if (Abs(CameraOffset.X) >= Abs(Clamp(CircleVelocity.X, CameraTranslateDistance * -1, CameraTranslateDistance)))
+			CameraOffset.X = Clamp(CircleVelocity.X, CameraTranslateDistance * -1, CameraTranslateDistance);
 		
 		out_CamLoc.Y = self.Location.Y - CameraPullback;
-		out_CamLoc.X = CameraOffset.X;
+		out_CamLoc.X = Location.X + CameraOffset.X;
 		out_CamLoc.Z = Location.Z + 128;
 		out_CamRot.Yaw = 16384;
 		
-		CameraOffset = out_CamLoc;
-		CameraAlpha += fDeltaTime / CameraAdjustSpeed;
 	}
 	else if (CircleWorldGameInfo(WorldInfo.Game).CameraMode == 1)
 	{
@@ -291,7 +352,7 @@ defaultproperties
 	MomentumFade = 0.2
 	
 	CameraPullback = 2048
-	CameraAdjustSpeed = 200
+	CameraAdjustSpeed = 1
 	CameraTranslateDistance = 200
 	CameraRotateFactor = 1
 	CameraFOVFactor = 10
