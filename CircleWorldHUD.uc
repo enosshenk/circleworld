@@ -37,9 +37,9 @@ simulated function DrawHUD()
 		Canvas.SetPos(Canvas.ClipX * 0.1, Canvas.ClipY * 0.1);	
 		Canvas.DrawText("World Properties - CircleAcceleration: " $CircleWorldPawn.CircleAcceleration$ " -- CircleVelocity: " $CircleWorldPawn.CircleVelocity$ " -- Circle RotRate: " $LevelBase.RotationRate.Pitch * UnrRotToDeg$ " -- Circle Rotation: " $LevelBase.Rotation.Pitch);
 		Canvas.SetPos(Canvas.ClipX * 0.1, Canvas.ClipY * 0.15);	
-		Canvas.DrawText("Pawn Properties - CirclePawnMoving: " $CircleWorldPawn.CirclePawnMoving$ " -- CirclePawnJumpUp: " $CircleWorldPawn.CirclePawnJumpUp$ " -- CirclePawnJumpDown: " $CircleWorldPawn.CirclePawnJumpDown$ " -- Rot: " $CircleWorldPawn.Rotation.Yaw$ " -- Z Velocity: " $CircleWorldPawn.Velocity.Z);
+		Canvas.DrawText("Pawn Properties - CirclePawnMoving: " $CircleWorldPawn.CirclePawnMoving$ " -- CirclePawnJumpUp: " $CircleWorldPawn.CirclePawnJumpUp$ " -- CirclePawnJumpDown: " $CircleWorldPawn.CirclePawnJumpDown$ " -- Rot: " $CircleWorldPawn.Rotation.Yaw$ " -- Velocity: X" $CircleWorldPawn.CircleVelocity.X$ " Z" $CircleWorldPawn.Velocity.Z);
 		Canvas.SetPos(Canvas.ClipX * 0.1, Canvas.ClipY * 0.2);
-		Canvas.DrawText("Camera Properties - Mode: " $CircleWorldGameInfo(WorldInfo.Game).CameraMode$ " -- Alpha: " $CircleWorldPawn.CameraAlpha);
+		Canvas.DrawText("Camera Properties - Mode: " $CircleWorldGameInfo(WorldInfo.Game).CameraMode + 1);
 		
 		foreach Pickups(PU)
 		{
@@ -47,6 +47,7 @@ simulated function DrawHUD()
 			Canvas.SetPos(ProjectLoc.X, ProjectLoc.Y);
 			Canvas.DrawText("Polar Radial: " $PU.LocationPolar.X$ " Polar Angular(UR): " $PU.LocationPolar.Y$ " -- Bounds Diameter: " $PU.StaticMeshComponent.Bounds.SphereRadius);
 		}
+		
 	}	
 	else
 	{

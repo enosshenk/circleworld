@@ -6,6 +6,7 @@ var int CameraMode;
 
 defaultproperties
 {
+	DebugHUD = true
 	PlayerControllerClass = class'CircleWorldGame.CircleWorldPlayerController'
 	DefaultPawnClass = class'CircleWorldGame.CircleWorldPawn'
 	HUDType = class'CircleWorldGame.CircleWorldHUD'

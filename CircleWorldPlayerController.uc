@@ -1,19 +1,5 @@
 class CircleWorldPlayerController extends UDKPlayerController;
 
-var CircleWorldPawn CirclePawn;
-
-event PostBeginPlay()
-{
-	local CircleWorldPawn P;
-	
-	foreach WorldInfo.AllActors(class'CircleWorldPawn', P)
-	{
-		CirclePawn = P;
-	}
-	
-	super.PostBeginPlay();
-}
-
 exec function DebugHUD()
 {
 	if (CircleWorldGameInfo(WorldInfo.Game).DebugHUD)
@@ -91,6 +77,23 @@ exec function CircleCamThree()
 	CircleWorldGameInfo(WorldInfo.Game).CameraMode = 2;
 }
 
+exec function CircleCamFour()
+{
+	CircleWorldGameInfo(WorldInfo.Game).CameraMode = 3;
+}
+
+exec function UseCameraActor()
+{
+	if (CircleWorldHUD(myHUD).CircleWorldPawn.UseCameraActor)
+	{
+		CircleWorldHUD(myHUD).CircleWorldPawn.UseCameraActor = false;	
+	}
+	else
+	{
+		CircleWorldHUD(myHUD).CircleWorldPawn.UseCameraActor = true;
+	}
+}
+
 exec function SprintDown()
 {
 	CircleWorldHUD(myHUD).CircleWorldPawn.Sprinting = true;
@@ -104,6 +107,21 @@ exec function SprintUp()
 exec function DropDown()
 {
 	CircleWorldHUD(myHUD).CircleWorldPawn.DropDown();
+}
+
+exec function SaveCircleValues()
+{
+	`log("CircleWorld editable values");
+	`log("Pawn Speed: " $CircleWorldHUD(myHUD).CircleWorldPawn.GroundSpeed);
+	`log("Air Control: " $CircleWorldHUD(myHUD).CircleWorldPawn.AirControl);
+	`log("JumpZ: " $CircleWorldHUD(myHUD).CircleWorldPawn.JumpZ);
+	`log("Jump Momentum: " $CircleWorldHUD(myHUD).CircleWorldPawn.JumpMomentum);
+	`log("Momentum Fade: " $CircleWorldHUD(myHUD).CircleWorldPawn.MomentumFade);
+	`log("Camera Pullback: " $CircleWorldHUD(myHUD).CircleWorldPawn.CameraPullback);
+	`log("Camera Adjust Speed: " $CircleWorldHUD(myHUD).CircleWorldPawn.CameraAdjustSpeed);
+	`log("Camera Translate Distance: " $CircleWorldHUD(myHUD).CircleWorldPawn.CameraTranslateDistance);
+	`log("Camera Rotate Factor: " $CircleWorldHUD(myHUD).CircleWorldPawn.CameraRotateFactor);
+	`log("Camera FOV Factor: " $CircleWorldHUD(myHUD).CircleWorldPawn.CameraFOVFactor);
 }
 
 state PlayerWalking

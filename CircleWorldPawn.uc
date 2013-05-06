@@ -25,6 +25,12 @@ var bool CirclePawnJumpUp;									// True if the character is jumping up (Hasn'
 var bool CirclePawnJumpDown;								// True when the character is falling
 var bool Sprinting;											// True when the sprint key is held
 var bool LedgeHanging;										// True when we're hanging on a ledge.
+var bool UseCameraActor;
+
+var CameraActor CameraActor;
+var rotator CameraActorRot;
+var vector CameraActorLoc;
+var float CameraActorFOV;
 
 var CircleWorld_LevelBase LevelBase;						// Ref to the cylinder base
 var array<CircleWorld_LevelBackground> LevelBackgrounds;	// Array of background items to rotate with the cylinder
@@ -34,6 +40,7 @@ event PostBeginPlay()
 {
 	local CircleWorld_LevelBase C;
 	local CircleWorld_LevelBackground B;
+	local CameraActor CA;
 	
 	// Get our reference to the level cylinder
 	foreach WorldInfo.AllActors(class'CircleWorld_LevelBase', C)
@@ -45,6 +52,19 @@ event PostBeginPlay()
 	{
 		LevelBackgrounds.AddItem(B);
 	}
+	
+	foreach WorldInfo.AllActors(class'CameraActor', CA)
+	{
+		if (CA.Tag == 'fnord')
+		{
+			`log("Found camera actor");
+			CameraActor = CA;
+			CameraActorRot = CameraActor.Rotation;
+			CameraActorLoc = CameraActor.Location;
+			CameraActorFOV = CameraActor.FOVAngle;
+		}
+	}
+	
 	super.PostBeginPlay();
 }
 
@@ -68,7 +88,7 @@ event Tick(float DeltaTime)
 		NewVelocity += (LastVelocity * MomentumFade + CircleForce);
 		CircleVelocity = ClampLength(NewVelocity, GroundSpeed);
 	}
-
+		
 	// Set the values as the previous accel and velocity for the next tick
 	LastAcceleration = CircleAcceleration;
 	LastVelocity = CircleVelocity;
@@ -250,14 +270,23 @@ simulated function bool CalcCamera( float fDeltaTime, out vector out_CamLoc, out
 
 	if (CircleWorldGameInfo(WorldInfo.Game).CameraMode == 0)
 	{
-		CameraOffset.X += Clamp(CircleVelocity.X, CameraTranslateDistance * -1, CameraTranslateDistance) / CameraAdjustSpeed;
+		CameraOffset.Y = CameraPullback * -1;
 		
-		if (Abs(CameraOffset.X) >= Abs(Clamp(CircleVelocity.X, CameraTranslateDistance * -1, CameraTranslateDistance)))
-			CameraOffset.X = Clamp(CircleVelocity.X, CameraTranslateDistance * -1, CameraTranslateDistance);
+		DesiredOffset.X = Clamp(CircleVelocity.X, CameraTranslateDistance * -1, CameraTranslateDistance);
+		DesiredOffset.Z = Clamp(Velocity.Z, CameraTranslateDistance * -1, CameraTranslateDistance);
 		
-		out_CamLoc.Y = self.Location.Y - CameraPullback;
-		out_CamLoc.X = Location.X + CameraOffset.X;
-		out_CamLoc.Z = Location.Z + 128;
+		// X Axis
+		if (CameraOffset.X != DesiredOffset.X)
+		{
+			CameraOffset.X = Lerp(CameraOffset.X, DesiredOffset.X, CameraAdjustSpeed);
+		}
+		// Z axis
+		if (CameraOffset.Z != DesiredOffset.Z)
+		{
+			CameraOffset.Z = Lerp(CameraOffset.Z, DesiredOffset.Z, CameraAdjustSpeed);
+		}
+		
+		out_CamLoc = Location + CameraOffset;
 		out_CamRot.Yaw = 16384;
 		
 	}
@@ -270,16 +299,16 @@ simulated function bool CalcCamera( float fDeltaTime, out vector out_CamLoc, out
 		DesiredRot.Yaw += (CircleVelocity.X * CameraRotateFactor) * -1;
 		DesiredRot.Pitch += Velocity.Z;
 		
-		if (CameraAlpha >= 1)
+		// Yaw = X
+		if (CameraRotator.Yaw != DesiredRot.Yaw)
 		{
-			CameraRotator = DesiredRot;
-			CameraAlpha = 0;
+			CameraRotator.Yaw = Lerp(CameraRotator.Yaw, DesiredRot.Yaw, CameraAdjustSpeed);
 		}
-		else
+		// Pitch = Z
+		if (CameraRotator.Pitch != DesiredRot.Pitch)
 		{
-			CameraRotator.Yaw = Lerp(CameraRotator.Yaw, DesiredRot.Yaw, CameraAlpha);
-			CameraRotator.Pitch = Lerp(CameraRotator.Pitch, DesiredRot.Pitch, CameraAlpha);
-		}
+			CameraRotator.Pitch = Lerp(CameraRotator.Pitch, DesiredRot.Pitch, CameraAdjustSpeed);
+		}	
 		
 		out_CamLoc = CameraOffset;
 		out_CamRot = CameraRotator;
@@ -294,14 +323,9 @@ simulated function bool CalcCamera( float fDeltaTime, out vector out_CamLoc, out
 		
 		DesiredFOV = Clamp(60 + ((VSize(Velocity) + VSize(CircleVelocity)) / 2) / CameraFOVFactor, 50 - CameraFOVFactor, 90 + CameraFOVFactor);
 		
-		if (CameraAlpha >= 1)
+		if (CameraFOV != DesiredFOV)
 		{
-			CameraFOV = DesiredFOV;
-			CameraAlpha = 0;
-		}
-		else
-		{
-			CameraFOV = Lerp(CameraFOV, DesiredFOV, CameraAlpha);
+			CameraFOV = Lerp(CameraFOV, DesiredFOV, CameraAdjustSpeed);
 		}
 		
 		out_CamLoc = CameraOffset;
@@ -309,7 +333,12 @@ simulated function bool CalcCamera( float fDeltaTime, out vector out_CamLoc, out
 		out_FOV = CameraFOV;
 		
 		CameraFOV = out_FOV;
-		CameraAlpha += fDeltaTime / CameraAdjustSpeed;
+	}
+	else if (CircleWorldGameInfo(WorldInfo.Game).CameraMode == 3)
+	{
+		out_CamLoc = CameraActorLoc;
+		out_CamRot = CameraActorRot;
+		out_FOV = CameraActorFOV;
 	}
 	
 	return true;
@@ -352,7 +381,7 @@ defaultproperties
 	MomentumFade = 0.2
 	
 	CameraPullback = 2048
-	CameraAdjustSpeed = 1
+	CameraAdjustSpeed = 0.05
 	CameraTranslateDistance = 200
 	CameraRotateFactor = 1
 	CameraFOVFactor = 10
