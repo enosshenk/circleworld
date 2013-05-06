@@ -3,6 +3,7 @@
 //
 
 class CircleWorld_LevelBase extends Actor
+	ClassGroup(CircleWorld)
 	placeable;
 	
 var() StaticMeshComponent StaticMeshComponent;		// The static mesh used to represent the level world
