@@ -134,13 +134,13 @@ function ProcessMove(float DeltaTime, vector NewAccel, eDoubleClickDir DoubleCli
 
 	if( Pawn == None )
 	{
-	 return;
+		return;
 	}
 
 	if (Role == ROLE_Authority)
 	{
-	 // Update ViewPitch for remote clients
-	 Pawn.SetRemoteViewPitch( Rotation.Pitch );
+		// Update ViewPitch for remote clients
+		Pawn.SetRemoteViewPitch( Rotation.Pitch );
 	}
 
 	// We set our new acceleration to a new var on the pawn. We want to bypass the stock movement system
@@ -150,15 +150,15 @@ function ProcessMove(float DeltaTime, vector NewAccel, eDoubleClickDir DoubleCli
 
 	tempRot.Pitch = Pawn.Rotation.Pitch;
 	tempRot.Roll = 0;
-	if(Normal(CircleWorldPawn(Pawn).CircleAcceleration) Dot Vect(1,0,0) > 0)
+	if(Normal(CircleWorldPawn(Pawn).CircleAcceleration) Dot Vect(1,0,0) > 0 && !CircleWorldPawn(Pawn).IsSkidding)
 	{
-	 tempRot.Yaw = 0;
-	 Pawn.SetRotation(tempRot);
+		tempRot.Yaw = 0;
+		Pawn.SetRotation(tempRot);
 	}
-	else if(Normal(CircleWorldPawn(Pawn).CircleAcceleration) Dot Vect(1,0,0) < 0)
+	else if(Normal(CircleWorldPawn(Pawn).CircleAcceleration) Dot Vect(1,0,0) < 0 && !CircleWorldPawn(Pawn).IsSkidding)
 	{
-	 tempRot.Yaw = 32768;
-	 Pawn.SetRotation(tempRot);
+		tempRot.Yaw = 32768;
+		Pawn.SetRotation(tempRot);
 	}
 
 	CheckJumpOrDuck();
@@ -169,12 +169,12 @@ function UpdateRotation( float DeltaTime )
 {
    local Rotator   DeltaRot, ViewRotation;
 
-   ViewRotation = Rotation;
+	ViewRotation = Rotation;
 
-   // Calculate Delta to be applied on ViewRotation
-   DeltaRot.Yaw = Pawn.Rotation.Yaw;
-   DeltaRot.Pitch   = PlayerInput.aLookUp;
+	// Calculate Delta to be applied on ViewRotation
+	DeltaRot.Yaw = Pawn.Rotation.Yaw;
+	DeltaRot.Pitch   = PlayerInput.aLookUp;
 
-   ProcessViewRotation( DeltaTime, ViewRotation, DeltaRot );
-   SetRotation(ViewRotation);
+	ProcessViewRotation( DeltaTime, ViewRotation, DeltaRot );
+	SetRotation(ViewRotation);
 } 

@@ -20,7 +20,7 @@ event PostBeginPlay()
 	// Get our initial polar coordinates from our cartesian coordinates
 	InitialLocationPolar.X = Sqrt(Location.X ** 2 + Location.Z ** 2);
 	InitialLocationPolar.Y = atan2(Location.Z, Location.X) * RadToUnrRot;
-	`log("Initial Polar: R" $InitialLocationPolar.X$ " A" $InitialLocationPolar.Y);
+	`log("Light Initial Polar: R" $InitialLocationPolar.X$ " A" $InitialLocationPolar.Y);
 	
 	LocationPolar.X = InitialLocationPolar.X;
 	LocationPolar.Y = InitialLocationPolar.Y;
@@ -48,4 +48,10 @@ event Tick(float DeltaTime)
 	SetRotation(NewRotation);
 	
 	super.Tick(DeltaTime);
+}
+
+defaultproperties
+{
+	bNoDelete = false
+	bStatic = false
 }

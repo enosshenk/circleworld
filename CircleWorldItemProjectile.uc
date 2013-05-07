@@ -1,4 +1,4 @@
-class CircleWorldItemProjectile extends DynamicSMActor
+class CircleWorldItemProjectile extends Actor
 	notplaceable;
 
 var	CylinderComponent CylinderComponent;
@@ -6,10 +6,21 @@ var CircleWorld_LevelBase LevelBase;				// The level base used
 var vector2d LocationPolar;							// X value is Radial, Y value is Angular
 var vector2d InitialLocationPolar;
 var rotator InitialLevelRot;
+
 var float ProjectileSpeed;
+var float ProjectileDamage;
+var float ProjectileDamageRadius;
+var float ProjectileDamageMomentum;
 var float ProjectileLife;
 var float ProjectileLifeElapsed;
 var int TravelDirection;
+var class<DamageType> ProjectileDamageType;
+
+var ParticleSystem ProjectileParticleSystem;
+var ParticleSystem ProjectileExplosionSystem;
+
+var ParticleSystemComponent PooledSystem;
+var CircleWorldItem_Emitter PooledExplosionSystem;
 
 event PostBeginPlay()
 {
@@ -33,6 +44,13 @@ event PostBeginPlay()
 	LocationPolar.X = InitialLocationPolar.X;
 	LocationPolar.Y = InitialLocationPolar.Y;
 	
+	// Spawn our projectile system
+	PooledSystem = WorldInfo.MyEmitterPool.SpawnEmitterCustomLifetime(ProjectileParticleSystem);
+	PooledSystem.SetAbsolute(false, false, false);
+	PooledSystem.bUpdateComponentInTick = true;
+	PooledSystem.OnSystemFinished = CircleOnSystemFinished;
+	AttachComponent(PooledSystem);
+	
 	super.PostBeginPlay();
 }
 
@@ -51,7 +69,7 @@ event Tick(float DeltaTime)
 		InitialLocationPolar.Y += TravelDirection * ProjectileSpeed / 50;
 		// Check the level base for rotation change
 		LocationPolar.Y = (InitialLevelRot.Pitch + LevelBase.Rotation.Pitch * -1) + InitialLocationPolar.Y;
-		`log(TravelDirection$ " * " $ProjectileSpeed$ " = " $LocationPolar.Y);
+//		`log(TravelDirection$ " * " $ProjectileSpeed$ " = " $LocationPolar.Y);
 		// Set new cartesian location based on our polar coordinates
 		NewLocation.X = InitialLocationPolar.X * cos(LocationPolar.Y * UnrRotToRad);
 		NewLocation.Z = InitialLocationPolar.X * sin(LocationPolar.Y * UnrRotToRad);
@@ -74,15 +92,48 @@ event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vect
 	{
 		// Hit level geometry
 		`log("Projectile " $self$ " impacted " $Other);
-		self.Destroy();
+		Explode(HitLocation);
 	}
 	super.Touch(Other, OtherComp, HitLocation, HitNormal);
 }	
+
+function Explode(vector HitLocation)
+{
+	PooledSystem.SetActive(false);
+	
+	PooledExplosionSystem = spawn(class'CircleWorldItem_Emitter', self, , HitLocation, self.Rotation);
+//	`log("Exploding at Radial " $PooledExplosionSystem.LocationPolar.X$ " Angular " $PooledExplosionSystem.LocationPolar.Y);
+	if (PooledExplosionSystem != none)
+	{
+		PooledExplosionSystem.ParticleSystemComponent.SetTemplate(ProjectileExplosionSystem);
+		PooledExplosionSystem.ParticleSystemComponent.ActivateSystem();
+	}
+	
+	HurtRadius(ProjectileDamage, ProjectileDamageRadius, ProjectileDamageType, ProjectileDamageMomentum, Location);
+	
+	self.Destroy();
+}
+
+function CircleOnSystemFinished(ParticleSystemComponent PSC)
+{
+	if (PSC == PooledSystem)
+	{
+		DetachComponent(PooledSystem);
+		WorldInfo.MyEmitterPool.OnParticleSystemFinished(PooledSystem);
+		PooledSystem = none;
+	}
+}
 	
 defaultproperties
 {
 	ProjectileLife = 10
 	ProjectileSpeed = 400
+	ProjectileDamage = 50
+	ProjectileDamageRadius = 1
+	ProjectileDamageMomentum = 1
+	ProjectileDamageType = class'DamageType'
+	ProjectileParticleSystem=ParticleSystem'CircleWorld.projectiletest_ps'
+	ProjectileExplosionSystem=ParticleSystem'CircleWorld.projectiletextexplosion_ps'
 	
 	bNoDelete = false
 	bStatic = false
@@ -98,12 +149,4 @@ defaultproperties
 	CollisionComponent=CollisionCylinder
 	CylinderComponent=CollisionCylinder
 	Components.Add(CollisionCylinder)
-	
-	Begin Object Name=StaticMeshComponent0
-		StaticMesh = StaticMesh'CircleWorld.circle_pickup'
-		BlockZeroExtent=true
-		CollideActors=true
-		BlockActors=false
-		BlockRigidBody=false
-	End Object
 }

@@ -18,6 +18,7 @@ var float CameraRotateFactor;								// Factor for rotating the camera in mode 2
 var float CameraFOVFactor;									// Factor for changing the FOV in mode 3
 var float JumpMomentum;										// Factor of momentum
 var float MomentumFade;										// Factor of momentum fading
+var float LastRot;											// Rotation last tick (Yaw)
 
 var bool CirclePawnMoving;									// True if the character is moving
 var bool CirclePawnJumping;									// True if the character is jumping at all
@@ -26,6 +27,8 @@ var bool CirclePawnJumpDown;								// True when the character is falling
 var bool Sprinting;											// True when the sprint key is held
 var bool LedgeHanging;										// True when we're hanging on a ledge.
 var bool UseCameraActor;
+var bool CanSkid;											// True if we are moving at top speed.
+var bool IsSkidding;										// True while playing turn-skid animation. Prevents jumping.
 
 var CameraActor CameraActor;
 var rotator CameraActorRot;
@@ -34,6 +37,7 @@ var float CameraActorFOV;
 
 var CircleWorld_LevelBase LevelBase;						// Ref to the cylinder base
 var array<CircleWorld_LevelBackground> LevelBackgrounds;	// Array of background items to rotate with the cylinder
+var AnimNodeSlot PriorityAnimSlot;
 
 
 event PostBeginPlay()
@@ -68,6 +72,11 @@ event PostBeginPlay()
 	super.PostBeginPlay();
 }
 
+simulated event PostInitAnimTree(SkeletalMeshComponent SkelComp)
+{
+	PriorityAnimSlot = AnimNodeSlot(Mesh.FindAnimNode('PrioritySlot'));
+}
+
 event Tick(float DeltaTime)
 {
 	local vector NewVelocity, TraceStart, TraceEnd, HitLocation, HitNormal, TraceExtent;
@@ -88,7 +97,20 @@ event Tick(float DeltaTime)
 		NewVelocity += (LastVelocity * MomentumFade + CircleForce);
 		CircleVelocity = ClampLength(NewVelocity, GroundSpeed);
 	}
-		
+	
+	if (VSize(CircleVelocity) >= GroundSpeed)	// We're moving near top speed, we can skid if we stop suddenly.
+	{
+//		CanSkid = true;
+		if (!IsTimerActive('SetSkid'))
+			SetTimer(0.1, false, 'SetSkid');
+	}
+	else
+	{
+		CanSkid = false;
+		if (IsTimerActive('SetSkid'))
+			ClearTimer('SetSkid');
+	}
+	
 	// Set the values as the previous accel and velocity for the next tick
 	LastAcceleration = CircleAcceleration;
 	LastVelocity = CircleVelocity;
@@ -138,7 +160,6 @@ event Tick(float DeltaTime)
 		if (CircleWorld_LevelBase(HitActor) == none)
 		{
 			// We didn't hit any level geometry. Set our physics to falling and give the pawn a nudge to begin falling.
-			`log("Below feet trace hit nothing!");
 			SetPhysics(PHYS_Falling);
 			Velocity.Z -= 16;
 		}	
@@ -174,6 +195,46 @@ event Tick(float DeltaTime)
 	else
 	{
 		CirclePawnMoving = false;
+	}
+	
+	if (Rotation.Yaw == 0)
+	{
+		// We are facing left
+		if (LastRot == 32768)
+		{
+			// We have reversed facing since last frame.
+			if (CanSkid && !IsSkidding)
+			{
+				PriorityAnimSlot.PlayCustomAnimByDuration('turn_run', 0.45, 0.1, 0.1, false, true);
+				IsSkidding = true;
+				SetTimer(0.45, false, 'ClearSkid');
+			}
+			else
+			{
+				PriorityAnimSlot.PlayCustomAnimByDuration('turn_idle', 0.45, 0.1, 0.1, false, true);
+			}
+		}
+		LastRot = 0;
+		
+	}
+	else if (Rotation.Yaw == 32768)
+	{
+		// We are facing right
+		if (LastRot == 0)
+		{
+			// We have reversed facing since last frame.
+			if (CanSkid && !IsSkidding)
+			{
+				PriorityAnimSlot.PlayCustomAnimByDuration('turn_run', 0.45, 0.1, 0.1, false, true);
+				IsSkidding = true;
+				SetTimer(0.45, false, 'ClearSkid');
+			}
+			else
+			{
+				PriorityAnimSlot.PlayCustomAnimByDuration('turn_idle', 0.45, 0.1, 0.1, false, true);
+			}			
+		}
+		LastRot = 32768;
 	}
 
 	// Send the data to the cylinder world actor
@@ -255,7 +316,8 @@ simulated function StartFire(byte FireModeNum)
 		
 	ProjectileRotation = self.Rotation;
 	
-	Projectile = spawn(class'CircleWorldItemProjectile', self, , ProjectileLocation, ProjectileRotation, , true);
+	PriorityAnimSlot.PlayCustomAnimByDuration('punch_stand1', 0.45, 0.1, 0.1, false, true);
+	Projectile = spawn(class'CircleWorldItemProjectile_Fireball', self, , ProjectileLocation, ProjectileRotation, , true);
 	if (Rotation.Yaw == 0)
 		Projectile.TravelDirection = -1;
 	if (Rotation.Yaw == 32768)
@@ -265,7 +327,7 @@ simulated function StartFire(byte FireModeNum)
 simulated function bool CalcCamera( float fDeltaTime, out vector out_CamLoc, out rotator out_CamRot, out float out_FOV )
 {
 	local vector DesiredOffset;
-	local rotator DesiredRot;
+	local rotator DesiredCamRot;
 	local float DesiredFOV;
 
 	if (CircleWorldGameInfo(WorldInfo.Game).CameraMode == 0)
@@ -295,19 +357,19 @@ simulated function bool CalcCamera( float fDeltaTime, out vector out_CamLoc, out
 		CameraOffset = self.Location;
 		CameraOffset.Y -= CameraPullback;
 		
-		DesiredRot = Rotator(Location - CameraOffset);
-		DesiredRot.Yaw += (CircleVelocity.X * CameraRotateFactor) * -1;
-		DesiredRot.Pitch += Velocity.Z;
+		DesiredCamRot = Rotator(Location - CameraOffset);
+		DesiredCamRot.Yaw += (CircleVelocity.X * CameraRotateFactor) * -1;
+		DesiredCamRot.Pitch += Velocity.Z;
 		
 		// Yaw = X
-		if (CameraRotator.Yaw != DesiredRot.Yaw)
+		if (CameraRotator.Yaw != DesiredCamRot.Yaw)
 		{
-			CameraRotator.Yaw = Lerp(CameraRotator.Yaw, DesiredRot.Yaw, CameraAdjustSpeed);
+			CameraRotator.Yaw = Lerp(CameraRotator.Yaw, DesiredCamRot.Yaw, CameraAdjustSpeed);
 		}
 		// Pitch = Z
-		if (CameraRotator.Pitch != DesiredRot.Pitch)
+		if (CameraRotator.Pitch != DesiredCamRot.Pitch)
 		{
-			CameraRotator.Pitch = Lerp(CameraRotator.Pitch, DesiredRot.Pitch, CameraAdjustSpeed);
+			CameraRotator.Pitch = Lerp(CameraRotator.Pitch, DesiredCamRot.Pitch, CameraAdjustSpeed);
 		}	
 		
 		out_CamLoc = CameraOffset;
@@ -346,6 +408,21 @@ simulated function bool CalcCamera( float fDeltaTime, out vector out_CamLoc, out
 
 function TakeFallingDamage();
 
+function bool CannotJumpNow()
+{
+	return IsSkidding;
+	
+}
+
+function ClearSkid()
+{
+	IsSkidding = false;
+}
+
+function SetSkid()
+{
+	CanSkid = true;
+}
 
 simulated singular event Rotator GetBaseAimRotation()
 {
@@ -353,18 +430,18 @@ simulated singular event Rotator GetBaseAimRotation()
 
    POVRot = Rotation;
    if( (Rotation.Yaw % 65535 > 16384 && Rotation.Yaw % 65535 < 49560) ||
-      (Rotation.Yaw % 65535 < -16384 && Rotation.Yaw % 65535 > -49560) )
+	  (Rotation.Yaw % 65535 < -16384 && Rotation.Yaw % 65535 > -49560) )
    {
-      POVRot.Yaw = 32768;
+		POVRot.Yaw = 32768;
    }
    else
    {
-      POVRot.Yaw = 0;
+		POVRot.Yaw = 0;
    }
    
    if( POVRot.Pitch == 0 )
    {
-      POVRot.Pitch = RemoteViewPitch << 8;
+	  POVRot.Pitch = RemoteViewPitch << 8;
    }
 
    return POVRot;
