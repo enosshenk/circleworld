@@ -3,6 +3,7 @@ class CircleWorldHUD extends HUD;
 var CircleWorldPawn CircleWorldPawn;
 var CircleWorld_LevelBase LevelBase;
 var array<CircleWorldItem> Pickups;
+var array<CircleWorldEnemyPawn> Enemies;
 var Vector2D PlayerPos;
 
 simulated function DrawHUD()
@@ -12,6 +13,7 @@ simulated function DrawHUD()
 	local vector ProjectLoc;
 	local rotator MapRot;
 	local CircleWorldItem PU;
+	local CircleWorldEnemyPawn EP;
 	local int i;
 	
 	foreach WorldInfo.AllActors(class'CircleWorld_LevelBase', C)
@@ -27,6 +29,13 @@ simulated function DrawHUD()
 	foreach WorldInfo.AllActors(class'CircleWorldItem', PU)
 	{
 		Pickups[i] = PU;
+		i += 1;
+	}
+	
+	i = 0;
+	foreach WorldInfo.AllActors(class'CircleWorldEnemyPawn', EP)
+	{
+		Enemies[i] = EP;
 		i += 1;
 	}
 
@@ -47,6 +56,13 @@ simulated function DrawHUD()
 			Canvas.SetPos(ProjectLoc.X, ProjectLoc.Y);
 			Canvas.DrawText("Polar Radial: " $PU.LocationPolar.X$ " Polar Angular(UR): " $PU.LocationPolar.Y$ " -- Bounds Diameter: " $PU.StaticMeshComponent.Bounds.SphereRadius);
 		}
+		
+		foreach Enemies(EP)
+		{
+			ProjectLoc = Canvas.Project(EP.Location);
+			Canvas.SetPos(ProjectLoc.X, ProjectLoc.Y);
+			Canvas.DrawText("PawnVelocity: " $EP.EnemyPawnVelocity$ " -- Obstructed: " $EP.ObstructedForward);
+		}		
 		
 	}	
 	else

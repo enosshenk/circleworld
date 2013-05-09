@@ -68,4 +68,5 @@ defaultproperties
 {
 	bNoDelete = false
 	bStatic = false
+	bDestroyOnSystemFinish=true
 }
