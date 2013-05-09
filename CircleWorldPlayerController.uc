@@ -1,5 +1,7 @@
 class CircleWorldPlayerController extends UDKPlayerController;
 
+var float LastAccelX;
+
 exec function DebugHUD()
 {
 	if (CircleWorldGameInfo(WorldInfo.Game).DebugHUD)
@@ -144,7 +146,8 @@ function ProcessMove(float DeltaTime, vector NewAccel, eDoubleClickDir DoubleCli
 	}
 
 	// We set our new acceleration to a new var on the pawn. We want to bypass the stock movement system
-	CircleWorldPawn(Pawn).CircleAcceleration.X = -1 * PlayerInput.aStrafe * DeltaTime * 40 * PlayerInput.MoveForwardSpeed;
+	CircleWorldPawn(Pawn).CircleAcceleration.X = (-1 * PlayerInput.aStrafe * DeltaTime * 30) + (LastAccelX * 0.8);
+	LastAccelX = CircleWorldPawn(Pawn).CircleAcceleration.X;
 	Pawn.Acceleration.Y = 0;
 	Pawn.Acceleration.Z = 0;
 
@@ -169,12 +172,15 @@ function UpdateRotation( float DeltaTime )
 {
    local Rotator   DeltaRot, ViewRotation;
 
-	ViewRotation = Rotation;
+	if (!CircleWorldPawn(Pawn).IsSkidding)
+	{
+		ViewRotation = Rotation;
 
-	// Calculate Delta to be applied on ViewRotation
-	DeltaRot.Yaw = Pawn.Rotation.Yaw;
-	DeltaRot.Pitch   = PlayerInput.aLookUp;
+		// Calculate Delta to be applied on ViewRotation
+		DeltaRot.Yaw = Pawn.Rotation.Yaw;
+		DeltaRot.Pitch   = PlayerInput.aLookUp;
 
-	ProcessViewRotation( DeltaTime, ViewRotation, DeltaRot );
-	SetRotation(ViewRotation);
+		ProcessViewRotation( DeltaTime, ViewRotation, DeltaRot );
+		SetRotation(ViewRotation);
+	}
 } 

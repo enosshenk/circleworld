@@ -37,7 +37,7 @@ simulated function DrawHUD()
 		Canvas.SetPos(Canvas.ClipX * 0.1, Canvas.ClipY * 0.1);	
 		Canvas.DrawText("World Properties - CircleAcceleration: " $CircleWorldPawn.CircleAcceleration$ " -- CircleVelocity: " $CircleWorldPawn.CircleVelocity$ " -- Circle RotRate: " $LevelBase.RotationRate.Pitch * UnrRotToDeg$ " -- Circle Rotation: " $LevelBase.Rotation.Pitch);
 		Canvas.SetPos(Canvas.ClipX * 0.1, Canvas.ClipY * 0.15);	
-		Canvas.DrawText("Pawn Properties - CirclePawnMoving: " $CircleWorldPawn.CirclePawnMoving$ " -- CirclePawnJumpUp: " $CircleWorldPawn.CirclePawnJumpUp$ " -- CirclePawnJumpDown: " $CircleWorldPawn.CirclePawnJumpDown$ " -- Rot: " $CircleWorldPawn.Rotation.Yaw$ " -- Velocity: X" $CircleWorldPawn.CircleVelocity.X$ " Z" $CircleWorldPawn.Velocity.Z$ " -- CanSkid: " $CircleWorldPawn.CanSkid$ " -- IsSkidding: " $CircleWorldPawn.IsSkidding);
+		Canvas.DrawText("Pawn Properties -- Rot: " $CircleWorldPawn.Rotation.Yaw$ " -- Velocity: X" $CircleWorldPawn.CircleVelocity.X$ " Z" $CircleWorldPawn.Velocity.Z$ " -- CanSkid: " $CircleWorldPawn.CanSkid$ " -- IsSkidding: " $CircleWorldPawn.IsSkidding$ " -- IsTurning: " $CircleWorldPawn.IsTurning);
 		Canvas.SetPos(Canvas.ClipX * 0.1, Canvas.ClipY * 0.2);
 		Canvas.DrawText("Camera Properties - Mode: " $CircleWorldGameInfo(WorldInfo.Game).CameraMode + 1);
 		

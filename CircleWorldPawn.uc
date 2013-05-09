@@ -29,6 +29,8 @@ var bool LedgeHanging;										// True when we're hanging on a ledge.
 var bool UseCameraActor;
 var bool CanSkid;											// True if we are moving at top speed.
 var bool IsSkidding;										// True while playing turn-skid animation. Prevents jumping.
+var bool IsTurning;
+var bool ResetSkid;
 
 var CameraActor CameraActor;
 var rotator CameraActorRot;
@@ -98,23 +100,6 @@ event Tick(float DeltaTime)
 		CircleVelocity = ClampLength(NewVelocity, GroundSpeed);
 	}
 	
-	if (VSize(CircleVelocity) >= GroundSpeed)	// We're moving near top speed, we can skid if we stop suddenly.
-	{
-//		CanSkid = true;
-		if (!IsTimerActive('SetSkid'))
-			SetTimer(0.1, false, 'SetSkid');
-	}
-	else
-	{
-		CanSkid = false;
-		if (IsTimerActive('SetSkid'))
-			ClearTimer('SetSkid');
-	}
-	
-	// Set the values as the previous accel and velocity for the next tick
-	LastAcceleration = CircleAcceleration;
-	LastVelocity = CircleVelocity;
-	
 	// Set up some trace extents
 	TraceExtent.X = 64;
 	TraceExtent.Y = 64;	
@@ -144,7 +129,7 @@ event Tick(float DeltaTime)
 		LastVelocity.X = 0;
 	}
 
-	if (!Sprinting)
+	if (!Sprinting && !CirclePawnJumping)
 	{
 		// Set up for our below feet trace.
 		TraceStart = Location;
@@ -196,43 +181,52 @@ event Tick(float DeltaTime)
 	{
 		CirclePawnMoving = false;
 	}
+
+	if (VSize(CircleVelocity) >= GroundSpeed - 20)	// We're moving near top speed, we can skid if we stop suddenly.
+	{
+		ResetSkid = false;
+		if (!IsTimerActive('SetSkid'))
+			SetTimer(0.3, false, 'SetSkid');
+	}
+	else
+	{
+		ResetSkid = true;
+		if (!IsTimerActive('SetSkid'))
+			SetTimer(0.1, false, 'SetSkid');
+	}
+
+	if (Abs(CircleVelocity.X) < Abs(LastVelocity.X) * 0.95 && CanSkid && !IsTurning && !IsSkidding)
+	{
+		IsSkidding = true;
+		ResetSkid = false;
+		if (!IsTimerActive('SetSkid'))
+			SetTimer(0.1, false, 'SetSkid');
+		SetTimer(0.45, false, 'ClearSkid');
+		PriorityAnimSlot.PlayCustomAnimByDuration('turn_run', 0.45, 0.1, 0.1, false, true);	
+	}
 	
-	if (Rotation.Yaw == 0)
+	if (Rotation.Yaw == 0 && !IsTurning && !IsSkidding)
 	{
 		// We are facing left
-		if (LastRot == 32768)
+		if (LastRot == 32768 && !CanSkid)
 		{
 			// We have reversed facing since last frame.
-			if (CanSkid && !IsSkidding)
-			{
-				PriorityAnimSlot.PlayCustomAnimByDuration('turn_run', 0.45, 0.1, 0.1, false, true);
-				IsSkidding = true;
-				SetTimer(0.45, false, 'ClearSkid');
-			}
-			else
-			{
-				PriorityAnimSlot.PlayCustomAnimByDuration('turn_idle', 0.45, 0.1, 0.1, false, true);
-			}
+			IsTurning = true;
+			SetTimer(0.45, false, 'ResetTurning');
+			PriorityAnimSlot.PlayCustomAnimByDuration('turn_idle', 0.45, 0.1, 0.1, false, true);
 		}
 		LastRot = 0;
 		
 	}
-	else if (Rotation.Yaw == 32768)
+	else if (Rotation.Yaw == 32768 && !IsTurning && !IsSkidding)
 	{
 		// We are facing right
-		if (LastRot == 0)
+		if (LastRot == 0 && !CanSkid)
 		{
 			// We have reversed facing since last frame.
-			if (CanSkid && !IsSkidding)
-			{
-				PriorityAnimSlot.PlayCustomAnimByDuration('turn_run', 0.45, 0.1, 0.1, false, true);
-				IsSkidding = true;
-				SetTimer(0.45, false, 'ClearSkid');
-			}
-			else
-			{
-				PriorityAnimSlot.PlayCustomAnimByDuration('turn_idle', 0.45, 0.1, 0.1, false, true);
-			}			
+			IsTurning = true;
+			SetTimer(0.45, false, 'ResetTurning');
+			PriorityAnimSlot.PlayCustomAnimByDuration('turn_idle', 0.45, 0.1, 0.1, false, true);			
 		}
 		LastRot = 32768;
 	}
@@ -259,6 +253,10 @@ event Tick(float DeltaTime)
 		bForceFloorCheck = false;
 		GroundSpeed = default.GroundSpeed;	
 	}
+	
+	// Set the values as the previous accel and velocity for the next tick
+	LastAcceleration = CircleAcceleration;
+	LastVelocity = CircleVelocity;
 	
 	super.Tick(DeltaTime);
 }
@@ -293,6 +291,7 @@ function DropDown()
 	else
 	{
 		`log("Can drop down");
+		CircleVelocity.X += 512;
 	}
 }
 
@@ -419,9 +418,21 @@ function ClearSkid()
 	IsSkidding = false;
 }
 
+function ResetTurning()
+{
+	IsTurning = false;
+}
+
 function SetSkid()
 {
-	CanSkid = true;
+	if (ResetSkid)
+	{
+		CanSkid = false;
+	}
+	else
+	{
+		CanSkid = true;
+	}
 }
 
 simulated singular event Rotator GetBaseAimRotation()
