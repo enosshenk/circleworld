@@ -62,4 +62,7 @@ defaultproperties
 	ProjectileDamageType = class'DamageType'
 	ProjectileParticleSystem=ParticleSystem'CircleWorld.fireball_ps'
 	ProjectileExplosionSystem=ParticleSystem'ScottPlosion.fx.ScottPlosion1'
+	
+	FlightLightClass = class'CircleWorldProjectileLight'
+	ExplosionLightClass = class'CircleWorldExplosionLight'
 }

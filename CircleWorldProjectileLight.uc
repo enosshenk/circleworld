@@ -1,6 +1,5 @@
-class CircleWorldItem extends DynamicSMActor
-	placeable;
-	
+class CircleWorldProjectileLight extends PointLight;
+
 var CircleWorld_LevelBase LevelBase;				// The level base used
 var vector2d LocationPolar;							// X value is Radial, Y value is Angular
 var vector2d InitialLocationPolar;
@@ -8,8 +7,7 @@ var vector2d InitialLocationPolar;
 event PostBeginPlay()
 {
 	local CircleWorld_LevelBase L;
-	
-	SetCollisionType(COLLIDE_TouchAll);
+
 	SetPhysics(PHYS_Rotating);
 	
 	foreach WorldInfo.AllActors(class'CircleWorld_LevelBase', L)
@@ -31,7 +29,6 @@ event PostBeginPlay()
 event Tick(float DeltaTime)
 {
 	local vector NewLocation;
-	local rotator NewRotation;
 	
 	// Check the level base for rotation change
 	LocationPolar.Y = (LevelBase.Rotation.Pitch * -1) + InitialLocationPolar.Y;
@@ -42,11 +39,6 @@ event Tick(float DeltaTime)
 	NewLocation.Y = Location.Y;
 	SetLocation(NewLocation);
 	
-	// Set new rotation based on our polar angular value
-	NewRotation = Rotation;
-	NewRotation.Pitch = LocationPolar.Y - 16384;		// Subtract 16384 because UnrealEngine sets 0 rotation as 3 oclock position
-	SetRotation(NewRotation);
-	
 	super.Tick(DeltaTime);
 }
 
@@ -54,14 +46,15 @@ defaultproperties
 {
 	bNoDelete = false
 	bStatic = false
-	bCollideComplex = true
-	CollisionType = COLLIDE_TouchAll
 	
-	Begin Object Name=StaticMeshComponent0
-		StaticMesh = StaticMesh'CircleWorld.circle_pickup'
-		BlockZeroExtent=true
-		CollideActors=true
-		BlockActors=false
-		BlockRigidBody=false
+	Begin Object Name=PointLightComponent0
+		Radius=1024.0
+	    LightAffectsClassification=LAC_DYNAMIC_AND_STATIC_AFFECTING
+	    CastShadows=TRUE
+	    CastStaticShadows=TRUE
+	    CastDynamicShadows=TRUE
+	    bForceDynamicLight=FALSE
+	    UseDirectLightMap=FALSE
+	    LightingChannels=(BSP=TRUE,Static=TRUE,Dynamic=TRUE,bInitialized=TRUE)
 	End Object
 }

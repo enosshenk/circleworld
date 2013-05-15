@@ -1,6 +1,6 @@
-class CircleWorldItem extends DynamicSMActor
-	placeable;
-	
+class CircleWorldExplosionLight extends Actor;
+
+var UDKExplosionLight ExplosionLightComponent;
 var CircleWorld_LevelBase LevelBase;				// The level base used
 var vector2d LocationPolar;							// X value is Radial, Y value is Angular
 var vector2d InitialLocationPolar;
@@ -8,8 +8,7 @@ var vector2d InitialLocationPolar;
 event PostBeginPlay()
 {
 	local CircleWorld_LevelBase L;
-	
-	SetCollisionType(COLLIDE_TouchAll);
+
 	SetPhysics(PHYS_Rotating);
 	
 	foreach WorldInfo.AllActors(class'CircleWorld_LevelBase', L)
@@ -20,7 +19,7 @@ event PostBeginPlay()
 	// Get our initial polar coordinates from our cartesian coordinates
 	InitialLocationPolar.X = Sqrt(Location.X ** 2 + Location.Z ** 2);
 	InitialLocationPolar.Y = atan2(Location.Z, Location.X) * RadToUnrRot;
-	`log("Initial Polar: R" $InitialLocationPolar.X$ " A" $InitialLocationPolar.Y);
+	`log("ExpLight Initial Polar: R" $InitialLocationPolar.X$ " A" $InitialLocationPolar.Y);
 	
 	LocationPolar.X = InitialLocationPolar.X;
 	LocationPolar.Y = InitialLocationPolar.Y;
@@ -31,7 +30,6 @@ event PostBeginPlay()
 event Tick(float DeltaTime)
 {
 	local vector NewLocation;
-	local rotator NewRotation;
 	
 	// Check the level base for rotation change
 	LocationPolar.Y = (LevelBase.Rotation.Pitch * -1) + InitialLocationPolar.Y;
@@ -42,26 +40,22 @@ event Tick(float DeltaTime)
 	NewLocation.Y = Location.Y;
 	SetLocation(NewLocation);
 	
-	// Set new rotation based on our polar angular value
-	NewRotation = Rotation;
-	NewRotation.Pitch = LocationPolar.Y - 16384;		// Subtract 16384 because UnrealEngine sets 0 rotation as 3 oclock position
-	SetRotation(NewRotation);
-	
 	super.Tick(DeltaTime);
 }
+
 
 defaultproperties
 {
 	bNoDelete = false
 	bStatic = false
-	bCollideComplex = true
-	CollisionType = COLLIDE_TouchAll
-	
-	Begin Object Name=StaticMeshComponent0
-		StaticMesh = StaticMesh'CircleWorld.circle_pickup'
-		BlockZeroExtent=true
-		CollideActors=true
-		BlockActors=false
-		BlockRigidBody=false
+
+	Begin Object Class=UDKExplosionLight Name=ExplosionLight0
+		HighDetailFrameTime=+0.02
+		Brightness=8
+		Radius=256
+		LightColor=(R=255,G=255,B=255,A=255)
+		TimeShift=((StartTime=0.0,Radius=256,Brightness=16,LightColor=(R=255,G=255,B=255,A=255)),(StartTime=0.3,Radius=128,Brightness=8,LightColor=(R=255,G=255,B=128,A=255)),(StartTime=0.4,Radius=128,Brightness=0,LightColor=(R=255,G=255,B=64,A=255)))
 	End Object
+	ExplosionLightComponent=ExplosionLight0
+	Components.Add(ExplosionLight0) 	
 }

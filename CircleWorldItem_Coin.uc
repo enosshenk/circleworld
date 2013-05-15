@@ -4,12 +4,9 @@ class CircleWorldItem_Coin extends CircleWorldItem
 	
 event PostBeginPlay()
 {
-	local Rotator RotationRot;
 	
 	SetCollisionType(COLLIDE_TouchAll);
 	SetPhysics(PHYS_Rotating);
-	RotationRot.Yaw = 4551;
-//	RotationRate = RotationRot;	
 	
 	super.PostBeginPlay();
 }

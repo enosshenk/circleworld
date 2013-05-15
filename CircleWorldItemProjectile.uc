@@ -22,9 +22,13 @@ var class<DamageType> ProjectileDamageType;			// Damagetype for explosion
 
 var ParticleSystem ProjectileParticleSystem;		// Particle system used for flight effect
 var ParticleSystem ProjectileExplosionSystem;		// Particle system used for explosion
+var class<CircleWorldProjectileLight> FlightLightClass;	// Class of light attached for flight effects
+var class<CircleWorldExplosionLight> ExplosionLightClass;	// Class to be spawned when this projectile explodes
 
 var ParticleSystemComponent PooledSystem;			// Ref for the flight effects
 var CircleWorldItem_Emitter PooledExplosionSystem;	// Ref for the explosion effects
+var CircleWorldProjectileLight FlightLight;		// Refs to the lights
+var CircleWorldExplosionLight ExplosionLight;	
 
 event PostBeginPlay()
 {
@@ -54,6 +58,13 @@ event PostBeginPlay()
 	PooledSystem.bUpdateComponentInTick = true;
 	PooledSystem.OnSystemFinished = CircleOnSystemFinished;
 	AttachComponent(PooledSystem);
+	
+	// Spawn flight light if applicable
+	if (FlightLightClass != none)
+	{
+		FlightLight = spawn(FlightLightClass, self, , Location, Rotation);
+		AttachComponent(FlightLight.LightComponent);
+	}
 	
 	super.PostBeginPlay();
 }
@@ -121,11 +132,16 @@ function Explode(vector HitLocation)
 	PooledSystem.SetActive(false);
 	
 	PooledExplosionSystem = spawn(class'CircleWorldItem_Emitter', self, , HitLocation, self.Rotation);
-//	`log("Exploding at Radial " $PooledExplosionSystem.LocationPolar.X$ " Angular " $PooledExplosionSystem.LocationPolar.Y);
 	if (PooledExplosionSystem != none)
 	{
 		PooledExplosionSystem.ParticleSystemComponent.SetTemplate(ProjectileExplosionSystem);
 		PooledExplosionSystem.ParticleSystemComponent.ActivateSystem();
+	}
+	
+	// Spawn explosion light if applicable
+	if (ExplosionLightClass != none)
+	{
+		ExplosionLight = spawn(ExplosionLightClass, self, , Location, Rotation);
 	}
 	
 	HurtRadius(ProjectileDamage, ProjectileDamageRadius, ProjectileDamageType, ProjectileDamageMomentum, Location);
