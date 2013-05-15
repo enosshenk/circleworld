@@ -316,11 +316,20 @@ simulated function StartFire(byte FireModeNum)
 	ProjectileRotation = self.Rotation;
 	
 	PriorityAnimSlot.PlayCustomAnimByDuration('punch_stand1', 0.45, 0.1, 0.1, false, true);
-	Projectile = spawn(class'CircleWorldItemProjectile_Fireball', self, , ProjectileLocation, ProjectileRotation, , true);
+	if (FireModeNum == 0)
+		Projectile = spawn(class'CircleWorldItemProjectile', self, , ProjectileLocation, ProjectileRotation, , true);
+	if (FireModeNum == 1)
+		Projectile = spawn(class'CircleWorldItemProjectile_Fireball', self, , ProjectileLocation, ProjectileRotation, , true);
 	if (Rotation.Yaw == 0)
-		Projectile.TravelDirection = -1;
+	{
+		ProjectileRotation.Pitch = 0 + (Clamp(Velocity.Z, -10, 10) * DegToUnrRot);	
+		Projectile.InitProjectile(ProjectileRotation);
+	}
 	if (Rotation.Yaw == 32768)
-		Projectile.TravelDirection = 1;
+	{
+		ProjectileRotation.Pitch = 32768 + (Clamp(Velocity.Z, -10, 10) * DegToUnrRot);
+		Projectile.InitProjectile(ProjectileRotation);
+	}
 }	
 	
 simulated function bool CalcCamera( float fDeltaTime, out vector out_CamLoc, out rotator out_CamRot, out float out_FOV )

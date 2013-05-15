@@ -1,26 +1,30 @@
 class CircleWorldItemProjectile extends Actor
 	notplaceable;
 
-var	CylinderComponent CylinderComponent;
+var	CylinderComponent CylinderComponent;			// Our collision cylinder
 var CircleWorld_LevelBase LevelBase;				// The level base used
 var vector2d LocationPolar;							// X value is Radial, Y value is Angular
-var vector2d InitialLocationPolar;
-var rotator InitialLevelRot;
+var vector ProjectileVelocity;						// A fake velocity vector set at init time
+var rotator ProjectileRotation;						// A fake rotator set at init time, determines our heading
+var vector2d InitialLocationPolar;					// Initial polar coordinates generated from our spawn-in location
+var vector2d LastLocationPolar;						// Last frame polar coordinates, used for gravity
+var rotator InitialLevelRot;						// Initial rotation of the world cylinder set at spawn-in of this projectile
 
-var float ProjectileSpeed;
-var float ProjectileDamage;
-var float ProjectileDamageRadius;
-var float ProjectileDamageMomentum;
-var float ProjectileLife;
-var float ProjectileLifeElapsed;
-var int TravelDirection;
-var class<DamageType> ProjectileDamageType;
+var bool ProjectileUseGravity;						// If true this projectile is affected by gravity
+var float ProjectileGravityFactor;					// If UseGravity is on, scale by this value
+var float ProjectileSpeed;							// Approx. speed this projectile travels per frame
+var float ProjectileDamage;							// Damage done when projectile explodes
+var float ProjectileDamageRadius;					// Radius of explosion
+var float ProjectileDamageMomentum;					// Momentum scalar applied to damaged actors
+var float ProjectileLife;							// Maximum lifetime of this projectile
+var float ProjectileLifeElapsed;					// Current elapsed lifetime
+var class<DamageType> ProjectileDamageType;			// Damagetype for explosion
 
-var ParticleSystem ProjectileParticleSystem;
-var ParticleSystem ProjectileExplosionSystem;
+var ParticleSystem ProjectileParticleSystem;		// Particle system used for flight effect
+var ParticleSystem ProjectileExplosionSystem;		// Particle system used for explosion
 
-var ParticleSystemComponent PooledSystem;
-var CircleWorldItem_Emitter PooledExplosionSystem;
+var ParticleSystemComponent PooledSystem;			// Ref for the flight effects
+var CircleWorldItem_Emitter PooledExplosionSystem;	// Ref for the explosion effects
 
 event PostBeginPlay()
 {
@@ -54,6 +58,13 @@ event PostBeginPlay()
 	super.PostBeginPlay();
 }
 
+function InitProjectile(rotator NewRotation)
+{
+	// Set our fake velocity vector using some trig and our speed
+	ProjectileVelocity.X = (ProjectileSpeed * Cos(NewRotation.Pitch * UnrRotToRad)) * -1;
+	ProjectileVelocity.Z = ProjectileSpeed * Sin(NewRotation.Pitch * UnrRotToRad);
+}
+
 event Tick(float DeltaTime)
 {
 	local vector NewLocation;
@@ -66,19 +77,27 @@ event Tick(float DeltaTime)
 	}
 	else
 	{
-		InitialLocationPolar.Y += TravelDirection * ProjectileSpeed / 50;
+		// If we're simulating gravity, modify our velocity each frame
+		if (ProjectileUseGravity)
+		{
+			ProjectileVelocity.Z = ProjectileVelocity.Z + (1 * ProjectileGravityFactor);
+		}
+		
+		// Modify our initial polar with our fake velocity vector
+		InitialLocationPolar.Y = InitialLocationPolar.Y + (ProjectileVelocity.X / 10);
+		InitialLocationPolar.X = InitialLocationPolar.X + ((ProjectileVelocity.Z * -1) / 10);	
+		
 		// Check the level base for rotation change
 		LocationPolar.Y = (InitialLevelRot.Pitch + LevelBase.Rotation.Pitch * -1) + InitialLocationPolar.Y;
-//		`log(TravelDirection$ " * " $ProjectileSpeed$ " = " $LocationPolar.Y);
 		// Set new cartesian location based on our polar coordinates
+		NewLocation.Y = Location.Y;
 		NewLocation.X = InitialLocationPolar.X * cos(LocationPolar.Y * UnrRotToRad);
 		NewLocation.Z = InitialLocationPolar.X * sin(LocationPolar.Y * UnrRotToRad);
-		NewLocation.Y = Location.Y;
 		SetLocation(NewLocation);
 		
-		// Set new rotation based on our polar angular value
+		// Set new rotation based on our polar angular value, considering our launch angle
 		NewRotation = Rotation;
-		NewRotation.Pitch = LocationPolar.Y - 16384;		// Subtract 16384 because UnrealEngine sets 0 rotation as 3 oclock position
+		NewRotation.Pitch = (LocationPolar.Y + ProjectileRotation.Pitch) - 16384;		// Subtract 16384 because UnrealEngine sets 0 rotation as 3 oclock position
 		SetRotation(NewRotation);
 	}
 	
@@ -126,8 +145,10 @@ function CircleOnSystemFinished(ParticleSystemComponent PSC)
 	
 defaultproperties
 {
+	ProjectileUseGravity = false
+	ProjectileGravityFactor = 1
 	ProjectileLife = 10
-	ProjectileSpeed = 400
+	ProjectileSpeed = 100
 	ProjectileDamage = 50
 	ProjectileDamageRadius = 1
 	ProjectileDamageMomentum = 1

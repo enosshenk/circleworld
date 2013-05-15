@@ -1,6 +1,7 @@
 class CircleWorldItemProjectile_Fireball extends CircleWorldItemProjectile;
 
 var bool IsArmed;
+var bool RandomizeVector;
 var float RandomFactor;
 
 event PostBeginPlay()
@@ -13,39 +14,12 @@ event PostBeginPlay()
 
 event Tick(float DeltaTime)
 {
-	local vector NewLocation;
-	local rotator NewRotation;
-	
-	if (ProjectileLifeElapsed >= ProjectileLife)
+	if (!RandomizeVector)
 	{
-		`log("Projectile " $self$ " timed out");
-		Explode(Location);
+		ProjectileVelocity.X += RandomFactor * 3;
+		ProjectileVelocity.Y += RandomFactor * 3;
+		RandomizeVector = true;
 	}
-	else
-	{
-		if (ProjectileSpeed != 20)
-		{
-			ProjectileSpeed = Lerp(ProjectileSpeed, 20, 0.01);
-		}
-		InitialLocationPolar.Y += TravelDirection * ProjectileSpeed / 50;
-		InitialLocationPolar.X = InitialLocationPolar.X + (50 + (RandomFactor * 2)) + (WorldInfo.DefaultGravityZ / 10);
-
-		// Check the level base for rotation change
-		LocationPolar.Y = (InitialLevelRot.Pitch + LevelBase.Rotation.Pitch * -1) + InitialLocationPolar.Y;
-//		`log(TravelDirection$ " * " $ProjectileSpeed$ " = " $LocationPolar.Y);
-		// Set new cartesian location based on our polar coordinates
-		NewLocation.X = InitialLocationPolar.X * cos(LocationPolar.Y * UnrRotToRad);
-		NewLocation.Z = InitialLocationPolar.X * sin(LocationPolar.Y * UnrRotToRad);
-		NewLocation.Y = Location.Y;
-		SetLocation(NewLocation);
-		
-		// Set new rotation based on our polar angular value
-		NewRotation = Rotation;
-		NewRotation.Pitch = LocationPolar.Y - 16384;		// Subtract 16384 because UnrealEngine sets 0 rotation as 3 oclock position
-		SetRotation(NewRotation);
-	}
-	
-	ProjectileLifeElapsed += DeltaTime;
 	super.Tick(DeltaTime);
 }
 
@@ -53,7 +27,15 @@ event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vect
 {
 	if (CircleWorld_LevelBase(Other) != none)
 	{
-		Explode(Location);
+		if (HitLocation.Z < Location.Z + 1)
+		{
+			// Bounce
+			ProjectileVelocity.Z *= -1;
+		}
+		else
+		{
+			Explode(Location);
+		}
 	}
 	else if (CircleWorldPawn(Other) != none && IsArmed)
 	{
@@ -70,8 +52,10 @@ function SetArm()
 
 defaultproperties
 {
+	ProjectileUseGravity = true
+	ProjectileGravityFactor = 2
 	ProjectileLife = 10
-	ProjectileSpeed = 600
+	ProjectileSpeed = 200
 	ProjectileDamage = 50
 	ProjectileDamageRadius = 512
 	ProjectileDamageMomentum = 10

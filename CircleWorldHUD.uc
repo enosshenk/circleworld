@@ -2,7 +2,7 @@ class CircleWorldHUD extends HUD;
 
 var CircleWorldPawn CircleWorldPawn;
 var CircleWorld_LevelBase LevelBase;
-var array<CircleWorldItem> Pickups;
+var array<CircleWorldItemProjectile> Projectiles;
 var array<CircleWorldEnemyPawn> Enemies;
 var Vector2D PlayerPos;
 
@@ -12,7 +12,7 @@ simulated function DrawHUD()
 	local CircleWorldPawn P;
 	local vector ProjectLoc;
 	local rotator MapRot;
-	local CircleWorldItem PU;
+	local CircleWorldItemProjectile PU;
 	local CircleWorldEnemyPawn EP;
 	local int i;
 	
@@ -26,9 +26,9 @@ simulated function DrawHUD()
 		CircleWorldPawn = P;
 	}
 	
-	foreach WorldInfo.AllActors(class'CircleWorldItem', PU)
+	foreach WorldInfo.AllActors(class'CircleWorldItemProjectile', PU)
 	{
-		Pickups[i] = PU;
+		Projectiles[i] = PU;
 		i += 1;
 	}
 	
@@ -50,11 +50,11 @@ simulated function DrawHUD()
 		Canvas.SetPos(Canvas.ClipX * 0.1, Canvas.ClipY * 0.2);
 		Canvas.DrawText("Camera Properties - Mode: " $CircleWorldGameInfo(WorldInfo.Game).CameraMode + 1);
 		
-		foreach Pickups(PU)
+		foreach Projectiles(PU)
 		{
 			ProjectLoc = Canvas.Project(PU.Location);
 			Canvas.SetPos(ProjectLoc.X, ProjectLoc.Y);
-			Canvas.DrawText("Polar Radial: " $PU.LocationPolar.X$ " Polar Angular(UR): " $PU.LocationPolar.Y$ " -- Bounds Diameter: " $PU.StaticMeshComponent.Bounds.SphereRadius);
+			Canvas.DrawText("ProjectileVelocity: " $PU.ProjectileVelocity$ " -- Real Loc: " $PU.Location);
 		}
 		
 		foreach Enemies(EP)

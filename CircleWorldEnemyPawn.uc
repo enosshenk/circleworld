@@ -126,7 +126,7 @@ event TickSpecial( float DeltaTime )
 	NewRotation = Rotation;
 	NewRotation.Pitch = LocationPolar.Y - 16384;		// Subtract 16384 because UnrealEngine sets 0 rotation as 3 oclock position
 	SetRotation(NewRotation);
-	`log("Setting New Rotation: " $NewRotation);
+//	`log("Setting New Rotation: " $NewRotation);
 }
 
 function SetEnemyPawnVelocity(float NewSpeed)
