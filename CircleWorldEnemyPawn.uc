@@ -161,7 +161,8 @@ function bool Died(Controller Killer, class<DamageType> DamageType, vector HitLo
 		DeathSystem.ParticleSystemComponent.ActivateSystem();
 	}	
 	SetHidden(true);
-	super.Died(Killer, DamageType, HitLocation);
+	
+	return super.Died(Killer, DamageType, HitLocation);
 }
 	
 defaultproperties

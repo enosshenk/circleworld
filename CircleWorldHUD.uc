@@ -46,9 +46,9 @@ simulated function DrawHUD()
 		Canvas.SetPos(Canvas.ClipX * 0.1, Canvas.ClipY * 0.1);	
 		Canvas.DrawText("World Properties - CircleAcceleration: " $CircleWorldPawn.CircleAcceleration$ " -- CircleVelocity: " $CircleWorldPawn.CircleVelocity$ " -- Circle RotRate: " $LevelBase.RotationRate.Pitch * UnrRotToDeg$ " -- Circle Rotation: " $LevelBase.Rotation.Pitch);
 		Canvas.SetPos(Canvas.ClipX * 0.1, Canvas.ClipY * 0.15);	
-		Canvas.DrawText("Pawn Properties -- Rot: " $CircleWorldPawn.Rotation.Yaw$ " -- Velocity: X" $CircleWorldPawn.CircleVelocity.X$ " Z" $CircleWorldPawn.Velocity.Z$ " -- CanSkid: " $CircleWorldPawn.CanSkid$ " -- IsSkidding: " $CircleWorldPawn.IsSkidding$ " -- IsTurning: " $CircleWorldPawn.IsTurning);
+		Canvas.DrawText("Pawn Properties -- Rot: " $CircleWorldPawn.Rotation.Yaw$ " -- Velocity: X"$CircleWorldPawn.CircleVelocity.X$ "Z" $CircleWorldPawn.Velocity.Z$ " -- AccelZ: " $CircleWorldPawn.Acceleration.Z$ " -- Boost: " $CircleWorldPawn.UsingBoost$ " -- Fuel: " $CircleWorldPawn.BoostFuel$ " -- Fuel Regen: " $CircleWorldPawn.BoostRegenerating);
 		Canvas.SetPos(Canvas.ClipX * 0.1, Canvas.ClipY * 0.2);
-		Canvas.DrawText("Camera Properties - Mode: " $CircleWorldGameInfo(WorldInfo.Game).CameraMode + 1);
+		Canvas.DrawText("Input - aStrafe: " $CircleWorldPlayerController(PlayerOwner).ThisStrafe$ " -- aForward: " $CircleWorldPlayerController(PlayerOwner).ThisUp$ " -- Control State: " $CircleWorldPlayerController(PlayerOwner).GetStateName());
 		
 		foreach Projectiles(PU)
 		{
@@ -72,6 +72,8 @@ simulated function DrawHUD()
 		Canvas.SetPos(Canvas.ClipX * 0.1, Canvas.ClipY * 0.1);	
 		Canvas.DrawText("Coins Collected: " $CircleWorldGameInfo(WorldInfo.Game).CoinsCollected);
 		
+		// Minimap stuff
+		
 		MapRot.Yaw = LevelBase.Rotation.Pitch * -1;
 		// Draw a white tile for a border
 		Canvas.SetPos(Canvas.ClipX - 132, 0);
@@ -89,6 +91,15 @@ simulated function DrawHUD()
 		// Draw position dot
 		Canvas.SetPos(PlayerPos.X - 1, PlayerPos.Y - 1);
 		Canvas.DrawTile(Texture2D'enginevolumetrics.Fogsheet.Materials.T_EV_BlankWhite_01', 2, 2, 0, 0, 1, 1, MakeLinearColor(0,1,0,1));
+		
+		// Fuel guage stuff
+		
+		// Draw a background
+		Canvas.SetPos(Canvas.ClipX / 2 - 102, 18);
+		Canvas.DrawTile(Texture2D'enginevolumetrics.Fogsheet.Materials.T_EV_BlankWhite_01', 204, 44, 0, 0, 1, 1, MakeLinearColor(0,0,0,1));
+		// Draw the guage bar
+		Canvas.SetPos(Canvas.ClipX / 2 - 100, 20);
+		Canvas.DrawTile(Texture2D'enginevolumetrics.Fogsheet.Materials.T_EV_BlankWhite_01', CircleWorldPawn.BoostFuel * 2, 40, 0, 0, 1, 1, MakeLinearColor(1,1,1,1));
 	
 	}
 	

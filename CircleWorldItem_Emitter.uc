@@ -9,7 +9,7 @@ var vector InitialLocation;
 var rotator InitialRotation;
 var rotator InitialLevelRot;
 
-event PostBeginPlay()
+simulated event PostBeginPlay()
 {
 	local CircleWorld_LevelBase L;
 	SetPhysics(PHYS_Rotating);
