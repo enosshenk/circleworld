@@ -43,6 +43,10 @@ event Tick(float DeltaTime)
 	super.Tick(DeltaTime);
 }
 
+function LightFinished(UDKExplosionLight Light)
+{
+	self.Destroy();
+}
 
 defaultproperties
 {
@@ -55,6 +59,7 @@ defaultproperties
 		Radius=256
 		LightColor=(R=255,G=255,B=255,A=255)
 		TimeShift=((StartTime=0.0,Radius=256,Brightness=16,LightColor=(R=255,G=255,B=255,A=255)),(StartTime=0.3,Radius=128,Brightness=8,LightColor=(R=255,G=255,B=128,A=255)),(StartTime=0.4,Radius=128,Brightness=0,LightColor=(R=255,G=255,B=64,A=255)))
+		OnLightFinished = LightFinished
 	End Object
 	ExplosionLightComponent=ExplosionLight0
 	Components.Add(ExplosionLight0) 	

@@ -188,6 +188,7 @@ ignores SeePlayer, HearNoise, Bump;
 			// Player has pressed up, activate boost.
 			GotoState('PlayerFlying');
 			CircleWorldPawn(Pawn).UsingBoost = true;
+			CircleWorldPawn(Pawn).WasUsingBoost = true;
 		}	
 		super.PlayerMove(DeltaTime);
 	}
@@ -211,51 +212,54 @@ ignores SeePlayer, HearNoise, Bump;
 		{
 			// Update ViewPitch for remote clients
 			Pawn.SetRemoteViewPitch( Rotation.Pitch );
-		}
-		
+		}		
+
+		CircleWorldPawn(Pawn).CircleAcceleration.X = (-1 * PlayerInput.aStrafe * DeltaTime * CircleWorldPawn(Pawn).BoostX) + (LastAccelX * 0.8);
+		LastAccelX = CircleWorldPawn(Pawn).CircleAcceleration.X;
+			
 		if (CircleWorldPawn(Pawn).BoostFuel > 0)
 		{
-			// We have fuel in our tanks, keep boosting
-			CircleWorldPawn(Pawn).CircleAcceleration.X = (-1 * PlayerInput.aStrafe * DeltaTime * CircleWorldPawn(Pawn).BoostX) + (LastAccelX * 0.8);
-			LastAccelX = CircleWorldPawn(Pawn).CircleAcceleration.X;
-			
+			// We have fuel in our tanks, keep boosting			
 			Pawn.Acceleration.Z = PlayerInput.aForward * DeltaTime * CircleWorldPawn(Pawn).BoostZ;
-			Pawn.Acceleration.X = 0;
-			Pawn.Acceleration.Y = 0;
-
-
-			tempRot.Pitch = Pawn.Rotation.Pitch;
-			tempRot.Roll = 0;
-			if(Normal(CircleWorldPawn(Pawn).CircleAcceleration) Dot Vect(1,0,0) > 0)
-			{
-				tempRot.Yaw = 0;
-				Pawn.SetRotation(tempRot);
-			}
-			else if(Normal(CircleWorldPawn(Pawn).CircleAcceleration) Dot Vect(1,0,0) < 0)
-			{
-				tempRot.Yaw = 32768;
-				Pawn.SetRotation(tempRot);
-			}
 		}
 		else
 		{
 			// We're out of fuel!
-			Pawn.Acceleration.X = 0;
+			Pawn.Acceleration.Z = 0;
 			GotoState('PlayerWalking');
 			CircleWorldPawn(Pawn).UsingBoost = false;
+			CircleWorldPawn(Pawn).WasUsingBoost = true;
+		}	
+		
+		Pawn.Acceleration.X = 0;
+		Pawn.Acceleration.Y = 0;
+
+
+		tempRot.Pitch = Pawn.Rotation.Pitch;
+		tempRot.Roll = 0;
+		if(Normal(CircleWorldPawn(Pawn).CircleAcceleration) Dot Vect(1,0,0) > 0)
+		{
+			tempRot.Yaw = 0;
+			Pawn.SetRotation(tempRot);
+		}
+		else if(Normal(CircleWorldPawn(Pawn).CircleAcceleration) Dot Vect(1,0,0) < 0)
+		{
+			tempRot.Yaw = 32768;
+			Pawn.SetRotation(tempRot);
 		}
 
 		ThisStrafe = PlayerInput.aStrafe;
-		ThisUp = PlayerInput.aUp;
+		ThisUp = PlayerInput.aForward;
 	}
 	
 	function PlayerMove( float DeltaTime )
 	{
 		if (PlayerInput.aForward < 100)
 		{
-			// Player has stopped pressing up. Get back to PlayerWalking state
+			// Player has stopped pressing up. Turn off boost.
 			GotoState('PlayerWalking');
 			CircleWorldPawn(Pawn).UsingBoost = false;
+			CircleWorldPawn(Pawn).WasUsingBoost = true;
 		}	
 		super.PlayerMove(DeltaTime);
 	}

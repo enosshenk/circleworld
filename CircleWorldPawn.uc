@@ -25,6 +25,8 @@ var float BoostFuel;										// Fuel available for boosting
 var float BoostConsumeRate;									// Fuel consumed per tick when boosting
 var float BoostRegenRate;									// Fuel regenerated per tick when not boosting
 var float BoostRegenTime;									// Time we must be on the ground before our fuel begins to regenerate
+var float JumpLaunchTime;									// How long to play our jump launch animation
+var float VerticalSensitivity;								// A variable used to determine if we're ascending or descending for animations.
 
 var bool CirclePawnMoving;									// True if the character is moving
 var bool CirclePawnJumping;									// True if the character is jumping at all
@@ -33,12 +35,15 @@ var bool CirclePawnJumpDown;								// True when the character is falling
 var bool Sprinting;											// True when the sprint key is held
 var bool LedgeHanging;										// True when we're hanging on a ledge.
 var bool UsingBoost;										// True while we're using our jetpack
+var bool WasUsingBoost;										// True if we used boost any time before we land on solid ground
+var bool CirclePawnBoostUp;									// Boosting and ascending
+var bool CirclePawnBoostDown;								// Boosting and descending
 var bool BoostRegenerating;									// True if we're regenerating fuel
 var bool UseCameraActor;
 var bool CanSkid;											// True if we are moving at top speed.
 var bool IsSkidding;										// True while playing turn-skid animation. Prevents jumping and firing.
 var bool IsTurning;											// True while playing idle turn animation. Prevents jumping and firing.
-var bool ResetSkid;											
+var bool ResetSkid;	
 
 var CameraActor CameraActor;
 var rotator CameraActorRot;
@@ -135,26 +140,52 @@ event Tick(float DeltaTime)
 		}
 	}
 	
+	// Set sensitivity for the following checks
+	if (WasUsingBoost)
+		VerticalSensitivity = 150;
+	else
+		VerticalSensitivity = 10;
+	
 	// Set some flags
-	if (Velocity.Z > 10)
+	if (Velocity.Z > VerticalSensitivity)
 	{
-		// We are jumping up! Tell the AnimTree
-		CirclePawnJumpUp = true;
-		CirclePawnJumpDown = false;
-		CirclePawnJumping = true;
+		if (!UsingBoost)
+		{
+			// We are jumping up! Tell the AnimTree
+			CirclePawnJumpUp = true;
+			CirclePawnJumpDown = false;
+			CirclePawnJumping = true;
+		}
+		else
+		{
+			// We are boosting up
+			CirclePawnBoostUp = true;
+			CirclePawnBoostDown = false;
+		}
 	}
-	else if (Velocity.Z < -10)
+	else if (Velocity.Z < VerticalSensitivity * -1)
 	{
-		// We're falling straight down
-		CirclePawnJumpUp = false;
-		CirclePawnJumpDown = true;
-		CirclePawnJumping = true;
+		if (!WasUsingBoost)
+		{
+			// We're falling straight down
+			CirclePawnJumpUp = false;
+			CirclePawnJumpDown = true;
+			CirclePawnJumping = true;
+		}
+		else
+		{
+			// We are falling in boost mode
+			CirclePawnBoostUp = false;
+			CirclePawnBoostDown = true;		
+		}
 	}	
 	else
 	{
 		CirclePawnJumpUp = false;
 		CirclePawnJumpDown = false;	
 		CirclePawnJumping = false;
+		CirclePawnBoostUp = false;
+		CirclePawnBoostDown = false;	
 	}
 	
 	if (VSize(Velocity) > 10 || VSize(CircleVelocity) > 10)
@@ -284,11 +315,9 @@ event Tick(float DeltaTime)
 
 event Landed(vector HitNormal, Actor FloorActor)
 {
-	if (UsingBoost)
-	{
-		UsingBoost = false;
-		Controller.GotoState('PlayerWalking');
-	}
+	UsingBoost = false;
+	WasUsingBoost = false;
+	Controller.GotoState('PlayerWalking');
 }
 
 //
@@ -446,12 +475,12 @@ simulated function StartFire(byte FireModeNum)
 			// Set the projectile pitch with a small bit of random angle.
 			ProjectileRotation.Pitch = 0 + (Clamp(Velocity.Z, -10, 10) * DegToUnrRot);	
 			// InitProjectile must be called, passing the proper rotation.
-			Projectile.InitProjectile(ProjectileRotation);
+			Projectile.InitProjectile(ProjectileRotation, CircleVelocity.X);
 		}
 		if (Rotation.Yaw == 32768)
 		{
 			ProjectileRotation.Pitch = 32768 + (Clamp(Velocity.Z, -10, 10) * DegToUnrRot);
-			Projectile.InitProjectile(ProjectileRotation);
+			Projectile.InitProjectile(ProjectileRotation, CircleVelocity.X);
 		}
 	}
 }	
@@ -614,6 +643,7 @@ defaultproperties
 	MaxFallSpeed = 1024
 	JumpMomentum = 0.9
 	MomentumFade = 0.2
+	JumpLaunchTime = 0.4
 	
 	BoostFuel = 100;
 	BoostConsumeRate = 0.05;

@@ -69,8 +69,14 @@ event PostBeginPlay()
 	super.PostBeginPlay();
 }
 
-function InitProjectile(rotator NewRotation)
+function InitProjectile(rotator NewRotation, float AddSpeed)
 {
+	// Add to our speed
+	if (AddSpeed > 0)
+		ProjectileSpeed += AddSpeed / 20;
+	else if (AddSpeed < 0)
+		ProjectileSpeed -= AddSpeed / 20;	
+		
 	// Set our fake velocity vector using some trig and our speed
 	ProjectileVelocity.X = (ProjectileSpeed * Cos(NewRotation.Pitch * UnrRotToRad)) * -1;
 	ProjectileVelocity.Z = ProjectileSpeed * Sin(NewRotation.Pitch * UnrRotToRad);
@@ -129,8 +135,7 @@ event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vect
 
 function Explode(vector HitLocation)
 {
-	PooledSystem.SetActive(false);
-	
+	// Spawn in our explosion system
 	PooledExplosionSystem = spawn(class'CircleWorldItem_Emitter', self, , HitLocation, self.Rotation);
 	if (PooledExplosionSystem != none)
 	{
@@ -144,6 +149,7 @@ function Explode(vector HitLocation)
 		ExplosionLight = spawn(ExplosionLightClass, self, , Location, Rotation);
 	}
 	
+	// Damage radius!
 	HurtRadius(ProjectileDamage, ProjectileDamageRadius, ProjectileDamageType, ProjectileDamageMomentum, Location);
 	
 	self.Destroy();
