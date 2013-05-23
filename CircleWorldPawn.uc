@@ -129,15 +129,28 @@ event Tick(float DeltaTime)
 		LastVelocity.X = 0;
 	}
 
-	if (!Sprinting && !CirclePawnJumping && !UsingBoost)
+	if (!Sprinting && !CirclePawnJumping && !UsingBoost && !WasUsingBoost)
 	{
 		// Check our below feet collision
 		if (CollisionCheckFeet() == true)
 		{
 			// Collision trace says we need to fall
+			WasUsingBoost = false;
+			Controller.GotoState('PlayerWalking');
 			SetPhysics(PHYS_Falling);
 			Velocity.Z -= 16;			
 		}
+	}
+	else if (WasUsingBoost && !UsingBoost)
+	{
+		if (CollisionCheckFeet() == false)
+		{
+			`log("Resetting walking collision");
+			// Reset us to walking on solid ground
+			WasUsingBoost = false;
+			Controller.GotoState('PlayerWalking');
+			SetPhysics(PHYS_Walking);
+		}	
 	}
 	
 	// Set sensitivity for the following checks
@@ -676,10 +689,11 @@ defaultproperties
 
 
 	Begin Object Class=SkeletalMeshComponent Name=CirclePawnSkeletalMeshComponent
-		SkeletalMesh = SkeletalMesh'Rock.TheRock'
-		AnimTreeTemplate=AnimTree'CircleWorld.Rock_Tree'
-		AnimSets(0)=AnimSet'Rock.Rock_Anim'
-		PhysicsAsset = PhysicsAsset'Rock.therock_Physics'
+		SkeletalMesh = SkeletalMesh'RockCharacter.TheRock'
+		AnimTreeTemplate=AnimTree'RockCharacter.Rock_Tree'
+		AnimSets(0)=AnimSet'RockCharacter.Rock_Anim'
+		PhysicsAsset = PhysicsAsset'RockCharacter.therock_Physics'
+		
 		CastShadow=true
 		bCastDynamicShadow=true
 		bOwnerNoSee=false
