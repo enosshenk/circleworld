@@ -53,6 +53,10 @@ var float CameraActorFOV;
 var CircleWorld_LevelBase LevelBase;						// Ref to the cylinder base
 var array<CircleWorld_LevelBackground> LevelBackgrounds;	// Array of background items to rotate with the cylinder
 var AnimNodeSlot PriorityAnimSlot;							// Ref to our AnimNodeSlot for playing one-shot animations
+var ParticleSystemComponent BoostParticleSystem;			// Particle system component for our boost effects
+var ParticleSystemComponent GroundEffectsParticleSystem;	// Particle system used when our boost exhaust is hitting the ground
+var PointLightComponent BoostLight;							// Light attached for boost effects
+
 
 
 event PostBeginPlay()
@@ -72,6 +76,12 @@ event PostBeginPlay()
 	{
 		LevelBackgrounds.AddItem(B);
 	}
+	
+	// attach the jetpack effect
+	Mesh.AttachComponentToSocket(BoostParticleSystem, 'BoostSocket');
+	AttachComponent(GroundEffectsParticleSystem);
+	Mesh.AttachComponentToSocket(BoostLight, 'BoostSocket');
+	BoostLight.SetEnabled(false);
 	
 	foreach WorldInfo.AllActors(class'CameraActor', CA)
 	{
@@ -96,13 +106,13 @@ simulated event PostInitAnimTree(SkeletalMeshComponent SkelComp)
 
 event Tick(float DeltaTime)
 {
-	local vector NewVelocity;
+	local vector NewVelocity, TempVector, TranslateVector;
 	local CircleWorld_LevelBackground B;
 	
 	// Set our new velocity based on the acceleration given by PlayerController
 	if (Physics == PHYS_Falling)
 	{
-		CircleForce = (CircleAcceleration * AirControl) / 100;
+		CircleForce = CircleAcceleration;
 		CircleForce += LastVelocity * JumpMomentum;
 		NewVelocity += (LastVelocity * MomentumFade + CircleForce);
 		CircleVelocity = ClampLength(NewVelocity, GroundSpeed);
@@ -299,6 +309,25 @@ event Tick(float DeltaTime)
 		// Make sure regen gets disabled
 		BoostRegenerating = false;
 		ClearTimer('BeginBoostRegenerate');
+		
+		// Trace below us for detecting ground effects
+		TempVector = JetpackGroundCheck();
+		if (TempVector != vect(0,0,0))
+		{
+			GroundEffectsParticleSystem.SetActive(true);
+			TranslateVector = TempVector - Location;
+			GroundEffectsParticleSystem.SetTranslation(TranslateVector);
+		}
+		else
+		{
+			GroundEffectsParticleSystem.SetActive(false);
+		}
+		BoostLight.SetEnabled(true);
+	}
+	else
+	{
+		GroundEffectsParticleSystem.SetActive(false);
+		BoostLight.SetEnabled(false);
 	}
 	
 	if (!UsingBoost && !BoostRegenerating && !IsTimerActive('BeginBoostRegenerate'))
@@ -407,6 +436,30 @@ function bool CollisionCheckFeet()
 	{
 		return false;
 	}
+}
+
+function vector JetpackGroundCheck()
+{
+	local vector TraceStart, TraceEnd, HitLocation, HitNormal;
+	local actor HitActor;
+	
+	Mesh.GetSocketWorldLocationAndRotation('BoostSocket', TraceStart);
+	TraceEnd = TraceStart;
+	TraceEnd.Z -= 256;
+
+	if (CircleWorldGameInfo(WorldInfo.Game).DebugHUD)
+		DrawDebugLine(TraceStart, TraceEnd, 255, 0, 0);
+
+	HitActor = Trace(HitLocation, HitNormal, TraceEnd, TraceStart, true);
+	if (CircleWorld_LevelBase(HitActor) != none)
+	{
+		// Trace hit the level geometry. We send the hitlocation to position the ground effects.
+		return HitLocation;
+	}
+	else
+	{
+		return vect(0,0,0);
+	}	
 }
 
 //
@@ -692,8 +745,7 @@ defaultproperties
 		SkeletalMesh = SkeletalMesh'RockCharacter.TheRock'
 		AnimTreeTemplate=AnimTree'RockCharacter.Rock_Tree'
 		AnimSets(0)=AnimSet'RockCharacter.Rock_Anim'
-		PhysicsAsset = PhysicsAsset'RockCharacter.therock_Physics'
-		
+		PhysicsAsset = PhysicsAsset'RockCharacter.therock_Physics'		
 		CastShadow=true
 		bCastDynamicShadow=true
 		bOwnerNoSee=false
@@ -704,8 +756,29 @@ defaultproperties
 		bIgnoreControllersWhenNotRendered=TRUE
 		bUpdateSkelWhenNotRendered=FALSE
 		bHasPhysicsAssetInstance=true
-//		LightEnvironment=MyLightEnvironment
 	End Object
 	Mesh=CirclePawnSkeletalMeshComponent
 	Components.Add(CirclePawnSkeletalMeshComponent) 
+	
+	Begin Object class=ParticleSystemComponent name=ParticleSystemComponent0
+		Template=ParticleSystem'CircleWorld.Boost_PS'
+		bAutoActivate=false
+	End Object
+	BoostParticleSystem = ParticleSystemComponent0
+	
+	Begin Object class=ParticleSystemComponent name=ParticleSystemComponent1
+		Template=ParticleSystem'CircleWorld.GroundEffects_PS'
+		bAutoActivate=false
+	End Object
+	GroundEffectsParticleSystem = ParticleSystemComponent1
+	
+	Begin Object class=PointLightComponent name=PointLightComponent0
+		CastShadows = true
+		CastStaticShadows = false
+		CastDynamicShadows = true
+		Radius = 512
+		Brightness=1.0
+		LightColor=(R=255,G=255,B=255)
+	End Object
+	BoostLight = PointLightComponent0
 }

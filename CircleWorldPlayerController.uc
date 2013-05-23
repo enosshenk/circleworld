@@ -189,6 +189,7 @@ ignores SeePlayer, HearNoise, Bump;
 			GotoState('PlayerFlying');
 			CircleWorldPawn(Pawn).UsingBoost = true;
 			CircleWorldPawn(Pawn).WasUsingBoost = true;
+			CircleWorldPawn(Pawn).BoostParticleSystem.SetActive(true);
 		}	
 		super.PlayerMove(DeltaTime);
 	}
@@ -229,6 +230,7 @@ ignores SeePlayer, HearNoise, Bump;
 			GotoState('PlayerWalking');
 			CircleWorldPawn(Pawn).UsingBoost = false;
 			CircleWorldPawn(Pawn).WasUsingBoost = true;
+			CircleWorldPawn(Pawn).BoostParticleSystem.SetActive(false);
 		}	
 		
 		Pawn.Acceleration.X = 0;
@@ -260,6 +262,7 @@ ignores SeePlayer, HearNoise, Bump;
 			GotoState('PlayerWalking');
 			CircleWorldPawn(Pawn).UsingBoost = false;
 			CircleWorldPawn(Pawn).WasUsingBoost = true;
+			CircleWorldPawn(Pawn).BoostParticleSystem.SetActive(false);
 		}	
 		super.PlayerMove(DeltaTime);
 	}
