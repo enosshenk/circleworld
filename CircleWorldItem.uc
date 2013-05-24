@@ -1,6 +1,6 @@
-class CircleWorldItem extends DynamicSMActor
-	placeable;
-	
+class CircleWorldItem extends Actor
+	abstract;
+
 var CircleWorld_LevelBase LevelBase;				// The level base used
 var vector2d LocationPolar;							// X value is Radial, Y value is Angular
 var vector2d InitialLocationPolar;
@@ -56,12 +56,4 @@ defaultproperties
 	bStatic = false
 	bCollideComplex = true
 	CollisionType = COLLIDE_TouchAll
-	
-	Begin Object Name=StaticMeshComponent0
-		StaticMesh = StaticMesh'CircleWorld.circle_pickup'
-		BlockZeroExtent=true
-		CollideActors=true
-		BlockActors=false
-		BlockRigidBody=false
-	End Object
 }
