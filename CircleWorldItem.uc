@@ -9,9 +9,6 @@ event PostBeginPlay()
 {
 	local CircleWorld_LevelBase L;
 	
-	SetCollisionType(COLLIDE_TouchAll);
-	SetPhysics(PHYS_Rotating);
-	
 	foreach WorldInfo.AllActors(class'CircleWorld_LevelBase', L)
 	{
 		LevelBase = L;

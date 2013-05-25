@@ -266,6 +266,12 @@ ignores SeePlayer, HearNoise, Bump;
 		}	
 		super.PlayerMove(DeltaTime);
 	}
+	
+	event BeginState(Name PreviousStateName)
+	{
+		CircleWorldPawn(Pawn).WasUsingBoost = true;
+		Pawn.SetPhysics(PHYS_Flying);
+	}
 	// end state
 }
 

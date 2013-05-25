@@ -4,6 +4,7 @@ class CircleWorldPawn extends Pawn
 var vector CircleAcceleration;								// Fake acceleration set by the PlayerController
 var vector LastAcceleration;								// Last accel value used for calculations
 var vector CircleVelocity;									// Fake velocity calculated from our acceleration
+var vector CircleVelocityPreAdjust;							// Velocity direct from calculations before adjustment for lifts etc
 var vector LastVelocity;									// Last velocity value used for calculations
 var vector CircleForce;										// Forces calculated for things like momentum
 var vector CameraOffset;									// Camera offset used in CalcCamera
@@ -44,6 +45,7 @@ var bool CanSkid;											// True if we are moving at top speed.
 var bool IsSkidding;										// True while playing turn-skid animation. Prevents jumping and firing.
 var bool IsTurning;											// True while playing idle turn animation. Prevents jumping and firing.
 var bool ResetSkid;	
+var bool IsRidingLift;										// True while the player is riding on a lift
 
 var CameraActor CameraActor;
 var rotator CameraActorRot;
@@ -56,6 +58,7 @@ var AnimNodeSlot PriorityAnimSlot;							// Ref to our AnimNodeSlot for playing 
 var ParticleSystemComponent BoostParticleSystem;			// Particle system component for our boost effects
 var ParticleSystemComponent GroundEffectsParticleSystem;	// Particle system used when our boost exhaust is hitting the ground
 var PointLightComponent BoostLight;							// Light attached for boost effects
+var CircleWorldItem_Lift RiddenLift;						// Lift we're riding on, if any
 
 
 
@@ -108,26 +111,57 @@ event Tick(float DeltaTime)
 {
 	local vector NewVelocity, TempVector, TranslateVector;
 	local CircleWorld_LevelBackground B;
-	
+
+	// Find out if we're on a lift
+	if (RidingLift() == true)
+	{
+		IsRidingLift = true;
+		if (IsTimerActive('DisableRidingOnLift'));
+			ClearTimer('DisableRidingOnLift');
+	}
+	else
+	{
+		if (!IsTimerActive('DisableRidingOnLift'));
+			SetTimer(0.1, false, 'DisableRidingOnLift');
+	}
+
 	// Set our new velocity based on the acceleration given by PlayerController
 	if (Physics == PHYS_Falling)
 	{
 		CircleForce = CircleAcceleration;
 		CircleForce += LastVelocity * JumpMomentum;
-		NewVelocity += (LastVelocity * MomentumFade + CircleForce);
+		NewVelocity = (LastVelocity * MomentumFade + CircleForce);
 		CircleVelocity = ClampLength(NewVelocity, GroundSpeed);
+		CircleVelocityPreAdjust = CircleVelocity;
 	}
 	else if (Physics == PHYS_Flying)
 	{
 		CircleForce = CircleAcceleration;
-		NewVelocity += (LastVelocity * MomentumFade + CircleForce);
-		CircleVelocity = ClampLength(NewVelocity, AirSpeed);	
+		NewVelocity = (LastVelocity * MomentumFade + CircleForce);
+		CircleVelocity = ClampLength(NewVelocity, AirSpeed);
+		CircleVelocityPreAdjust = CircleVelocity;		
 	}
 	else
 	{
 		CircleForce = CircleAcceleration;
-		NewVelocity += (LastVelocity * MomentumFade + CircleForce);
+		NewVelocity = (LastVelocity * MomentumFade + CircleForce);
 		CircleVelocity = ClampLength(NewVelocity, GroundSpeed);
+		CircleVelocityPreAdjust = CircleVelocity;
+	}
+
+	if (IsRidingLift && RiddenLift.CircleLiftType == CW_Horizontal)
+	{
+		`log("Riding horizontal lift");
+		// Riding a horizontal lift. Add the lift speed to our velocity
+		if (RiddenLift.TravelDirection == 1 && !RiddenLift.IsWaiting)
+		{
+			
+			CircleVelocity.X -= ((RiddenLift.CircleLiftSpeed / 32768) * RadToDeg) * 2.3 * Pi * RiddenLift.Location.Z;
+		}
+		if (RiddenLift.TravelDirection == -1 && !RiddenLift.IsWaiting)
+		{
+			CircleVelocity.X += ((RiddenLift.CircleLiftSpeed / 32768) * RadToDeg) * 2.3 * Pi * RiddenLift.Location.Z;
+		}
 	}
 	
 	// Check our forward collision
@@ -139,7 +173,7 @@ event Tick(float DeltaTime)
 		LastVelocity.X = 0;
 	}
 
-	if (!Sprinting && !CirclePawnJumping && !UsingBoost && !WasUsingBoost)
+	if (!Sprinting && !CirclePawnJumping && !UsingBoost && !WasUsingBoost && !IsRidingLift)
 	{
 		// Check our below feet collision
 		if (CollisionCheckFeet() == true)
@@ -151,7 +185,7 @@ event Tick(float DeltaTime)
 			Velocity.Z -= 16;			
 		}
 	}
-	else if (WasUsingBoost && !UsingBoost)
+	else if (WasUsingBoost && !UsingBoost && !IsRidingLift)
 	{
 		if (CollisionCheckFeet() == false)
 		{
@@ -211,7 +245,7 @@ event Tick(float DeltaTime)
 		CirclePawnBoostDown = false;	
 	}
 	
-	if (VSize(Velocity) > 10 || VSize(CircleVelocity) > 10)
+	if (VSize(Velocity) > 10 || VSize(CircleVelocityPreAdjust) > 10)
 	{
 		// We are moving on the X axis, flag our movement state for AnimTree handling
 		CirclePawnMoving = true;
@@ -346,7 +380,7 @@ event Tick(float DeltaTime)
 	
 	// Set the values as the previous accel and velocity for the next tick
 	LastAcceleration = CircleAcceleration;
-	LastVelocity = CircleVelocity;
+	LastVelocity = CircleVelocityPreAdjust;
 	
 	// Make sure we don't go anywhere on Y
 	Velocity.Y = 0;
@@ -459,6 +493,34 @@ function vector JetpackGroundCheck()
 	else
 	{
 		return vect(0,0,0);
+	}	
+}
+
+function bool RidingLift()
+{
+	local vector TraceStart, TraceEnd, HitLocation, HitNormal;
+	local actor HitActor;
+
+	TraceStart = Location;
+	TraceStart.Z -= (Mesh.Bounds.BoxExtent.Z / 2) - 32;
+	TraceEnd = TraceStart;
+	TraceEnd.Z -= 128;
+
+	if (CircleWorldGameInfo(WorldInfo.Game).DebugHUD)
+		DrawDebugLine(TraceStart, TraceEnd, 0, 255, 0);
+
+	HitActor = Trace(HitLocation, HitNormal, TraceEnd, TraceStart, true);
+	if (CircleWorldItem_Lift(HitActor) != none)
+	{
+		// We're on a lift
+		RiddenLift = CircleWorldItem_Lift(HitActor);
+		WasUsingBoost = false;
+		return true;
+	}
+	else
+	{
+		RiddenLift = none;
+		return false;
 	}	
 }
 
@@ -586,6 +648,11 @@ function SetSkid()
 function BeginBoostRegenerate()
 {
 	BoostRegenerating = true;
+}
+
+function DisableRidingOnLift()
+{
+	IsRidingLift = false;
 }
 
 //

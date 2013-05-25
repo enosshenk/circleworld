@@ -44,11 +44,11 @@ simulated function DrawHUD()
 		Canvas.DrawColor = GreenColor;
 		Canvas.Font = class'Engine'.Static.GetSmallFont();
 		Canvas.SetPos(Canvas.ClipX * 0.1, Canvas.ClipY * 0.1);	
-		Canvas.DrawText("World Properties - CircleAcceleration: " $CircleWorldPawn.CircleAcceleration$ " -- CircleVelocity: " $CircleWorldPawn.CircleVelocity$ " -- Circle RotRate: " $LevelBase.RotationRate.Pitch * UnrRotToDeg$ " -- Circle Rotation: " $LevelBase.Rotation.Pitch);
+		Canvas.DrawText("World Properties - CircleAcceleration: " $CircleWorldPawn.CircleAcceleration$ " -- CircleVelocity: " $CircleWorldPawn.CircleVelocity$ " -- CircleVelocityPreAdjust: " $CircleWorldPawn.CircleVelocityPreAdjust$ " -- Circle Rotation: " $LevelBase.Rotation.Pitch);
 		Canvas.SetPos(Canvas.ClipX * 0.1, Canvas.ClipY * 0.15);	
 		Canvas.DrawText("Pawn Properties -- Rot: " $CircleWorldPawn.Rotation.Yaw$ " -- Velocity: X"$CircleWorldPawn.CircleVelocity.X$ "Z" $CircleWorldPawn.Velocity.Z$ " -- AccelZ: " $CircleWorldPawn.Acceleration.Z$ " -- Boost: " $CircleWorldPawn.UsingBoost$ " -- Fuel: " $CircleWorldPawn.BoostFuel$ " -- BoostUp: " $CircleWorldPawn.CirclePawnBoostUp$ " -- BoostDown: " $CircleWorldPawn.CirclePawnBoostDown$ " -- WasUsingBoost: " $CircleWorldPawn.WasUsingBoost);
 		Canvas.SetPos(Canvas.ClipX * 0.1, Canvas.ClipY * 0.2);
-		Canvas.DrawText("Input - aStrafe: " $CircleWorldPlayerController(PlayerOwner).ThisStrafe$ " -- aForward: " $CircleWorldPlayerController(PlayerOwner).ThisUp$ " -- Control State: " $CircleWorldPlayerController(PlayerOwner).GetStateName());
+		Canvas.DrawText("Input - aStrafe: " $CircleWorldPlayerController(PlayerOwner).ThisStrafe$ " -- aForward: " $CircleWorldPlayerController(PlayerOwner).ThisUp$ " -- Control State: " $CircleWorldPlayerController(PlayerOwner).GetStateName()$ " -- IsRidingLift: " $CircleWorldPawn.IsRidingLift$ " -- RiddenLift: " $CircleWorldPawn.RiddenLift);
 		
 		foreach Projectiles(PU)
 		{
