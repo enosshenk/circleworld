@@ -38,7 +38,7 @@ event Tick(float DeltaTime)
 
 	// Trace for holes in the floor ahead of us.
 	TraceStart = Location;
-	TraceStart.Z -= 64;
+//	TraceStart.Z -= 64;
 	TraceEnd = TraceStart;
 	TraceEnd.Z -= Mesh.Bounds.BoxExtent.Z * 2;
 	
@@ -134,6 +134,7 @@ function SetEnemyPawnVelocity(float NewSpeed)
 	local Rotator TempRot;
 	
 	ObstructedForward = false;
+	HoleForward = false;
 	EnemyPawnVelocity = NewSpeed;
 	TempRot = Rotation;
 	
