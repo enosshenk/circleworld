@@ -2,6 +2,7 @@ class CircleWorldEnemyPawn extends Pawn
 	placeable;
 
 var bool EnemyPawnWalking;							// True if this enemy pawn is "moving"
+var bool EnemyPawnMovingRight;						// True if we're moving right
 var float EnemyPawnVelocity;						// Out simulated velocity on the cylinder
 var bool ObstructedForward;							// True if we're bumped into a wall
 var bool HoleForward;								// True if we detect a hole in the floor ahead of us
@@ -9,6 +10,7 @@ var bool HoleForward;								// True if we detect a hole in the floor ahead of u
 var CircleWorld_LevelBase LevelBase;				// The level base used
 var vector2d LocationPolar;							// X value is Radial, Y value is Angular
 var vector2d InitialLocationPolar;
+var vector InitialLocation;
 	
 event PostBeginPlay()
 {
@@ -18,7 +20,9 @@ event PostBeginPlay()
 	{
 		LevelBase = L;
 	}	
-
+	
+	InitialLocation = Location;
+	
 	// Get our initial polar coordinates from our cartesian coordinates
 	InitialLocationPolar.X = Sqrt(Location.X ** 2 + Location.Z ** 2);
 	InitialLocationPolar.Y = atan2(Location.Z, Location.X) * RadToUnrRot;
@@ -33,72 +37,70 @@ event PostBeginPlay()
 event Tick(float DeltaTime)
 {
 	local vector NewLocation;
-	local vector TraceStart, TraceEnd, HitLocation, HitNormal, TraceExtent;
-	local actor HitActor;
+	local rotator NewRotation;
+	local vector TraceStart, TraceEnd, TraceExtent, TempVector;
 
 	// Trace for holes in the floor ahead of us.
 	TraceStart = Location;
-//	TraceStart.Z -= 64;
-	TraceEnd = TraceStart;
-	TraceEnd.Z -= Mesh.Bounds.BoxExtent.Z * 2;
+	TraceEnd = Location;
 	
-	if (Rotation.Yaw == 0)
+	TempVector.X = Mesh.Bounds.BoxExtent.X * 2;
+	TempVector.Z = Mesh.Bounds.BoxExtent.Z * 2;
+	TraceStart += TempVector >> Rotation;
+	
+	TempVector.X = Mesh.Bounds.BoxExtent.X * 2;
+	TempVector.Z = Mesh.Bounds.BoxExtent.Z * 3 * -1;
+	TraceEnd += TempVector >> Rotation;	
+		
+	if (CircleWorldGameInfo(WorldInfo.Game).DebugHUD)
+		DrawDebugLine(TraceStart, TraceEnd, 255, 255, 0, false);	
+		
+	if (FastTrace(TraceEnd, TraceStart))
 	{
-		TraceEnd.X += Mesh.Bounds.BoxExtent.Z * 2;
+		// Trace hit no level geometry
+		HoleForward = true;
 	}
 	else
-	{
-		TraceEnd.X -= Mesh.Bounds.BoxExtent.Z * 2;
-	}
-	
-	if (CircleWorldGameInfo(WorldInfo.Game).DebugHUD)
-		DrawDebugLine(TraceStart, TraceEnd, 255, 0, 0, false);	
-		
-	HitActor = Trace(HitLocation, HitNormal, TraceEnd, TraceStart, true);
-	if (CircleWorld_LevelBase(HitActor) != none)
 	{
 		HoleForward = false;
 	}
-	else
-	{
-		HoleForward = true;
-	}
 	
 	// Set up some trace extents
-	TraceExtent.X = 64;
-	TraceExtent.Y = 64;	
+	TraceExtent.X = 32;
+	TraceExtent.Y = 32;	
 	
 	// Trace in our direction of motion. This is used to detect if the pawn is colliding with a wall.
+	TraceStart = Location;
 	TraceEnd = Location;
-	if (Rotation.Yaw == 0)
-	{
-		TraceEnd.X += Mesh.Bounds.BoxExtent.X;
-		TraceStart = Location + vect(64,0,0);
-	}
-	else
-	{
-		TraceEnd.X += Mesh.Bounds.BoxExtent.X * -1;
-		TraceStart = Location + vect(-64,0,0);
-	}
+
+	TempVector.X = Mesh.Bounds.BoxExtent.X / 2;
+	TempVector.Z = Mesh.Bounds.BoxExtent.Z * 2;
+	TraceStart += TempVector >> Rotation;
+	
+	TempVector.X = Mesh.Bounds.BoxExtent.X * 2;
+	TempVector.Z = Mesh.Bounds.BoxExtent.Z * 2;
+	TraceEnd += TempVector >> Rotation;
 	
 	if (CircleWorldGameInfo(WorldInfo.Game).DebugHUD)
-		DrawDebugLine(TraceStart, TraceEnd, 255, 0, 0, false);
+		DrawDebugLine(TraceStart, TraceEnd, 255, 255, 0, false);
 		
-	HitActor = Trace(HitLocation, HitNormal, TraceEnd, TraceStart, true, TraceExtent);
-	if (CircleWorld_LevelBase(HitActor) != none)
+	if (FastTrace(TraceEnd, TraceStart, TraceExtent))
 	{
-		// Trace hit the level mesh.
-		ObstructedForward = true;
+		// Trace did not hit the level mesh.
+		ObstructedForward = false;
 	}
 	else
 	{
-		ObstructedForward = false;
+		ObstructedForward = true;
 	}
 	
-	// We're bumping a wall or a hole. Null our fake velocity until the AIController can reverse us.
+	// If we're blocked, set our speed to 0 until the AIController catches up
 	if (ObstructedForward || HoleForward)
+	{
 		EnemyPawnVelocity = 0;
+	}
 	
+	// Flag us for motion
 	if (Abs(EnemyPawnVelocity) >= 15)
 		EnemyPawnWalking = true;
 	else
@@ -114,19 +116,13 @@ event Tick(float DeltaTime)
 	NewLocation.Z = InitialLocationPolar.X * sin(LocationPolar.Y * UnrRotToRad);
 	NewLocation.Y = Location.Y;
 	SetLocation(NewLocation);
-	
-	super.Tick(DeltaTime);
-}
 
-event TickSpecial( float DeltaTime )
-{
-	local rotator NewRotation;
-	
 	// Set new rotation based on our polar angular value
 	NewRotation = Rotation;
 	NewRotation.Pitch = LocationPolar.Y - 16384;		// Subtract 16384 because UnrealEngine sets 0 rotation as 3 oclock position
 	SetRotation(NewRotation);
-//	`log("Setting New Rotation: " $NewRotation);
+	
+	super.Tick(DeltaTime);
 }
 
 function SetEnemyPawnVelocity(float NewSpeed)
@@ -135,20 +131,23 @@ function SetEnemyPawnVelocity(float NewSpeed)
 	
 	ObstructedForward = false;
 	HoleForward = false;
-	EnemyPawnVelocity = NewSpeed;
 	TempRot = Rotation;
 	
 	if (NewSpeed > 0)
 	{
+		EnemyPawnMovingRight = true;
 		TempRot.Yaw = 32768;
 		SetRotation(TempRot);
 	}
-	else
+	else if (NewSpeed < 0)
 	{
+		EnemyPawnMovingRight = false;
 		TempRot.Yaw = 0;
 		SetRotation(TempRot);
 	}
-	`log("Enemy pawn speed set to " $NewSpeed);
+	
+	EnemyPawnVelocity = NewSpeed;
+	
 }
 
 function bool Died(Controller Killer, class<DamageType> DamageType, vector HitLocation)
@@ -165,21 +164,26 @@ function bool Died(Controller Killer, class<DamageType> DamageType, vector HitLo
 	
 	return super.Died(Killer, DamageType, HitLocation);
 }
+
+simulated function SetViewRotation(rotator NewRotation);
+simulated function FaceRotation(rotator NewRotation, float DeltaTime);
+function UpdateControllerOnPossess(bool bVehicleTransition);
+// Null this shit
 	
 defaultproperties
 {
 	GroundSpeed = 100
 	ControllerClass = class'CircleWorldAIController_BackForth'
+	Physics=PHYS_Interpolating
 	WalkingPhysics=PHYS_Interpolating
 	bCollideActors=true
-	CollisionType=COLLIDE_BlockAll
-	bCollideWorld=true
-	bBlockActors=true
-	bScriptTickSpecial=true
+	CollisionType=COLLIDE_TouchAll
+	bCollideWorld=false
+	bBlockActors=false
 	
 	Begin Object Name=CollisionCylinder
 		CollisionRadius=74.000000
-		CollisionHeight=128.000000
+		CollisionHeight=48.000000
 		BlockNonZeroExtent=true
 		BlockZeroExtent=true
 		BlockActors=true
@@ -191,10 +195,16 @@ defaultproperties
 
 
 	Begin Object Class=SkeletalMeshComponent Name=CirclePawnSkeletalMeshComponent
-		SkeletalMesh = SkeletalMesh'Rock.snail'
+/*		SkeletalMesh = SkeletalMesh'Rock.snail'
 		AnimTreeTemplate=AnimTree'CircleWorld.snail_tree'
 		AnimSets(0)=AnimSet'Rock.snail_anim'
-		PhysicsAsset = PhysicsAsset'Rock.snail_Physics'
+		PhysicsAsset = PhysicsAsset'Rock.snail_Physics' */
+		
+		SkeletalMesh = SkeletalMesh'cylmaster.Enemies.CRAWLER'
+		AnimTreeTemplate = AnimTree'cylmaster.Enemies.crawler_tree'
+		AnimSets(0) = AnimSet'cylmaster.Enemies.crawler-anim'
+		PhysicsAsset = PhysicsAsset'cylmaster.Enemies.CRAWLER_Physics'
+		
 		CastShadow=true
 		bCastDynamicShadow=true
 		bOwnerNoSee=false

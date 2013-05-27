@@ -37,7 +37,7 @@ event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vect
 			Explode(Location);
 		}
 	}
-	else if (CircleWorldPawn(Other) != none && IsArmed)
+	else if (Pawn(Other) != none && IsArmed)
 	{
 		// You hit yourself, dumbass.
 		`log("Projectile " $self$ " impacted " $Other);

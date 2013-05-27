@@ -41,7 +41,7 @@ simulated function DrawHUD()
 
 	if (CircleWorldGameInfo(WorldInfo.Game).DebugHUD)
 	{
-		Canvas.DrawColor = GreenColor;
+		Canvas.DrawColor = RedColor;
 		Canvas.Font = class'Engine'.Static.GetSmallFont();
 		Canvas.SetPos(Canvas.ClipX * 0.1, Canvas.ClipY * 0.1);	
 		Canvas.DrawText("World Properties - CircleAcceleration: " $CircleWorldPawn.CircleAcceleration$ " -- CircleVelocity: " $CircleWorldPawn.CircleVelocity$ " -- CircleVelocityPreAdjust: " $CircleWorldPawn.CircleVelocityPreAdjust$ " -- Circle Rotation: " $LevelBase.Rotation.Pitch);
@@ -61,7 +61,7 @@ simulated function DrawHUD()
 		{
 			ProjectLoc = Canvas.Project(EP.Location);
 			Canvas.SetPos(ProjectLoc.X, ProjectLoc.Y);
-			Canvas.DrawText("PawnVelocity: " $EP.EnemyPawnVelocity$ " -- Obstructed: " $EP.ObstructedForward);
+			Canvas.DrawText("PawnVelocity: " $EP.EnemyPawnVelocity$ " -- Obstructed: " $EP.ObstructedForward$ " -- HoleForward: " $EP.HoleForward$ " -- Pitch: " $EP.Rotation.Pitch$ " -- Yaw: " $EP.Rotation.Yaw$ " -- EnemyPawnMovingRight: " $EP.EnemyPawnMovingRight);
 		}		
 		
 	}	

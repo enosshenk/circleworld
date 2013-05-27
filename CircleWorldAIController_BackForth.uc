@@ -4,12 +4,23 @@
 
 class CircleWorldAIController_BackForth extends AIController;
 
+event Possess(Pawn inPawn, bool bVehicleTransition)
+{
+	if (inPawn.Controller != None)
+	{
+		inPawn.Controller.UnPossess();
+	}
+
+	inPawn.PossessedBy(self, bVehicleTransition);
+	Pawn = inPawn;
+}
+
 auto state Startup
 {
 	Begin:
-	
+	`log("AI startup");
+	Sleep(5);	
 	CircleWorldEnemyPawn(Pawn).SetEnemyPawnVelocity(Pawn.GroundSpeed);
-	Sleep(1);
 	GotoState('Moving');
 }
 
@@ -19,20 +30,22 @@ state Moving
 
 	if (CircleWorldEnemyPawn(Pawn).ObstructedForward || CircleWorldEnemyPawn(Pawn).HoleForward)
 	{
-		if (Pawn.Rotation.Yaw == 0)
+		CircleWorldEnemyPawn(Pawn).EnemyPawnVelocity = 0;
+		if (!CircleWorldEnemyPawn(Pawn).EnemyPawnMovingRight)
 		{
-			Sleep(5);
+			// Turn around and head right
 			CircleWorldEnemyPawn(Pawn).SetEnemyPawnVelocity(Pawn.GroundSpeed);
+			`log("Was moving left, setting speed to " $Pawn.GroundSpeed);
 		}
-		else
+		else if (CircleWorldEnemyPawn(Pawn).EnemyPawnMovingRight)
 		{
-			Sleep(5);
+			// Turn around and head left
 			CircleWorldEnemyPawn(Pawn).SetEnemyPawnVelocity(Pawn.GroundSpeed * -1);
+			`log("Was moving right, setting speed to " $Pawn.GroundSpeed * -1);
 		}
 	}
-	else
-	{
-		Sleep(1);
-		Goto 'Begin';
-	}
+
+	// Let the pawn keep moving
+	Sleep(1);
+	Goto 'Begin';
 }
