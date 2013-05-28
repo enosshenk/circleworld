@@ -1,7 +1,6 @@
-class CircleWorldItemProjectile_Fireball extends CircleWorldItemProjectile;
+class CircleWorldItemProjectile_TurretBall extends CircleWorldItemProjectile;
 
 var bool IsArmed;
-var bool RandomizeVector;
 var float RandomFactor;
 
 event PostBeginPlay()
@@ -12,34 +11,10 @@ event PostBeginPlay()
 	super.PostBeginPlay();
 }
 
-event Tick(float DeltaTime)
-{
-	if (!RandomizeVector)
-	{
-		ProjectileVelocity.X += RandomFactor * 3;
-		ProjectileVelocity.Y += RandomFactor * 3;
-		RandomizeVector = true;
-	}
-	super.Tick(DeltaTime);
-}
-
 event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vector HitNormal )
 {
-	if (CircleWorld_LevelBase(Other) != none)
+	if (IsArmed)
 	{
-		if (HitLocation.Z < Location.Z + 1)
-		{
-			// Bounce
-			ProjectileVelocity.Z *= -1;
-		}
-		else
-		{
-			Explode(Location);
-		}
-	}
-	else if (Pawn(Other) != none && IsArmed)
-	{
-		// You hit yourself, dumbass.
 		`log("Projectile " $self$ " impacted " $Other);
 		Explode(Location);
 	}
@@ -52,15 +27,16 @@ function SetArm()
 
 defaultproperties
 {
-	ProjectileUseGravity = true
+	ProjectileUseGravity = false
 	ProjectileGravityFactor = 2
 	ProjectileLife = 10
 	ProjectileSpeed = 200
 	ProjectileDamage = 50
-	ProjectileDamageRadius = 512
+	ProjectileDamageRadius = 256
 	ProjectileDamageMomentum = 10
 	ProjectileDamageType = class'DamageType'
-	ProjectileParticleSystem=ParticleSystem'CircleWorld.fireball_ps'
+	
+	ProjectileParticleSystem=ParticleSystem'CircleTurret.fireball_ps'
 	ProjectileExplosionSystem=ParticleSystem'CircleTurret.explosion_ps'
 	
 	FlightLightClass = class'CircleWorldProjectileLight'

@@ -71,15 +71,15 @@ event PostBeginPlay()
 
 function InitProjectile(rotator NewRotation, float AddSpeed)
 {
+	local vector TempVelocity;
+	
 	// Add to our speed
-	if (AddSpeed > 0)
-		ProjectileSpeed += AddSpeed / 20;
-	else if (AddSpeed < 0)
-		ProjectileSpeed -= AddSpeed / 20;	
+	ProjectileSpeed += AddSpeed / 20;
 		
-	// Set our fake velocity vector using some trig and our speed
-	ProjectileVelocity.X = (ProjectileSpeed * Cos(NewRotation.Pitch * UnrRotToRad)) * -1;
-	ProjectileVelocity.Z = ProjectileSpeed * Sin(NewRotation.Pitch * UnrRotToRad);
+	TempVelocity.X = ProjectileSpeed;
+
+	ProjectileVelocity = TempVelocity >> NewRotation;
+	`log("Init projectile rotator: " $NewRotation$ " -- velocity: " $ProjectileVelocity);
 }
 
 event Tick(float DeltaTime)
@@ -97,12 +97,12 @@ event Tick(float DeltaTime)
 		// If we're simulating gravity, modify our velocity each frame
 		if (ProjectileUseGravity)
 		{
-			ProjectileVelocity.Z = ProjectileVelocity.Z + (1 * ProjectileGravityFactor);
+			ProjectileVelocity.Z = ProjectileVelocity.Z + (1 * ProjectileGravityFactor) * -1;
 		}
 		
 		// Modify our initial polar with our fake velocity vector
-		InitialLocationPolar.Y = InitialLocationPolar.Y + (ProjectileVelocity.X / 10);
-		InitialLocationPolar.X = InitialLocationPolar.X + ((ProjectileVelocity.Z * -1) / 10);	
+		InitialLocationPolar.Y = InitialLocationPolar.Y + ((ProjectileVelocity.X * -1) / 10);
+		InitialLocationPolar.X = InitialLocationPolar.X + (ProjectileVelocity.Z / 10);	
 		
 		// Check the level base for rotation change
 		LocationPolar.Y = (InitialLevelRot.Pitch + LevelBase.Rotation.Pitch * -1) + InitialLocationPolar.Y;

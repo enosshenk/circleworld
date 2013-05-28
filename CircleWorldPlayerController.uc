@@ -2,6 +2,8 @@ class CircleWorldPlayerController extends UDKPlayerController;
 
 var float LastAccelX;
 var float ThisStrafe, ThisUp;
+var float JumpHeldElapsed;
+var bool JumpHeld;
 
 exec function DebugHUD()
 {
@@ -139,13 +141,54 @@ exec function SaveCircleValues()
 	`log("BoostX: " $CircleWorldHUD(myHUD).CircleWorldPawn.BoostX);
 }
 
+exec function CircleJump()
+{
+	if (!CircleWorldPawn(Pawn).WasUsingBoost)
+		JumpHeld = true;
+		
+	if (!CircleWorldPawn(Pawn).UsingBoost)
+		Pawn.DoJump(bUpdating);	
+		
+	if (CircleWorldPawn(Pawn).WasUsingBoost)
+	{
+		GotoState('PlayerFlying');
+		CircleWorldPawn(Pawn).UsingBoost = true;
+		CircleWorldPawn(Pawn).BoostParticleSystem.SetActive(true);
+	}
+}
+
+exec function CircleStopJump()
+{
+	if (JumpHeld)
+	{
+		JumpHeld = false;
+		JumpHeldElapsed = 0;
+	}
+		
+	if (CircleWorldPawn(Pawn).UsingBoost)	
+	{
+		GotoState('PlayerWalking');
+		CircleWorldPawn(Pawn).UsingBoost = false;
+		CircleWorldPawn(Pawn).BoostParticleSystem.SetActive(false);	
+	}
+}
+
+function BoostLiftoff()
+{
+	GotoState('PlayerFlying');
+	CircleWorldPawn(Pawn).UsingBoost = true;
+	CircleWorldPawn(Pawn).WasUsingBoost = true;
+	CircleWorldPawn(Pawn).BoostParticleSystem.SetActive(true);	
+}
+
 state PlayerWalking
 {
 ignores SeePlayer, HearNoise, Bump;
 
 	function ProcessMove(float DeltaTime, vector NewAccel, eDoubleClickDir DoubleClickMove, rotator DeltaRot)
 	{
-		local Rotator tempRot;
+		local vector AimVector ;
+		local Rotator tempRot, AimRot;
 
 		if( Pawn == None )
 		{
@@ -176,22 +219,28 @@ ignores SeePlayer, HearNoise, Bump;
 			tempRot.Yaw = 32768;
 			Pawn.SetRotation(tempRot);
 		}
-		ThisStrafe = PlayerInput.aStrafe;
-		ThisUp = PlayerInput.aUp;
-		CheckJumpOrDuck();
-	}
 
-	function PlayerMove( float DeltaTime )
-	{
-		if (PlayerInput.aForward > 100)
-		{
-			// Player has pressed up, activate boost.
-			GotoState('PlayerFlying');
-			CircleWorldPawn(Pawn).UsingBoost = true;
-			CircleWorldPawn(Pawn).WasUsingBoost = true;
-			CircleWorldPawn(Pawn).BoostParticleSystem.SetActive(true);
-		}	
-		super.PlayerMove(DeltaTime);
+		// Adjust the pawn aim location
+		AimRot = Pawn.Rotation;
+		AimVector = Pawn.Location;
+		AimRot.Pitch = PlayerInput.aForward * 16.384;
+		// Bias for left/right for keyboard
+		if (AimRot.Pitch > 0)
+			AimRot.Pitch -= Abs(PlayerInput.aStrafe) * 8.192;
+		else if (AimRot.Pitch < 0)
+			AimRot.Pitch += Abs(PlayerInput.aStrafe) * 8.192;
+		// Set the aimpoint and rotate to world space
+		AimVector += vect(512,0,0) >> AimRot;
+		CircleWorldPawn(Pawn).AimPoint = AimVector;
+		
+		ThisStrafe = PlayerInput.aStrafe;
+		ThisUp = PlayerInput.aForward;
+		
+		if (JumpHeld)
+			JumpHeldElapsed += DeltaTime;
+			
+		if (JumpHeldElapsed >= 0.5)
+			BoostLiftoff();		
 	}
 	// End state
 }
@@ -202,7 +251,8 @@ ignores SeePlayer, HearNoise, Bump;
 
 	function ProcessMove(float DeltaTime, vector NewAccel, eDoubleClickDir DoubleClickMove, rotator DeltaRot)
 	{
-		local Rotator tempRot;
+		local vector AimVector;
+		local Rotator tempRot, AimRot;
 
 		if( Pawn == None )
 		{
@@ -221,7 +271,7 @@ ignores SeePlayer, HearNoise, Bump;
 		if (CircleWorldPawn(Pawn).BoostFuel > 0)
 		{
 			// We have fuel in our tanks, keep boosting			
-			Pawn.Acceleration.Z = PlayerInput.aForward * DeltaTime * CircleWorldPawn(Pawn).BoostZ;
+			Pawn.Acceleration.Z = 1000 * DeltaTime * CircleWorldPawn(Pawn).BoostZ;
 		}
 		else
 		{
@@ -235,8 +285,7 @@ ignores SeePlayer, HearNoise, Bump;
 		
 		Pawn.Acceleration.X = 0;
 		Pawn.Acceleration.Y = 0;
-
-
+		
 		tempRot.Pitch = Pawn.Rotation.Pitch;
 		tempRot.Roll = 0;
 		if(Normal(CircleWorldPawn(Pawn).CircleAcceleration) Dot Vect(1,0,0) > 0)
@@ -250,21 +299,21 @@ ignores SeePlayer, HearNoise, Bump;
 			Pawn.SetRotation(tempRot);
 		}
 
+		// Adjust the pawn aim location
+		AimRot = Pawn.Rotation;
+		AimVector = Pawn.Location;
+		AimRot.Pitch = PlayerInput.aForward * 16.384;
+		// Bias for left/right for keyboard
+		if (AimRot.Pitch > 0)
+			AimRot.Pitch -= Abs(PlayerInput.aStrafe) * 8.192;
+		else if (AimRot.Pitch < 0)
+			AimRot.Pitch += Abs(PlayerInput.aStrafe) * 8.192;
+		// Set the aimpoint and rotate to world space
+		AimVector += vect(512,0,0) >> AimRot;
+		CircleWorldPawn(Pawn).AimPoint = AimVector;
+		
 		ThisStrafe = PlayerInput.aStrafe;
 		ThisUp = PlayerInput.aForward;
-	}
-	
-	function PlayerMove( float DeltaTime )
-	{
-		if (PlayerInput.aForward < 100)
-		{
-			// Player has stopped pressing up. Turn off boost.
-			GotoState('PlayerWalking');
-			CircleWorldPawn(Pawn).UsingBoost = false;
-			CircleWorldPawn(Pawn).WasUsingBoost = true;
-			CircleWorldPawn(Pawn).BoostParticleSystem.SetActive(false);
-		}	
-		super.PlayerMove(DeltaTime);
 	}
 	
 	event BeginState(Name PreviousStateName)

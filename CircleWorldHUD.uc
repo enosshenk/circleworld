@@ -4,6 +4,7 @@ var CircleWorldPawn CircleWorldPawn;
 var CircleWorld_LevelBase LevelBase;
 var array<CircleWorldItemProjectile> Projectiles;
 var array<CircleWorldEnemyPawn> Enemies;
+var array<CircleWorldEnemyPawn_Turret> Turrets;
 var Vector2D PlayerPos;
 
 simulated function DrawHUD()
@@ -14,6 +15,7 @@ simulated function DrawHUD()
 	local rotator MapRot;
 	local CircleWorldItemProjectile PU;
 	local CircleWorldEnemyPawn EP;
+	local CircleWorldEnemyPawn_Turret T;
 	local int i;
 	
 	foreach WorldInfo.AllActors(class'CircleWorld_LevelBase', C)
@@ -39,6 +41,13 @@ simulated function DrawHUD()
 		i += 1;
 	}
 
+	i = 0;
+	foreach WorldInfo.AllActors(class'CircleWorldEnemyPawn_Turret', T)
+	{
+		Turrets[i] = T;
+		i += 1;
+	}
+	
 	if (CircleWorldGameInfo(WorldInfo.Game).DebugHUD)
 	{
 		Canvas.DrawColor = RedColor;
@@ -46,9 +55,15 @@ simulated function DrawHUD()
 		Canvas.SetPos(Canvas.ClipX * 0.1, Canvas.ClipY * 0.1);	
 		Canvas.DrawText("World Properties - CircleAcceleration: " $CircleWorldPawn.CircleAcceleration$ " -- CircleVelocity: " $CircleWorldPawn.CircleVelocity$ " -- CircleVelocityPreAdjust: " $CircleWorldPawn.CircleVelocityPreAdjust$ " -- Circle Rotation: " $LevelBase.Rotation.Pitch);
 		Canvas.SetPos(Canvas.ClipX * 0.1, Canvas.ClipY * 0.15);	
-		Canvas.DrawText("Pawn Properties -- Rot: " $CircleWorldPawn.Rotation.Yaw$ " -- Velocity: X"$CircleWorldPawn.CircleVelocity.X$ "Z" $CircleWorldPawn.Velocity.Z$ " -- AccelZ: " $CircleWorldPawn.Acceleration.Z$ " -- Boost: " $CircleWorldPawn.UsingBoost$ " -- Fuel: " $CircleWorldPawn.BoostFuel$ " -- BoostUp: " $CircleWorldPawn.CirclePawnBoostUp$ " -- BoostDown: " $CircleWorldPawn.CirclePawnBoostDown$ " -- WasUsingBoost: " $CircleWorldPawn.WasUsingBoost);
+		Canvas.DrawText("Pawn Properties -- Rot: " $CircleWorldPawn.Rotation.Yaw$ " -- Velocity: X"$CircleWorldPawn.CircleVelocity.X$ "Z" $CircleWorldPawn.Velocity.Z$ " -- AccelZ: " $CircleWorldPawn.Acceleration.Z$ " -- Boost: " $CircleWorldPawn.UsingBoost$ " -- Fuel: " $CircleWorldPawn.BoostFuel$ " -- WasUsingBoost: " $CircleWorldPawn.WasUsingBoost$ " -- AimPoint: " $CircleWorldPawn.AimPoint);
 		Canvas.SetPos(Canvas.ClipX * 0.1, Canvas.ClipY * 0.2);
 		Canvas.DrawText("Input - aStrafe: " $CircleWorldPlayerController(PlayerOwner).ThisStrafe$ " -- aForward: " $CircleWorldPlayerController(PlayerOwner).ThisUp$ " -- Control State: " $CircleWorldPlayerController(PlayerOwner).GetStateName()$ " -- IsRidingLift: " $CircleWorldPawn.IsRidingLift$ " -- RiddenLift: " $CircleWorldPawn.RiddenLift);
+		
+		ProjectLoc = Canvas.Project(CircleWorldPawn.AimPoint);
+		Canvas.SetPos(ProjectLoc.X - 8, ProjectLoc.Y - 8);
+		Canvas.DrawTile(Texture2D'CircleWorld.velocityvector', 16, 16, 0, 0, 16, 16, MakeLinearColor(1,0,0,1));
+//		Canvas.Draw2DLine(ProjectLoc.X - 4, ProjectLoc.X + 4, ProjectLoc.Y, ProjectLoc.Y, MakeColor(255,0,0,255));
+//		Canvas.Draw2DLine(ProjectLoc.X, ProjectLoc.X, ProjectLoc.Y - 4, ProjectLoc.Y + 4, MakeColor(255,0,0,255));
 		
 		foreach Projectiles(PU)
 		{
@@ -63,6 +78,13 @@ simulated function DrawHUD()
 			Canvas.SetPos(ProjectLoc.X, ProjectLoc.Y);
 			Canvas.DrawText("PawnVelocity: " $EP.EnemyPawnVelocity$ " -- Obstructed: " $EP.ObstructedForward$ " -- HoleForward: " $EP.HoleForward$ " -- Pitch: " $EP.Rotation.Pitch$ " -- Yaw: " $EP.Rotation.Yaw$ " -- EnemyPawnMovingRight: " $EP.EnemyPawnMovingRight);
 		}		
+
+		foreach Turrets(T)
+		{
+			ProjectLoc = Canvas.Project(T.Location);
+			Canvas.SetPos(ProjectLoc.X, ProjectLoc.Y);
+			Canvas.DrawText("State: " $T.Controller.GetStateName()$ " -- Target: " $T.PlayerTarget$ " -- IsAiming: " $T.IsAiming);
+		}	
 		
 	}	
 	else

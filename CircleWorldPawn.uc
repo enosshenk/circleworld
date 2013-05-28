@@ -9,6 +9,7 @@ var vector LastVelocity;									// Last velocity value used for calculations
 var vector CircleForce;										// Forces calculated for things like momentum
 var vector CameraOffset;									// Camera offset used in CalcCamera
 var rotator CameraRotator;									// Rotator used in CalcCamera
+var vector AimPoint;										// A vector that we aim at when firing
 var float CameraAlpha;										// Alpha value for lerping
 var float CameraAlphaZ;
 var float CameraFOV;										// FOV value used for mode 3
@@ -586,7 +587,7 @@ simulated function StartFire(byte FireModeNum)
 			ProjectileLocation.X += 64;
 			
 		// Make sure the projectile gets our current rotation. This determines it's direction of flight.
-		ProjectileRotation = self.Rotation;
+		ProjectileRotation = Rotator(Normal(AimPoint - Location));
 		
 		// Play an animation to "shoot"
 		PriorityAnimSlot.PlayCustomAnimByDuration('punch_stand1', 0.45, 0.1, 0.1, false, true);
@@ -596,20 +597,8 @@ simulated function StartFire(byte FireModeNum)
 			Projectile = spawn(class'CircleWorldItemProjectile', self, , ProjectileLocation, ProjectileRotation, , true);
 		if (FireModeNum == 1)
 			Projectile = spawn(class'CircleWorldItemProjectile_Fireball', self, , ProjectileLocation, ProjectileRotation, , true);
-			
-		// Once more we make damn sure our projectile rotation is right.
-		if (Rotation.Yaw == 0)
-		{
-			// Set the projectile pitch with a small bit of random angle.
-			ProjectileRotation.Pitch = 0 + (Clamp(Velocity.Z, -10, 10) * DegToUnrRot);	
-			// InitProjectile must be called, passing the proper rotation.
-			Projectile.InitProjectile(ProjectileRotation, CircleVelocity.X);
-		}
-		if (Rotation.Yaw == 32768)
-		{
-			ProjectileRotation.Pitch = 32768 + (Clamp(Velocity.Z, -10, 10) * DegToUnrRot);
-			Projectile.InitProjectile(ProjectileRotation, CircleVelocity.X);
-		}
+		
+		Projectile.InitProjectile(ProjectileRotation, Abs(CircleVelocity.X));
 	}
 }	
 
