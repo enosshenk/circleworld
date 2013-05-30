@@ -602,6 +602,14 @@ simulated function StartFire(byte FireModeNum)
 	}
 }	
 
+event TakeDamage(int Damage, Controller InstigatedBy, vector HitLocation, vector Momentum, class<DamageType> DamageType, optional TraceHitInfo HitInfo, optional Actor DamageCauser)
+{
+	// Play a hurt animation
+	PriorityAnimSlot.PlayCustomAnimByDuration('hurt', 0.4, 0.1, 0.1, false, true);
+	
+	super.TakeDamage(Damage, InstigatedBy, HitLocation, Momentum, DamageType, HitInfo, DamageCauser);
+}
+
 // Null function to disable fall damage
 function TakeFallingDamage();
 
