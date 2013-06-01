@@ -13,11 +13,19 @@ var() StaticMeshComponent StaticMeshComponent;
 enum ELiftType
 {
 	CW_Vertical,
-	CW_Horizontal
+	CW_Horizontal,
+	CW_ContinuousHorizontal
+};
+
+enum EContDirection
+{
+	D_Left,
+	D_Right
 };
 
 var() ELiftType CircleLiftType;							// Type of lift being used
-var() float CircleLiftWaitTime;							// Time this lift will wait at either position before moving
+var() EContDirection ContDirection;						// If type is continuous horizontal, direction of travel
+var() float CircleLiftWaitTime;							// Time this lift will wait at either position before moving. No effect on continous horizontal
 var() float CircleLiftTravel;							// Vertical: The distance in Unreal Units this lift will travel before stopping  Horizontal: How many Unreal Rotation Units the lift moves before stopping
 var() float CircleLiftSpeed;							// Vertical: Distance this lift moves in Unreal Units per tick  Horizontal: Distance this lift moves in Unreal Rotation Units per tick
 
@@ -122,7 +130,27 @@ event Tick(float DeltaTime)
 						TravelDirection = 1;
 				}
 			}
-			break;			
+			break;
+
+			case CW_ContinuousHorizontal:
+				// Move the lift
+				if (ContDirection == D_Left)
+				{
+					InitialLocationPolar.Y -= CircleLiftSpeed;
+					if (InitialLocationPolar.Y < 0)
+						InitialLocationPolar.Y = 65536;
+					if (InitialLocationPolar.Y > 65536)
+						InitialLocationPolar.Y = 0;
+				}
+				else
+				{
+					InitialLocationPolar.Y += CircleLiftSpeed;
+					if (InitialLocationPolar.Y < 0)
+						InitialLocationPolar.Y = 65536;
+					if (InitialLocationPolar.Y > 65536)
+						InitialLocationPolar.Y = 0;
+				}
+			break;
 	}
 	
 	// Check the level base for rotation change
@@ -155,6 +183,7 @@ defaultproperties
 	bStatic = false
 	bCollideComplex = true	
 	CollisionType = COLLIDE_BlockAll
+	TickGroup=TG_PreAsyncWork
 	
 	Begin Object Class=StaticMeshComponent Name=StaticMeshComponent0
 		StaticMesh = StaticMesh'EngineMeshes.Cube'

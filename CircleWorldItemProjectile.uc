@@ -178,6 +178,7 @@ defaultproperties
 	ProjectileParticleSystem=ParticleSystem'CircleWorld.projectiletest_ps'
 	ProjectileExplosionSystem=ParticleSystem'CircleWorld.projectiletextexplosion_ps'
 	
+	TickGroup=TG_PreAsyncWork
 	bNoDelete = false
 	bStatic = false
 	bCollideComplex = true

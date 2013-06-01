@@ -164,6 +164,19 @@ event Tick(float DeltaTime)
 			CircleVelocity.X += ((RiddenLift.CircleLiftSpeed / 32768) * RadToDeg) * 2.3 * Pi * RiddenLift.Location.Z;
 		}
 	}
+	else if (IsRidingLift && RiddenLift.CircleLiftType == CW_ContinuousHorizontal)
+	{
+		// Riding a continuous horizontal lift. Add the lift speed to our velocity
+		if (RiddenLift.ContDirection == D_Left)
+		{
+			
+			CircleVelocity.X += ((RiddenLift.CircleLiftSpeed / 32768) * RadToDeg) * 2.3 * Pi * RiddenLift.Location.Z;
+		}
+		if (RiddenLift.ContDirection == D_Right)
+		{
+			CircleVelocity.X -= ((RiddenLift.CircleLiftSpeed / 32768) * RadToDeg) * 2.3 * Pi * RiddenLift.Location.Z;
+		}	
+	}
 	
 	// Check our forward collision
 	if (CollisionCheckForward() == true)
@@ -579,14 +592,10 @@ simulated function StartFire(byte FireModeNum)
 	// We can't shoot if we're skidding or turning
 	if (!IsSkidding && !IsTurning)
 	{
-		// We spawn the projectile at our current location, but 64 units ahead of our direction of travel.
-		ProjectileLocation = self.Location;
-		if (Rotation.Yaw == 0)
-			ProjectileLocation.X -= 64;
-		if (Rotation.Yaw == 32768)
-			ProjectileLocation.X += 64;
+		// Get projectile spawn location from our FireSocket socket
+		Mesh.GetSocketWorldLocationAndRotation('FireSocket', ProjectileLocation);
 			
-		// Make sure the projectile gets our current rotation. This determines it's direction of flight.
+		// Set projectile rotation based on aim point and current location
 		ProjectileRotation = Rotator(Normal(AimPoint - Location));
 		
 		// Play an animation to "shoot"
@@ -598,6 +607,7 @@ simulated function StartFire(byte FireModeNum)
 		if (FireModeNum == 1)
 			Projectile = spawn(class'CircleWorldItemProjectile_Fireball', self, , ProjectileLocation, ProjectileRotation, , true);
 		
+		// Initialize the projectile with rotation and added velocity
 		Projectile.InitProjectile(ProjectileRotation, Abs(CircleVelocity.X));
 	}
 }	
@@ -791,6 +801,7 @@ defaultproperties
 	CollisionType=COLLIDE_BlockAll
 	bCollideWorld=true
 	bBlockActors=true
+	TickGroup=TG_PreAsyncWork
 	
 	Begin Object Name=CollisionCylinder
 		CollisionRadius=64.000000

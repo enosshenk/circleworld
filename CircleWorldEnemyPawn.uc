@@ -180,7 +180,7 @@ defaultproperties
 	CollisionType=COLLIDE_TouchAll
 	bCollideWorld=false
 	bBlockActors=false
-	
+	TickGroup=TG_PreAsyncWork
 	MaxPitchLimit=9999999
 	
 	Begin Object Name=CollisionCylinder

@@ -33,6 +33,7 @@ defaultproperties
 	bStatic = false
 	bCollideComplex = true
 	CollisionType = COLLIDE_BlockAll
+	TickGroup=TG_PreAsyncWork
 	
 	Begin Object Class=StaticMeshComponent Name=CircleStaticMeshComponent
 		BlockZeroExtent=true
