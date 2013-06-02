@@ -16,6 +16,7 @@ var CircleWorld_LevelBase LevelBase;				// The level base used
 var vector2d LocationPolar;							// X value is Radial, Y value is Angular
 var vector2d InitialLocationPolar;
 var vector InitialLocation;
+var rotator InitialRotation;
 
 event PostBeginPlay()
 {
@@ -33,6 +34,7 @@ event PostBeginPlay()
 	}	
 	
 	InitialLocation = Location;
+	InitialRotation = Rotation;
 	
 	// Get our initial polar coordinates from our cartesian coordinates
 	InitialLocationPolar.X = Sqrt(Location.X ** 2 + Location.Z ** 2);
@@ -77,7 +79,7 @@ event Tick(float DeltaTime)
 
 	// Set new rotation based on our polar angular value
 	NewRotation = Rotation;
-	NewRotation.Pitch = LocationPolar.Y - 16384;		// Subtract 16384 because UnrealEngine sets 0 rotation as 3 oclock position
+	NewRotation.Pitch = (InitialRotation.Pitch + LocationPolar.Y) - 16384;		// Subtract 16384 because UnrealEngine sets 0 rotation as 3 oclock position
 	SetRotation(NewRotation);
 	
 	super.Tick(DeltaTime);

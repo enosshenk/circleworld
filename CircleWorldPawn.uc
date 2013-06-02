@@ -442,7 +442,7 @@ function bool CollisionCheckForward()
 		DrawDebugLine(TraceStart, TraceEnd, 255, 0, 0);
 		
 	HitActor = Trace(HitLocation, HitNormal, TraceEnd, TraceStart, true, TraceExtent);
-	if (CircleWorld_LevelBase(HitActor) != none)
+	if (CircleWorld_LevelBase(HitActor) != none || CircleWorldItem_Lift(HitActor) != none || CircleWorldItem_Door(HitActor) != none)
 	{
 		// Trace hit the level mesh.
 		return true;
@@ -586,29 +586,45 @@ function PullUp()
 simulated function StartFire(byte FireModeNum)
 {
 	local CircleWorldItemProjectile Projectile;
-	local vector ProjectileLocation;
+	local vector ProjectileLocation, TraceStart, TraceEnd, HitLocation, HitNormal;
 	local rotator ProjectileRotation;
+	local actor HitActor;
 	
-	// We can't shoot if we're skidding or turning
-	if (!IsSkidding && !IsTurning)
+	// First, do a trace to see if we're trying to open a door instead of shooting
+	Mesh.GetSocketWorldLocationAndRotation('FireSocket', TraceStart);
+	TraceEnd = TraceStart;
+	TraceEnd += vect(512,0,0);
+	
+	HitActor = Trace(HitLocation, HitNormal, TraceEnd, TraceStart, true);
+	if (CircleWorldItem_Door(HitActor) != none)
 	{
-		// Get projectile spawn location from our FireSocket socket
-		Mesh.GetSocketWorldLocationAndRotation('FireSocket', ProjectileLocation);
+		// Trace hit a door. Send the door open command and abort firing
+		CircleWorldItem_Door(HitActor).OpenDoor();
+	}
+	else
+	{	
+		// Didn't hit a door. Go through with firing.
+		// We can't shoot if we're skidding or turning
+		if (!IsSkidding && !IsTurning)
+		{
+			// Get projectile spawn location from our FireSocket socket
+			Mesh.GetSocketWorldLocationAndRotation('FireSocket', ProjectileLocation);
+				
+			// Set projectile rotation based on aim point and current location
+			ProjectileRotation = Rotator(Normal(AimPoint - Location));
 			
-		// Set projectile rotation based on aim point and current location
-		ProjectileRotation = Rotator(Normal(AimPoint - Location));
-		
-		// Play an animation to "shoot"
-		PriorityAnimSlot.PlayCustomAnimByDuration('punch_stand1', 0.45, 0.1, 0.1, false, true);
-		
-		// Find out which fire mode we're using, and spawn that projectile.
-		if (FireModeNum == 0)
-			Projectile = spawn(class'CircleWorldItemProjectile', self, , ProjectileLocation, ProjectileRotation, , true);
-		if (FireModeNum == 1)
-			Projectile = spawn(class'CircleWorldItemProjectile_Fireball', self, , ProjectileLocation, ProjectileRotation, , true);
-		
-		// Initialize the projectile with rotation and added velocity
-		Projectile.InitProjectile(ProjectileRotation, Abs(CircleVelocity.X));
+			// Play an animation to "shoot"
+			PriorityAnimSlot.PlayCustomAnimByDuration('punch_stand1', 0.45, 0.1, 0.1, false, true);
+			
+			// Find out which fire mode we're using, and spawn that projectile.
+			if (FireModeNum == 0)
+				Projectile = spawn(class'CircleWorldItemProjectile', self, , ProjectileLocation, ProjectileRotation, , true);
+			if (FireModeNum == 1)
+				Projectile = spawn(class'CircleWorldItemProjectile_Fireball', self, , ProjectileLocation, ProjectileRotation, , true);
+			
+			// Initialize the projectile with rotation and added velocity
+			Projectile.InitProjectile(ProjectileRotation, Abs(CircleVelocity.X));
+		}
 	}
 }	
 

@@ -25,7 +25,7 @@ event Tick(float DeltaTime)
 
 event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vector HitNormal )
 {
-	if (CircleWorld_LevelBase(Other) != none)
+	if (CircleWorld_LevelBase(Other) != none || CircleWorldItem_Lift(Other) != none || CircleWorldItem_Door(Other) != none)
 	{
 		if (HitLocation.Z < Location.Z + 1)
 		{
