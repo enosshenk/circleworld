@@ -92,23 +92,6 @@ exec function CircleCamThree()
 	CircleWorldGameInfo(WorldInfo.Game).CameraMode = 2;
 }
 
-exec function CircleCamFour()
-{
-	CircleWorldGameInfo(WorldInfo.Game).CameraMode = 3;
-}
-
-exec function UseCameraActor()
-{
-	if (CircleWorldHUD(myHUD).CircleWorldPawn.UseCameraActor)
-	{
-		CircleWorldHUD(myHUD).CircleWorldPawn.UseCameraActor = false;	
-	}
-	else
-	{
-		CircleWorldHUD(myHUD).CircleWorldPawn.UseCameraActor = true;
-	}
-}
-
 exec function SprintDown()
 {
 	CircleWorldHUD(myHUD).CircleWorldPawn.Sprinting = true;

@@ -7,6 +7,7 @@ class CircleWorld_LevelBase extends Actor
 	placeable;
 	
 var() StaticMeshComponent StaticMeshComponent;		// The static mesh used to represent the level world
+var() float WorldRadius;							// Must be set! Radius from the center point of the world to the surface
 var vector PawnVelocity;
 var vector PawnLocation;
 

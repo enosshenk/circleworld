@@ -8,6 +8,25 @@ var vector CircleVelocityPreAdjust;							// Velocity direct from calculations b
 var vector LastVelocity;									// Last velocity value used for calculations
 var vector CircleForce;										// Forces calculated for things like momentum
 var vector CameraOffset;									// Camera offset used in CalcCamera
+
+// Above ground camera settings
+var vector MapCameraOffset;									// Camera offset data gotten from MapInfo
+var float MapCameraFOV;										// Camera FOV data from MapInfo
+var float MapCameraBlendSpeed;								// Blend speed from MapInfo
+var float MapCameraMaxRotX;
+var float MapCameraMaxRotZ;
+var float MapCameraMaxTransX;
+var float MapCameraMaxTransZ;
+
+// Below ground camera settings
+var vector MapCameraOffset_Underground;									// Camera offset data gotten from MapInfo
+var float MapCameraFOV_Underground;										// Camera FOV data from MapInfo
+var float MapCameraBlendSpeed_Underground;								// Blend speed from MapInfo
+var float MapCameraMaxRotX_Underground;
+var float MapCameraMaxRotZ_Underground;
+var float MapCameraMaxTransX_Underground;
+var float MapCameraMaxTransZ_Underground;
+
 var rotator CameraRotator;									// Rotator used in CalcCamera
 var vector AimPoint;										// A vector that we aim at when firing
 var float CameraAlpha;										// Alpha value for lerping
@@ -41,17 +60,12 @@ var bool WasUsingBoost;										// True if we used boost any time before we lan
 var bool CirclePawnBoostUp;									// Boosting and ascending
 var bool CirclePawnBoostDown;								// Boosting and descending
 var bool BoostRegenerating;									// True if we're regenerating fuel
-var bool UseCameraActor;
 var bool CanSkid;											// True if we are moving at top speed.
 var bool IsSkidding;										// True while playing turn-skid animation. Prevents jumping and firing.
 var bool IsTurning;											// True while playing idle turn animation. Prevents jumping and firing.
 var bool ResetSkid;	
 var bool IsRidingLift;										// True while the player is riding on a lift
-
-var CameraActor CameraActor;
-var rotator CameraActorRot;
-var vector CameraActorLoc;
-var float CameraActorFOV;
+var bool IsUnderground;										// True while player location on Z is less than the radius of the level world surface.
 
 var CircleWorld_LevelBase LevelBase;						// Ref to the cylinder base
 var array<CircleWorld_LevelBackground> LevelBackgrounds;	// Array of background items to rotate with the cylinder
@@ -67,7 +81,6 @@ event PostBeginPlay()
 {
 	local CircleWorld_LevelBase C;
 	local CircleWorld_LevelBackground B;
-	local CameraActor CA;
 	
 	// Get our reference to the level cylinder
 	foreach WorldInfo.AllActors(class'CircleWorld_LevelBase', C)
@@ -87,16 +100,47 @@ event PostBeginPlay()
 	Mesh.AttachComponentToSocket(BoostLight, 'BoostSocket');
 	BoostLight.SetEnabled(false);
 	
-	foreach WorldInfo.AllActors(class'CameraActor', CA)
+	// Collect camera settings from MapInfo, if any
+	if (CircleWorldMapInfo(WorldInfo.GetMapInfo()) != none)
 	{
-		if (CA.Tag == 'fnord')
-		{
-			`log("Found camera actor");
-			CameraActor = CA;
-			CameraActorRot = CameraActor.Rotation;
-			CameraActorLoc = CameraActor.Location;
-			CameraActorFOV = CameraActor.FOVAngle;
-		}
+		MapCameraOffset = CircleWorldMapInfo(WorldInfo.GetMapInfo()).CameraOffset;
+		MapCameraFOV = CircleWorldMapInfo(WorldInfo.GetMapInfo()).CameraFOV;
+		MapCameraBlendSpeed = CircleWorldMapInfo(WorldInfo.GetMapInfo()).BlendSpeed;
+		MapCameraMaxRotX = CircleWorldMapInfo(WorldInfo.GetMapInfo()).MaxRotX;
+		MapCameraMaxRotZ = CircleWorldMapInfo(WorldInfo.GetMapInfo()).MaxRotZ;
+		MapCameraMaxTransX = CircleWorldMapInfo(WorldInfo.GetMapInfo()).MaxTransX;
+		MapCameraMaxTransZ = CircleWorldMapInfo(WorldInfo.GetMapInfo()).MaxTransZ;
+		
+		MapCameraOffset_Underground = CircleWorldMapInfo(WorldInfo.GetMapInfo()).CameraOffset_U;
+		MapCameraFOV_Underground = CircleWorldMapInfo(WorldInfo.GetMapInfo()).CameraFOV_U;
+		MapCameraBlendSpeed_Underground = CircleWorldMapInfo(WorldInfo.GetMapInfo()).BlendSpeed_U;
+		MapCameraMaxRotX_Underground = CircleWorldMapInfo(WorldInfo.GetMapInfo()).MaxRotX_U;
+		MapCameraMaxRotZ_Underground = CircleWorldMapInfo(WorldInfo.GetMapInfo()).MaxRotZ_U;
+		MapCameraMaxTransX_Underground = CircleWorldMapInfo(WorldInfo.GetMapInfo()).MaxTransX_U;
+		MapCameraMaxTransZ_Underground = CircleWorldMapInfo(WorldInfo.GetMapInfo()).MaxTransZ_U;
+	}
+	else
+	{
+		// No map info, set some defaults
+		MapCameraOffset.X = 128;
+		MapCameraOffset.Y = -1200;
+		MapCameraOffset.Z = 128;
+		MapCameraFOV = 70;
+		MapCameraBlendSpeed = 0.1;
+		MapCameraMaxRotX = 10;
+		MapCameraMaxRotZ = 10;
+		MapCameraMaxTransX = 256;
+		MapCameraMaxTransZ = 256;
+		
+		MapCameraOffset_Underground.X = 128;
+		MapCameraOffset_Underground.Y = -1200;
+		MapCameraOffset_Underground.Z = 128;
+		MapCameraFOV_Underground = 70;
+		MapCameraBlendSpeed_Underground = 0.1;
+		MapCameraMaxRotX_Underground = 10;
+		MapCameraMaxRotZ_Underground = 10;
+		MapCameraMaxTransX_Underground = 256;
+		MapCameraMaxTransZ_Underground = 256;	
 	}
 	
 	super.PostBeginPlay();
@@ -124,6 +168,18 @@ event Tick(float DeltaTime)
 	{
 		if (!IsTimerActive('DisableRidingOnLift'));
 			SetTimer(0.1, false, 'DisableRidingOnLift');
+	}
+	
+	// Find out if we're underground
+	if (Location.Z >= LevelBase.WorldRadius)
+	{
+		// We are higher than surface
+		IsUnderground = false;
+	}
+	else
+	{
+		// Below surface
+		IsUnderground = true;
 	}
 
 	// Set our new velocity based on the acceleration given by PlayerController
@@ -418,38 +474,31 @@ event Landed(vector HitNormal, Actor FloorActor)
 // Returns true if trace collided with the world cylinder.
 function bool CollisionCheckForward()
 {
-	local vector TraceExtent, TraceStart, TraceEnd, HitLocation, HitNormal;
-	local actor HitActor;
+	local vector TraceExtent, TraceStart, TraceEnd;
 	
 	// Set up some trace extents
 	TraceExtent.X = 64;
 	TraceExtent.Y = 64;	
 	
 	// Trace in our direction of motion. This is used to detect if the pawn is colliding with a wall.
+	TraceStart = Location;
 	TraceEnd = Location;
-	if (Rotation.Yaw == 0)
-	{
+	if (Rotation.Yaw == 32768)
+		TraceEnd.X -= Mesh.Bounds.BoxExtent.Y;
+	else if (Rotation.Yaw == 0)
 		TraceEnd.X += Mesh.Bounds.BoxExtent.Y;
-		TraceStart = Location + vect(32,0,0);
-	}
-	else
-	{
-		TraceEnd.X += Mesh.Bounds.BoxExtent.Y * -1;
-		TraceStart = Location + vect(-32,0,0);
-	}
 	
 	if (CircleWorldGameInfo(WorldInfo.Game).DebugHUD)
 		DrawDebugLine(TraceStart, TraceEnd, 255, 0, 0);
-		
-	HitActor = Trace(HitLocation, HitNormal, TraceEnd, TraceStart, true, TraceExtent);
-	if (CircleWorld_LevelBase(HitActor) != none || CircleWorldItem_Lift(HitActor) != none || CircleWorldItem_Door(HitActor) != none)
+	
+	if (FastTrace(TraceEnd, TraceStart, TraceExtent))
 	{
-		// Trace hit the level mesh.
-		return true;
+		// Trace hit no world geometry
+		return false;
 	}
 	else
 	{
-		return false;
+		return true;
 	}
 }
 
@@ -457,8 +506,7 @@ function bool CollisionCheckForward()
 // Returns true if the trace hit nothing, meaning we're standing over air and need to fall.
 function bool CollisionCheckFeet()
 {
-	local vector TraceExtent, TraceStart, TraceEnd, HitLocation, HitNormal;
-	local actor HitActor;
+	local vector TraceExtent, TraceStart, TraceEnd;
 	
 	// Set up some trace extents
 	TraceExtent.X = 64;
@@ -474,8 +522,8 @@ function bool CollisionCheckFeet()
 		DrawDebugLine(TraceStart, TraceEnd, 255, 0, 0);
 	
 	// Trace straight down from our feet.
-	HitActor = Trace(HitLocation, HitNormal, TraceEnd, TraceStart, true, TraceExtent);
-	if (CircleWorld_LevelBase(HitActor) == none)
+	
+	if (FastTrace(TraceEnd, TraceStart, TraceExtent))
 	{
 		// We didn't hit any level geometry.
 		return true;
@@ -486,6 +534,7 @@ function bool CollisionCheckFeet()
 	}
 }
 
+// Trace during jetpack flight. If trace hits anything, return the vector location
 function vector JetpackGroundCheck()
 {
 	local vector TraceStart, TraceEnd, HitLocation, HitNormal;
@@ -499,7 +548,7 @@ function vector JetpackGroundCheck()
 		DrawDebugLine(TraceStart, TraceEnd, 255, 0, 0);
 
 	HitActor = Trace(HitLocation, HitNormal, TraceEnd, TraceStart, true);
-	if (CircleWorld_LevelBase(HitActor) != none)
+	if (CircleWorld_LevelBase(HitActor) != none || CircleWorldItem_Lift(HitActor) != none)
 	{
 		// Trace hit the level geometry. We send the hitlocation to position the ground effects.
 		return HitLocation;
@@ -686,7 +735,6 @@ simulated function bool CalcCamera( float fDeltaTime, out vector out_CamLoc, out
 {
 	local vector DesiredOffset;
 	local rotator DesiredCamRot;
-	local float DesiredFOV;
 
 	if (CircleWorldGameInfo(WorldInfo.Game).CameraMode == 0)
 	{
@@ -732,33 +780,99 @@ simulated function bool CalcCamera( float fDeltaTime, out vector out_CamLoc, out
 		
 		out_CamLoc = CameraOffset;
 		out_CamRot = CameraRotator;
-		
-		CameraRotator = out_CamRot;
-		CameraAlpha += fDeltaTime / CameraAdjustSpeed;
 	}
 	else if (CircleWorldGameInfo(WorldInfo.Game).CameraMode == 2)
 	{
-		CameraOffset = self.Location;
-		CameraOffset.Y -= CameraPullback;
-		
-		DesiredFOV = Clamp(60 + ((VSize(Velocity) + VSize(CircleVelocity)) / 2) / CameraFOVFactor, 50 - CameraFOVFactor, 90 + CameraFOVFactor);
-		
-		if (CameraFOV != DesiredFOV)
+		// UBER CAM
+		if (!IsUnderground)
 		{
-			CameraFOV = Lerp(CameraFOV, DesiredFOV, CameraAdjustSpeed);
+			// Not underground, use standard settings
+			CameraOffset = Location;
+			CameraOffset.X += MapCameraOffset.X * -1;
+			CameraOffset.Y += MapCameraOffset.Y;
+			CameraOffset.Z += MapCameraOffset.Z;
+			
+			// Do camera translation
+			DesiredOffset = CameraOffset;
+			DesiredOffset.X += Clamp(CircleVelocity.X, MapCameraMaxTransX * -1, MapCameraMaxTransX);
+			DesiredOffset.Z += Clamp(Velocity.Z, MapCameraMaxTransZ * -1, MapCameraMaxTransZ);
+			
+			// X Axis
+			if (CameraOffset.X != DesiredOffset.X)
+			{
+				CameraOffset.X = Lerp(CameraOffset.X, DesiredOffset.X, MapCameraBlendSpeed);
+			}
+			// Z axis
+			if (CameraOffset.Z != DesiredOffset.Z)
+			{
+				CameraOffset.Z = Lerp(CameraOffset.Z, DesiredOffset.Z, MapCameraBlendSpeed);
+			}
+			// Do camera rotation
+			DesiredCamRot = Rotator(Location - CameraOffset);
+			DesiredCamRot.Yaw += Clamp(CircleVelocity.X * -1, (MapCameraMaxRotX * DegToUnrRot) * -1, MapCameraMaxRotX * DegToUnrRot);
+			DesiredCamRot.Pitch += Clamp(CircleVelocity.Z * -1, (MapCameraMaxRotZ * DegToUnrRot) * -1, MapCameraMaxRotZ * DegToUnrRot);
+			
+			// Yaw = X
+			if (CameraRotator.Yaw != DesiredCamRot.Yaw)
+			{
+				CameraRotator.Yaw = Lerp(CameraRotator.Yaw, DesiredCamRot.Yaw, MapCameraBlendSpeed);
+			}
+			// Pitch = Z
+			if (CameraRotator.Pitch != DesiredCamRot.Pitch)
+			{
+				CameraRotator.Pitch = Lerp(CameraRotator.Pitch, DesiredCamRot.Pitch, MapCameraBlendSpeed);
+			}	
+		
+			// Set the final out vars
+			out_CamLoc = CameraOffset;
+			out_CamRot = CameraRotator;
+			out_FOV = MapCameraFOV;
 		}
+		else if (IsUnderground)
+		{
+			// Underground
+			CameraOffset = Location;
+			CameraOffset.X += MapCameraOffset_Underground.X * -1;
+			CameraOffset.Y += MapCameraOffset_Underground.Y;
+			CameraOffset.Z += MapCameraOffset_Underground.Z;
+			
+			// Do camera translation
+			DesiredOffset = CameraOffset;
+			DesiredOffset.X += Clamp(CircleVelocity.X, MapCameraMaxTransX_Underground * -1, MapCameraMaxTransX_Underground);
+			DesiredOffset.Z += Clamp(Velocity.Z, MapCameraMaxTransZ_Underground * -1, MapCameraMaxTransZ_Underground);
+			
+			// X Axis
+			if (CameraOffset.X != DesiredOffset.X)
+			{
+				CameraOffset.X = Lerp(CameraOffset.X, DesiredOffset.X, MapCameraBlendSpeed_Underground);
+			}
+			// Z axis
+			if (CameraOffset.Z != DesiredOffset.Z)
+			{
+				CameraOffset.Z = Lerp(CameraOffset.Z, DesiredOffset.Z, MapCameraBlendSpeed_Underground);
+			}
+	
+			// Do camera rotation
+			DesiredCamRot = Rotator(Location - CameraOffset);
+			DesiredCamRot.Yaw += Clamp(CircleVelocity.X * -1, (MapCameraMaxRotX_Underground * DegToUnrRot) * -1, MapCameraMaxRotX_Underground * DegToUnrRot);
+			DesiredCamRot.Pitch += Clamp(CircleVelocity.Z * -1, (MapCameraMaxRotZ_Underground * DegToUnrRot) * -1, MapCameraMaxRotZ_Underground * DegToUnrRot);
+			
+			// Yaw = X
+			if (CameraRotator.Yaw != DesiredCamRot.Yaw)
+			{
+				CameraRotator.Yaw = Lerp(CameraRotator.Yaw, DesiredCamRot.Yaw, MapCameraBlendSpeed_Underground);
+			}
+			// Pitch = Z
+			if (CameraRotator.Pitch != DesiredCamRot.Pitch)
+			{
+				CameraRotator.Pitch = Lerp(CameraRotator.Pitch, DesiredCamRot.Pitch, MapCameraBlendSpeed_Underground);
+			}	
 		
-		out_CamLoc = CameraOffset;
-		out_CamRot.Yaw = 16384;
-		out_FOV = CameraFOV;
-		
-		CameraFOV = out_FOV;
-	}
-	else if (CircleWorldGameInfo(WorldInfo.Game).CameraMode == 3)
-	{
-		out_CamLoc = CameraActorLoc;
-		out_CamRot = CameraActorRot;
-		out_FOV = CameraActorFOV;
+			// Set the final out vars
+			out_CamLoc = CameraOffset;
+			out_CamRot = CameraRotator;
+			out_FOV = MapCameraFOV_Underground;		
+		}
 	}
 	
 	return true;

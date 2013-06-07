@@ -4,7 +4,7 @@
 //
 class CircleWorldAIController_Turret extends AIController;
 
-var CircleWorldEnemyPawn_Turret Pawn;
+var CircleWorldEnemyPawn_Turret Turret;
 var vector HitLocation, HitNormal;
 var actor HitActor;
 		
@@ -16,7 +16,7 @@ event Possess(Pawn inPawn, bool bVehicleTransition)
 	}
 
 	inPawn.PossessedBy(self, bVehicleTransition);
-	Pawn = CircleWorldEnemyPawn_Turret(inPawn);
+	Turret = CircleWorldEnemyPawn_Turret(inPawn);
 }
 
 // Initial state makes sure we have a ref to the player then passes to waiting
@@ -24,10 +24,10 @@ auto state Startup
 {
 	Begin:
 	
-	if (Pawn.PlayerTarget == none)
+	if (Turret.PlayerTarget == none)
 	{
 		// This shouldn't happen but try to find a target
-		Pawn.FindPlayer();
+		Turret.FindPlayer();
 	}
 	else
 	{
@@ -43,24 +43,24 @@ state Waiting
 {
 	Begin:
 	
-	if (FastTrace(Pawn.PlayerTarget.Location, Pawn.Location))
+	if (FastTrace(Turret.PlayerTarget.Location, Turret.Location))
 	{
 		`log("Turret saw player");
 		
 		// Check if player is within turret aim range
-		if (VSize(Pawn.Location - Pawn.PlayerTarget.Location) <= Pawn.TurretAimRange)
+		if (VSize(Turret.Location - Turret.PlayerTarget.Location) <= Turret.TurretAimRange)
 		{
 			// In range, toggle aiming on
-			Pawn.IsAiming = true;
+			Turret.IsAiming = true;
 			`log("Player in range to aim");
 		}
 		else
 		{
 			// Disengage aiming
-			Pawn.IsAiming = false;
+			Turret.IsAiming = false;
 		}
 		
-		if (VSize(Pawn.Location - Pawn.PlayerTarget.Location) <= Pawn.TurretRange)
+		if (VSize(Turret.Location - Turret.PlayerTarget.Location) <= Turret.TurretRange)
 		{
 			// Player is in LOS, and is in range. Go to firing state.
 			GotoState('Firing');
@@ -85,27 +85,27 @@ state Firing
 	Begin:
 	
 	`log("Fire state begin");
-	if (FastTrace(Pawn.PlayerTarget.Location, Pawn.Location))
+	if (FastTrace(Turret.PlayerTarget.Location, Turret.Location))
 	{
 		// Check if player is within turret aim range
-		if (VSize(Pawn.Location - Pawn.PlayerTarget.Location) <= Pawn.TurretAimRange)
+		if (VSize(Turret.Location - Turret.PlayerTarget.Location) <= Turret.TurretAimRange)
 		{
 			// In range, toggle aiming on
-			Pawn.IsAiming = true;
+			Turret.IsAiming = true;
 			`log("Player in range to aim");
 		}
 		else
 		{
 			// Disengage aiming
-			Pawn.IsAiming = false;
+			Turret.IsAiming = false;
 			GotoState('Waiting');
 		}
 		
-		if (VSize(Pawn.Location - Pawn.PlayerTarget.Location) <= Pawn.TurretRange)
+		if (VSize(Turret.Location - Turret.PlayerTarget.Location) <= Turret.TurretRange)
 		{
 			Sleep(0.2);
-			Pawn.ShootAtPlayer();
-			Sleep(Pawn.TurretFireRate);
+			Turret.ShootAtPlayer();
+			Sleep(Turret.TurretFireRate);
 			GotoState('Firing');
 		}
 		else
