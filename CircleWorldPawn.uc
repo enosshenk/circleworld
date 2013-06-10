@@ -11,6 +11,7 @@ var vector CameraOffset;									// Camera offset used in CalcCamera
 
 // Above ground camera settings
 var vector MapCameraOffset;									// Camera offset data gotten from MapInfo
+var rotator MapCameraRotator;								// Base rotation applied before movement
 var float MapCameraFOV;										// Camera FOV data from MapInfo
 var float MapCameraBlendSpeed;								// Blend speed from MapInfo
 var float MapCameraMaxRotX;
@@ -20,6 +21,7 @@ var float MapCameraMaxTransZ;
 
 // Below ground camera settings
 var vector MapCameraOffset_Underground;									// Camera offset data gotten from MapInfo
+var rotator MapCameraRotator_Underground;								// Base rotation applied before movement
 var float MapCameraFOV_Underground;										// Camera FOV data from MapInfo
 var float MapCameraBlendSpeed_Underground;								// Blend speed from MapInfo
 var float MapCameraMaxRotX_Underground;
@@ -66,6 +68,8 @@ var bool IsTurning;											// True while playing idle turn animation. Prevent
 var bool ResetSkid;	
 var bool IsRidingLift;										// True while the player is riding on a lift
 var bool IsUnderground;										// True while player location on Z is less than the radius of the level world surface.
+var bool CanShootPrimary;	
+var bool CanShootSecondary;							
 
 var CircleWorld_LevelBase LevelBase;						// Ref to the cylinder base
 var array<CircleWorld_LevelBackground> LevelBackgrounds;	// Array of background items to rotate with the cylinder
@@ -74,8 +78,7 @@ var ParticleSystemComponent BoostParticleSystem;			// Particle system component 
 var ParticleSystemComponent GroundEffectsParticleSystem;	// Particle system used when our boost exhaust is hitting the ground
 var PointLightComponent BoostLight;							// Light attached for boost effects
 var CircleWorldItem_Lift RiddenLift;						// Lift we're riding on, if any
-
-
+var CircleWorldWeapons CircleWorldWeapons;
 
 event PostBeginPlay()
 {
@@ -104,6 +107,7 @@ event PostBeginPlay()
 	if (CircleWorldMapInfo(WorldInfo.GetMapInfo()) != none)
 	{
 		MapCameraOffset = CircleWorldMapInfo(WorldInfo.GetMapInfo()).CameraOffset;
+		MapCameraRotator = CircleWorldMapInfo(WorldInfo.GetMapInfo()).CameraRotation;
 		MapCameraFOV = CircleWorldMapInfo(WorldInfo.GetMapInfo()).CameraFOV;
 		MapCameraBlendSpeed = CircleWorldMapInfo(WorldInfo.GetMapInfo()).BlendSpeed;
 		MapCameraMaxRotX = CircleWorldMapInfo(WorldInfo.GetMapInfo()).MaxRotX;
@@ -112,6 +116,7 @@ event PostBeginPlay()
 		MapCameraMaxTransZ = CircleWorldMapInfo(WorldInfo.GetMapInfo()).MaxTransZ;
 		
 		MapCameraOffset_Underground = CircleWorldMapInfo(WorldInfo.GetMapInfo()).CameraOffset_U;
+		MapCameraRotator_Underground = CircleWorldMapInfo(WorldInfo.GetMapInfo()).CameraRotation_U;
 		MapCameraFOV_Underground = CircleWorldMapInfo(WorldInfo.GetMapInfo()).CameraFOV_U;
 		MapCameraBlendSpeed_Underground = CircleWorldMapInfo(WorldInfo.GetMapInfo()).BlendSpeed_U;
 		MapCameraMaxRotX_Underground = CircleWorldMapInfo(WorldInfo.GetMapInfo()).MaxRotX_U;
@@ -143,6 +148,8 @@ event PostBeginPlay()
 		MapCameraMaxTransZ_Underground = 256;	
 	}
 	
+//	InitWeapons();
+	
 	super.PostBeginPlay();
 }
 
@@ -151,6 +158,20 @@ simulated event PostInitAnimTree(SkeletalMeshComponent SkelComp)
 	// Fill our ref for our one-shot animnode
 	PriorityAnimSlot = AnimNodeSlot(Mesh.FindAnimNode('PrioritySlot'));
 }
+
+function InitWeapons()
+{
+	if (CircleWorldWeapons == none)
+	{
+		CircleWorldWeapons = new(self) class'CircleWorldWeapons';
+		
+		if (CircleWorldWeapons != none)
+		{
+			`log("Weapons init succeeded");
+		}
+	}
+}
+
 
 event Tick(float DeltaTime)
 {
@@ -631,6 +652,7 @@ function PullUp()
 	
 }
 
+
 // Main fire function. FireModeNum 0 is left click, 1 is right click.
 simulated function StartFire(byte FireModeNum)
 {
@@ -654,28 +676,60 @@ simulated function StartFire(byte FireModeNum)
 	{	
 		// Didn't hit a door. Go through with firing.
 		// We can't shoot if we're skidding or turning
-		if (!IsSkidding && !IsTurning)
-		{
-			// Get projectile spawn location from our FireSocket socket
-			Mesh.GetSocketWorldLocationAndRotation('FireSocket', ProjectileLocation);
-				
-			// Set projectile rotation based on aim point and current location
-			ProjectileRotation = Rotator(Normal(AimPoint - Location));
-			
-			// Play an animation to "shoot"
-			PriorityAnimSlot.PlayCustomAnimByDuration('punch_stand1', 0.45, 0.1, 0.1, false, true);
-			
+		if (CircleCanShoot())
+		{			
 			// Find out which fire mode we're using, and spawn that projectile.
-			if (FireModeNum == 0)
-				Projectile = spawn(class'CircleWorldItemProjectile', self, , ProjectileLocation, ProjectileRotation, , true);
-			if (FireModeNum == 1)
-				Projectile = spawn(class'CircleWorldItemProjectile_Fireball', self, , ProjectileLocation, ProjectileRotation, , true);
-			
+			if (FireModeNum == 0 && CircleCanShoot(1))
+			{
+				// Get projectile spawn location from our FireSocket socket
+				Mesh.GetSocketWorldLocationAndRotation('FireSocket', ProjectileLocation);
+					
+				// Set projectile rotation based on aim point and current location
+				ProjectileRotation = Rotator(Normal(AimPoint - Location));
+				
+				// Play an animation to "shoot"
+				PriorityAnimSlot.PlayCustomAnimByDuration('punch_stand1', 0.45, 0.1, 0.1, false, true);
+				
+				// Spawn projectile
+				Projectile = spawn(CircleWorldWeapons.Blaster.ProjectileClass, self, , ProjectileLocation, ProjectileRotation, , true);
+				
+				// Start the fire cooldown
+				CanShootPrimary = false;
+				SetTimer(CircleWorldWeapons.Blaster.FireCooldown, false, 'EnablePrimary');
+			}
+			if (FireModeNum == 1 && CircleCanShoot(2))
+			{
+				// Get projectile spawn location from our FireSocket socket
+				Mesh.GetSocketWorldLocationAndRotation('FireSocket', ProjectileLocation);
+					
+				// Set projectile rotation based on aim point and current location
+				ProjectileRotation = Rotator(Normal(AimPoint - Location));
+				
+				// Play an animation to "shoot"
+				PriorityAnimSlot.PlayCustomAnimByDuration('punch_stand1', 0.45, 0.1, 0.1, false, true);
+				
+				// Spawn projectile
+				Projectile = spawn(CircleWorldWeapons.Lobber.ProjectileClass, self, , ProjectileLocation, ProjectileRotation, , true);
+				
+				// Start the fire cooldown
+				CanShootSecondary = false;
+				SetTimer(CircleWorldWeapons.Lobber.FireCooldown, false, 'EnableSecondary');
+			}
 			// Initialize the projectile with rotation and added velocity
 			Projectile.InitProjectile(ProjectileRotation, Abs(CircleVelocity.X));
 		}
 	}
 }	
+
+function EnablePrimary()
+{
+	CanShootPrimary = true;
+}
+
+function EnableSecondary()
+{
+	CanShootSecondary = true;
+}
 
 event TakeDamage(int Damage, Controller InstigatedBy, vector HitLocation, vector Momentum, class<DamageType> DamageType, optional TraceHitInfo HitInfo, optional Actor DamageCauser)
 {
@@ -691,8 +745,29 @@ function TakeFallingDamage();
 // Replacement of a stock checking function.
 function bool CannotJumpNow()
 {
-	return IsSkidding;
-	
+	return IsSkidding;	
+}
+
+function bool CircleCanShoot(optional int FireMode)
+{
+	if (FireMode == 0)
+	{
+		if (IsSkidding || IsTurning)
+			return false;
+		else
+			return true;
+	}
+	else
+	{
+		if (FireMode == 1)
+		{
+			return CanShootPrimary;
+		}
+		else if (FireMode == 2)
+		{
+			return CanShootSecondary;
+		}
+	}
 }
 
 function ClearSkid()
@@ -809,8 +884,9 @@ simulated function bool CalcCamera( float fDeltaTime, out vector out_CamLoc, out
 			}
 			// Do camera rotation
 			DesiredCamRot = Rotator(Location - CameraOffset);
-			DesiredCamRot.Yaw += Clamp(CircleVelocity.X * -1, (MapCameraMaxRotX * DegToUnrRot) * -1, MapCameraMaxRotX * DegToUnrRot);
-			DesiredCamRot.Pitch += Clamp(CircleVelocity.Z * -1, (MapCameraMaxRotZ * DegToUnrRot) * -1, MapCameraMaxRotZ * DegToUnrRot);
+			DesiredCamRot += MapCameraRotator;
+			DesiredCamRot.Yaw += Clamp((CircleVelocity.X * -1) * DegToUnrRot, MapCameraMaxRotX * -1, MapCameraMaxRotX);
+			DesiredCamRot.Pitch += Clamp((CircleVelocity.Z * -1)  * DegToUnrRot, MapCameraMaxRotZ * -1, MapCameraMaxRotZ);
 			
 			// Yaw = X
 			if (CameraRotator.Yaw != DesiredCamRot.Yaw)
@@ -854,8 +930,9 @@ simulated function bool CalcCamera( float fDeltaTime, out vector out_CamLoc, out
 	
 			// Do camera rotation
 			DesiredCamRot = Rotator(Location - CameraOffset);
-			DesiredCamRot.Yaw += Clamp(CircleVelocity.X * -1, (MapCameraMaxRotX_Underground * DegToUnrRot) * -1, MapCameraMaxRotX_Underground * DegToUnrRot);
-			DesiredCamRot.Pitch += Clamp(CircleVelocity.Z * -1, (MapCameraMaxRotZ_Underground * DegToUnrRot) * -1, MapCameraMaxRotZ_Underground * DegToUnrRot);
+			DesiredCamRot += MapCameraRotator_Underground;
+			DesiredCamRot.Yaw += Clamp((CircleVelocity.X * -1) * DegToUnrRot, MapCameraMaxRotX_Underground * -1, MapCameraMaxRotX_Underground);
+			DesiredCamRot.Pitch += Clamp((CircleVelocity.Z * -1)  * DegToUnrRot, MapCameraMaxRotZ_Underground * -1, MapCameraMaxRotZ_Underground);
 			
 			// Yaw = X
 			if (CameraRotator.Yaw != DesiredCamRot.Yaw)
@@ -926,6 +1003,9 @@ defaultproperties
 	CameraRotateFactor = 1
 	CameraFOVFactor = 10
 	
+	CanShootPrimary = true
+	CanShootSecondary = true
+	
 	WalkingPhysics=PHYS_Walking
 	bCollideActors=true
 	CollisionType=COLLIDE_BlockAll
@@ -986,4 +1066,8 @@ defaultproperties
 		LightColor=(R=255,G=255,B=255)
 	End Object
 	BoostLight = PointLightComponent0
+	
+	Begin Object class=CircleWorldWeapons name=CircleWorldWeapons0
+	End Object
+	CircleWorldWeapons = CircleWorldWeapons0
 }
