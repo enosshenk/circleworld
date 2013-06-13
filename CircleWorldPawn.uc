@@ -1029,8 +1029,8 @@ simulated function bool CalcCamera( float fDeltaTime, out vector out_CamLoc, out
 			// Do camera rotation
 			DesiredCamRot = Rotator(Location - CameraOffset);
 			DesiredCamRot += MapCameraRotator;
-			DesiredCamRot.Yaw += Clamp((CircleVelocity.X * -1) * DegToUnrRot, MapCameraMaxRotX * -1, MapCameraMaxRotX);
-			DesiredCamRot.Pitch += Clamp((CircleVelocity.Z * -1)  * DegToUnrRot, MapCameraMaxRotZ * -1, MapCameraMaxRotZ);
+			DesiredCamRot.Yaw += Clamp(CircleVelocity.X * DegToUnrRot, MapCameraMaxRotX * -1, MapCameraMaxRotX);
+			DesiredCamRot.Pitch += Clamp(CircleVelocity.Z * DegToUnrRot, MapCameraMaxRotZ * -1, MapCameraMaxRotZ);
 			
 			// Yaw = X
 			if (CameraRotator.Yaw != DesiredCamRot.Yaw)
@@ -1075,8 +1075,8 @@ simulated function bool CalcCamera( float fDeltaTime, out vector out_CamLoc, out
 			// Do camera rotation
 			DesiredCamRot = Rotator(Location - CameraOffset);
 			DesiredCamRot += MapCameraRotator_Underground;
-			DesiredCamRot.Yaw += Clamp((CircleVelocity.X * -1) * DegToUnrRot, MapCameraMaxRotX_Underground * -1, MapCameraMaxRotX_Underground);
-			DesiredCamRot.Pitch += Clamp((CircleVelocity.Z * -1)  * DegToUnrRot, MapCameraMaxRotZ_Underground * -1, MapCameraMaxRotZ_Underground);
+			DesiredCamRot.Yaw += Clamp(CircleVelocity.X * DegToUnrRot, MapCameraMaxRotX_Underground * -1, MapCameraMaxRotX_Underground);
+			DesiredCamRot.Pitch += Clamp(CircleVelocity.Z * DegToUnrRot, MapCameraMaxRotZ_Underground * -1, MapCameraMaxRotZ_Underground);
 			
 			// Yaw = X
 			if (CameraRotator.Yaw != DesiredCamRot.Yaw)
