@@ -1,4 +1,4 @@
-class CircleWorldItemProjectile_Lobber extends CircleWorldItemProjectile;
+class CircleWorldItemProjectile_LobberMine extends CircleWorldItemProjectile;
 
 var bool IsArmed;
 var bool RandomizeVector;
@@ -6,7 +6,6 @@ var float RandomFactor;
 
 event PostBeginPlay()
 {
-	SetTimer(0.1, false, 'SetArm');
 	RandomFactor = FRand();
 	ProjectileSpeed = ProjectileSpeed + (RandomFactor * 3);
 	super.PostBeginPlay();
@@ -25,21 +24,21 @@ event Tick(float DeltaTime)
 
 event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vector HitNormal )
 {
-	if (IsArmed && Pawn(Other) != none)
+	if (Pawn(Other) != none && CircleWorldPawn(Other) == none)
 	{
+		// Shot landed on a pawn that isn't the player. Deal damage and don't spawn the mine.
 		Other.TakeDamage(ProjectileDamage, Pawn(Other).Controller, HitLocation, vect(0,0,0), ProjectileDamageType);
 		Explode(Location);
 	}
-	else if (IsArmed && Pawn(Other) == none)
+	else if (Other.bWorldGeometry == true && CircleWorldItem_Lift(Other) == none)
 	{
-		Explode(Location);
+		// Shot hit world geometry but not a lift. Spawn the mine class and destroy ourselves
+		`log("Trying to spawn mine");
+		spawn(class'CircleWorldItem_Mine', self, , Location, Rotation);
+		self.Destroy();
 	}
 }
 
-function SetArm()
-{
-	IsArmed = true;
-}
 
 defaultproperties
 {
@@ -47,8 +46,8 @@ defaultproperties
 	ProjectileGravityFactor = 2
 	ProjectileLife = 10
 	ProjectileSpeed = 150
-	ProjectileDamage = 50
-	ProjectileDamageRadius = 512
+	ProjectileDamage = 20
+	ProjectileDamageRadius = 256
 	ProjectileDamageMomentum = 10
 	ProjectileDamageType = class'DamageType'
 	ProjectileParticleSystem=ParticleSystem'CircleWorld.fireball_ps'

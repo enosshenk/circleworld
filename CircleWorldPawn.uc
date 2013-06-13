@@ -69,7 +69,10 @@ var bool ResetSkid;
 var bool IsRidingLift;										// True while the player is riding on a lift
 var bool IsUnderground;										// True while player location on Z is less than the radius of the level world surface.
 var bool CanShootPrimary;	
-var bool CanShootSecondary;							
+var bool CanShootSecondary;		
+var bool PrimaryFireDown;									// True while player holds down primary fire button		
+var bool SecondaryFireDown;		
+var bool PrimarySpreadShot;									// True if we should fire multiple projectiles	
 
 var CircleWorld_LevelBase LevelBase;						// Ref to the cylinder base
 var array<CircleWorld_LevelBackground> LevelBackgrounds;	// Array of background items to rotate with the cylinder
@@ -79,6 +82,18 @@ var ParticleSystemComponent GroundEffectsParticleSystem;	// Particle system used
 var PointLightComponent BoostLight;							// Light attached for boost effects
 var CircleWorldItem_Lift RiddenLift;						// Lift we're riding on, if any
 var CircleWorldWeapons CircleWorldWeapons;
+
+var enum EPrimaryUpgrades
+{
+	BlasterUpgrade1,
+	BlasterUpgrade2
+} PrimaryUpgrades;
+
+var enum ESecondaryUpgrades
+{
+	LobberUpgrade1,
+	LobberUpgrade2
+} SecondaryUpgrades;
 
 event PostBeginPlay()
 {
@@ -148,8 +163,6 @@ event PostBeginPlay()
 		MapCameraMaxTransZ_Underground = 256;	
 	}
 	
-//	InitWeapons();
-	
 	super.PostBeginPlay();
 }
 
@@ -158,20 +171,6 @@ simulated event PostInitAnimTree(SkeletalMeshComponent SkelComp)
 	// Fill our ref for our one-shot animnode
 	PriorityAnimSlot = AnimNodeSlot(Mesh.FindAnimNode('PrioritySlot'));
 }
-
-function InitWeapons()
-{
-	if (CircleWorldWeapons == none)
-	{
-		CircleWorldWeapons = new(self) class'CircleWorldWeapons';
-		
-		if (CircleWorldWeapons != none)
-		{
-			`log("Weapons init succeeded");
-		}
-	}
-}
-
 
 event Tick(float DeltaTime)
 {
@@ -656,15 +655,16 @@ function PullUp()
 // Main fire function. FireModeNum 0 is left click, 1 is right click.
 simulated function StartFire(byte FireModeNum)
 {
-	local CircleWorldItemProjectile Projectile;
-	local vector ProjectileLocation, TraceStart, TraceEnd, HitLocation, HitNormal;
-	local rotator ProjectileRotation;
+	local vector TraceStart, TraceEnd, HitLocation, HitNormal;
 	local actor HitActor;
 	
 	// First, do a trace to see if we're trying to open a door instead of shooting
 	Mesh.GetSocketWorldLocationAndRotation('FireSocket', TraceStart);
 	TraceEnd = TraceStart;
-	TraceEnd += vect(512,0,0);
+	if (Rotation.Yaw == 32768)
+		TraceEnd -= vect(512,0,0);
+	else if (Rotation.Yaw == 0)
+		TraceEnd += vect(512,0,0);
 	
 	HitActor = Trace(HitLocation, HitNormal, TraceEnd, TraceStart, true);
 	if (CircleWorldItem_Door(HitActor) != none)
@@ -675,51 +675,145 @@ simulated function StartFire(byte FireModeNum)
 	else
 	{	
 		// Didn't hit a door. Go through with firing.
-		// We can't shoot if we're skidding or turning
-		if (CircleCanShoot())
-		{			
-			// Find out which fire mode we're using, and spawn that projectile.
-			if (FireModeNum == 0 && CircleCanShoot(1))
-			{
-				// Get projectile spawn location from our FireSocket socket
-				Mesh.GetSocketWorldLocationAndRotation('FireSocket', ProjectileLocation);
-					
-				// Set projectile rotation based on aim point and current location
-				ProjectileRotation = Rotator(Normal(AimPoint - Location));
-				
-				// Play an animation to "shoot"
-				PriorityAnimSlot.PlayCustomAnimByDuration('punch_stand1', 0.45, 0.1, 0.1, false, true);
-				
-				// Spawn projectile
-				Projectile = spawn(CircleWorldWeapons.Blaster.ProjectileClass, self, , ProjectileLocation, ProjectileRotation, , true);
-				
-				// Start the fire cooldown
-				CanShootPrimary = false;
-				SetTimer(CircleWorldWeapons.Blaster.FireCooldown, false, 'EnablePrimary');
-			}
-			if (FireModeNum == 1 && CircleCanShoot(2))
-			{
-				// Get projectile spawn location from our FireSocket socket
-				Mesh.GetSocketWorldLocationAndRotation('FireSocket', ProjectileLocation);
-					
-				// Set projectile rotation based on aim point and current location
-				ProjectileRotation = Rotator(Normal(AimPoint - Location));
-				
-				// Play an animation to "shoot"
-				PriorityAnimSlot.PlayCustomAnimByDuration('punch_stand1', 0.45, 0.1, 0.1, false, true);
-				
-				// Spawn projectile
-				Projectile = spawn(CircleWorldWeapons.Lobber.ProjectileClass, self, , ProjectileLocation, ProjectileRotation, , true);
-				
-				// Start the fire cooldown
-				CanShootSecondary = false;
-				SetTimer(CircleWorldWeapons.Lobber.FireCooldown, false, 'EnableSecondary');
-			}
-			// Initialize the projectile with rotation and added velocity
-			Projectile.InitProjectile(ProjectileRotation, Abs(CircleVelocity.X));
+
+		if (FireModeNum == 0 && CircleCanShoot(0) && !PrimaryFireDown)
+		{
+			PrimaryFireDown = true;
+			ShootPrimary();
+			SetTimer(CircleWorldWeapons.Blaster.FireCooldown, false, 'RepeatShootPrimary');
+		}
+		if (FireModeNum == 1 && CircleCanShoot(1) && !SecondaryFireDown)
+		{
+			SecondaryFireDown = true;
+			ShootSecondary();
+			SetTimer(CircleWorldWeapons.Lobber.FireCooldown, false, 'RepeatShootSecondary');
 		}
 	}
 }	
+
+simulated function StopFire(byte FireModeNum)
+{
+	if (FireModeNum == 0)
+	{
+		PrimaryFireDown = false;
+		ClearTimer('RepeatShootPrimary');
+	}
+	if (FireModeNum == 1)
+	{
+		SecondaryFireDown = false;
+		ClearTimer('RepeatShootSecondary');
+	}
+}
+
+function RepeatShootPrimary()
+{
+	if (PrimaryFireDown && CircleCanShoot(0))
+	{
+		// Button is still held, and we can fire
+		ShootPrimary();
+		SetTimer(CircleWorldWeapons.Blaster.FireCooldown, false, 'RepeatShootPrimary');
+	}
+}
+
+function RepeatShootSecondary()
+{
+	if (SecondaryFireDown && CircleCanShoot(1))
+	{
+		// Button is still held, and we can fire
+		ShootSecondary();
+		SetTimer(CircleWorldWeapons.Lobber.FireCooldown, false, 'RepeatShootSecondary');
+	}
+}
+
+function ShootPrimary()
+{
+	local vector ProjectileLocation;
+	local rotator ProjectileRotation;
+	local CircleWorldItemProjectile Projectile, SpreadUp, SpreadDown;
+	
+	if (!PrimarySpreadShot)
+	{
+		// Get projectile spawn location from our FireSocket socket
+		Mesh.GetSocketWorldLocationAndRotation('FireSocket', ProjectileLocation);
+			
+		// Set projectile rotation based on aim point and current location
+		ProjectileRotation = Rotator(Normal(AimPoint - Location));
+		
+		// Play an animation to "shoot"
+		PriorityAnimSlot.PlayCustomAnimByDuration('punch_stand1', 0.45, 0.1, 0.1, false, true);
+		
+		// Spawn projectile
+		Projectile = spawn(CircleWorldWeapons.Blaster.ProjectileClass, self, , ProjectileLocation, ProjectileRotation, , true);
+		
+		// Start the fire cooldown
+		CanShootPrimary = false;
+		SetTimer(CircleWorldWeapons.Blaster.FireCooldown - 0.02, false, 'EnablePrimary');
+		
+		// Initialize the projectile with rotation and added velocity
+		Projectile.InitProjectile(ProjectileRotation, Abs(CircleVelocity.X));
+	}
+	else
+	{
+		// Get projectile spawn location from our FireSocket socket
+		Mesh.GetSocketWorldLocationAndRotation('FireSocket', ProjectileLocation);
+			
+		// Set projectile rotation based on aim point and current location
+		ProjectileRotation = Rotator(Normal(AimPoint - Location));
+		
+		// Play an animation to "shoot"
+		PriorityAnimSlot.PlayCustomAnimByDuration('punch_stand1', 0.45, 0.1, 0.1, false, true);
+		
+		// Spawn projectile #1 (Center)
+		Projectile = spawn(CircleWorldWeapons.Blaster.ProjectileClass, self, , ProjectileLocation, ProjectileRotation, , true);
+		// Initialize the projectile with rotation and added velocity
+		Projectile.InitProjectile(ProjectileRotation, Abs(CircleVelocity.X));	
+		
+		// Alter rotation
+		ProjectileRotation.Pitch -= 1820;
+		// Spawn projectile #2 (Up)
+		SpreadUp = spawn(CircleWorldWeapons.Blaster.ProjectileClass, self, , ProjectileLocation, ProjectileRotation, , true);
+		// Initialize the projectile with rotation and added velocity
+		SpreadUp.InitProjectile(ProjectileRotation, Abs(CircleVelocity.X));			
+
+		// Alter rotation
+		ProjectileRotation.Pitch += 3640;
+		// Spawn projectile #3 (Down)
+		SpreadDown = spawn(CircleWorldWeapons.Blaster.ProjectileClass, self, , ProjectileLocation, ProjectileRotation, , true);
+		// Initialize the projectile with rotation and added velocity
+		SpreadDown.InitProjectile(ProjectileRotation, Abs(CircleVelocity.X));	
+		
+		// Start the fire cooldown
+		CanShootPrimary = false;
+		SetTimer(CircleWorldWeapons.Blaster.FireCooldown - 0.02, false, 'EnablePrimary');
+
+	}
+}
+
+function ShootSecondary()
+{
+	local vector ProjectileLocation;
+	local rotator ProjectileRotation;
+	local CircleWorldItemProjectile Projectile;
+	
+	// Get projectile spawn location from our FireSocket socket
+	Mesh.GetSocketWorldLocationAndRotation('FireSocket', ProjectileLocation);
+		
+	// Set projectile rotation based on aim point and current location
+	ProjectileRotation = Rotator(Normal(AimPoint - Location));
+	
+	// Play an animation to "shoot"
+	PriorityAnimSlot.PlayCustomAnimByDuration('punch_stand1', 0.45, 0.1, 0.1, false, true);
+	
+	// Spawn projectile
+	Projectile = spawn(CircleWorldWeapons.Lobber.ProjectileClass, self, , ProjectileLocation, ProjectileRotation, , true);
+	
+	// Start the fire cooldown
+	CanShootSecondary = false;
+	SetTimer(CircleWorldWeapons.Lobber.FireCooldown - 0.02, false, 'EnableSecondary');
+	
+	// Initialize the projectile with rotation and added velocity
+	Projectile.InitProjectile(ProjectileRotation, Abs(CircleVelocity.X));
+}
 
 function EnablePrimary()
 {
@@ -729,6 +823,61 @@ function EnablePrimary()
 function EnableSecondary()
 {
 	CanShootSecondary = true;
+}
+
+function AddPrimaryUpgrade(int NewUpgrade)
+{
+	// Function sets the primary weapon upgrade by fetching the data from the weapons component, and changing the weapon properties
+	
+	// First reset all properties to default
+	PrimarySpreadShot = false;
+	CircleWorldWeapons.Blaster.FireCooldown = Default.CircleWorldWeapons.Blaster.FireCooldown;
+	CircleWorldWeapons.Blaster.ProjectileClass = Default.CircleWorldWeapons.Blaster.ProjectileClass;
+	
+	// Now find what upgrade we're applying and change the properties
+	switch (NewUpgrade)
+	{
+		case 1:
+			CircleWorldWeapons.Blaster.FireCooldown = CircleWorldWeapons.BlasterUpgrade1.FireCooldown;
+			CircleWorldWeapons.Blaster.ProjectileClass = CircleWorldWeapons.BlasterUpgrade1.ProjectileClass;
+			break;
+		case 2:
+			PrimarySpreadShot = true;
+			break;
+	}
+}
+
+function AddSecondaryUpgrade(int NewUpgrade)
+{
+	// First reset all properties to default
+	CircleWorldWeapons.Lobber.FireCooldown = Default.CircleWorldWeapons.Lobber.FireCooldown;
+	CircleWorldWeapons.Lobber.ProjectileClass = Default.CircleWorldWeapons.Lobber.ProjectileClass;
+	
+	// Now find what upgrade we're applying and change the properties
+	switch (NewUpgrade)
+	{
+		case 1:
+			CircleWorldWeapons.Lobber.FireCooldown = CircleWorldWeapons.LobberUpgrade1.FireCooldown;
+			CircleWorldWeapons.Lobber.ProjectileClass = CircleWorldWeapons.LobberUpgrade1.ProjectileClass;
+			break;
+		case 2:
+			CircleWorldWeapons.Lobber.FireCooldown = CircleWorldWeapons.LobberUpgrade2.FireCooldown;
+			CircleWorldWeapons.Lobber.ProjectileClass = CircleWorldWeapons.LobberUpgrade2.ProjectileClass;
+			break;
+	}
+}
+
+function ClearPrimaryUpgrade()
+{
+	PrimarySpreadShot = false;
+	CircleWorldWeapons.Blaster.FireCooldown = Default.CircleWorldWeapons.Blaster.FireCooldown;
+	CircleWorldWeapons.Blaster.ProjectileClass = Default.CircleWorldWeapons.Blaster.ProjectileClass;
+}
+
+function ClearSecondaryUpgrade()
+{
+	CircleWorldWeapons.Lobber.FireCooldown = Default.CircleWorldWeapons.Lobber.FireCooldown;
+	CircleWorldWeapons.Lobber.ProjectileClass = Default.CircleWorldWeapons.Lobber.ProjectileClass;	
 }
 
 event TakeDamage(int Damage, Controller InstigatedBy, vector HitLocation, vector Momentum, class<DamageType> DamageType, optional TraceHitInfo HitInfo, optional Actor DamageCauser)
@@ -748,22 +897,17 @@ function bool CannotJumpNow()
 	return IsSkidding;	
 }
 
-function bool CircleCanShoot(optional int FireMode)
+function bool CircleCanShoot(int FireMode)
 {
-	if (FireMode == 0)
-	{
-		if (IsSkidding || IsTurning)
-			return false;
-		else
-			return true;
-	}
+	if (IsSkidding || IsTurning)
+		return false;
 	else
 	{
-		if (FireMode == 1)
+		if (FireMode == 0)
 		{
 			return CanShootPrimary;
 		}
-		else if (FireMode == 2)
+		else if (FireMode == 1)
 		{
 			return CanShootSecondary;
 		}

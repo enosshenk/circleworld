@@ -13,8 +13,17 @@ event PostBeginPlay()
 
 event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vector HitNormal )
 {
-	if (IsArmed)
+	if (IsArmed && Pawn(Other) != none)
+	{
+		// We impacted another pawn directly. Do full damage then explode.
+		Other.TakeDamage(ProjectileDamage, Pawn(Other).Controller, HitLocation, vect(0,0,0), ProjectileDamageType);
 		Explode(Location);
+	}
+	else if (IsArmed && Pawn(Other) == none && CircleWorldItemProjectile(Other) == none)
+	{
+		// We hit something else, just explode.
+		Explode(Location);
+	}
 }
 
 function SetArm()
@@ -27,7 +36,7 @@ defaultproperties
 	ProjectileUseGravity = false
 	ProjectileGravityFactor = 2
 	ProjectileLife = 10
-	ProjectileSpeed = 500
+	ProjectileSpeed = 300
 	ProjectileDamage = 15
 	ProjectileDamageRadius = 8
 	ProjectileDamageMomentum = 10

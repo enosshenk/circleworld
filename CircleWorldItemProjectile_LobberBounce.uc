@@ -1,4 +1,4 @@
-class CircleWorldItemProjectile_Lobber extends CircleWorldItemProjectile;
+class CircleWorldItemProjectile_LobberBounce extends CircleWorldItemProjectile;
 
 var bool IsArmed;
 var bool RandomizeVector;
@@ -25,13 +25,22 @@ event Tick(float DeltaTime)
 
 event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vector HitNormal )
 {
-	if (IsArmed && Pawn(Other) != none)
+	if (CircleWorld_LevelBase(Other) != none || CircleWorldItem_Lift(Other) != none || CircleWorldItem_Door(Other) != none)
 	{
-		Other.TakeDamage(ProjectileDamage, Pawn(Other).Controller, HitLocation, vect(0,0,0), ProjectileDamageType);
-		Explode(Location);
+		if (HitLocation.Z < (Location.Z + 1))
+		{
+			// Bounce
+			ProjectileVelocity.Z *= -1;
+		}
+		else
+		{
+			Explode(Location);
+		}
 	}
-	else if (IsArmed && Pawn(Other) == none)
+	else if (Pawn(Other) != none && IsArmed)
 	{
+		// You hit yourself, dumbass.
+		`log("Projectile " $self$ " impacted " $Other);
 		Explode(Location);
 	}
 }

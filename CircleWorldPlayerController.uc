@@ -5,6 +5,18 @@ var float ThisStrafe, ThisUp;
 var float JumpHeldElapsed;
 var bool JumpHeld;
 
+enum EPrimaryUpgrades
+{
+	BlasterUpgrade1,
+	BlasterUpgrade2
+};
+
+enum ESecondaryUpgrades
+{
+	LobberUpgrade1,
+	LobberUpgrade2
+};
+
 exec function DebugHUD()
 {
 	if (CircleWorldGameInfo(WorldInfo.Game).DebugHUD)
@@ -162,6 +174,26 @@ function BoostLiftoff()
 	CircleWorldPawn(Pawn).UsingBoost = true;
 	CircleWorldPawn(Pawn).WasUsingBoost = true;
 	CircleWorldPawn(Pawn).BoostParticleSystem.SetActive(true);	
+}
+
+exec function AddPrimaryUpgrade(int NewUpgrade)
+{
+	CircleWorldPawn(Pawn).AddPrimaryUpgrade(NewUpgrade);
+}
+
+exec function AddSecondaryUpgrade(int NewUpgrade)
+{
+	CircleWorldPawn(Pawn).AddSecondaryUpgrade(NewUpgrade);
+}
+
+exec function ClearPrimaryUpgrade()
+{
+	CircleWorldPawn(Pawn).ClearPrimaryUpgrade();
+}
+
+exec function ClearSecondaryUpgrade()
+{
+	CircleWorldPawn(Pawn).ClearSecondaryUpgrade();
 }
 
 state PlayerWalking
