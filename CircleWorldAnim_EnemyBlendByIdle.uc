@@ -3,7 +3,6 @@ class CircleWorldAnim_EnemyBlendByIdle extends UDKAnimBlendBase
 
 var CircleWorldEnemyPawn Owner;
 
-
 simulated event OnInit()
 {
     Super.OnInit();

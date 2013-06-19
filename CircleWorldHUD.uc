@@ -92,7 +92,7 @@ simulated function DrawHUD()
 		Canvas.DrawColor = RedColor;
 		Canvas.Font = class'Engine'.Static.GetMediumFont();
 		Canvas.SetPos(Canvas.ClipX * 0.1, Canvas.ClipY * 0.1);	
-		Canvas.DrawText("Coins Collected: " $CircleWorldGameInfo(WorldInfo.Game).CoinsCollected);
+		Canvas.DrawText("Energy: " $CircleWorldGameInfo(WorldInfo.Game).EnergyLevel);
 		
 		// Minimap stuff
 		

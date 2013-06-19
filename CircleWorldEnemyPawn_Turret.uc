@@ -1,4 +1,5 @@
 class CircleWorldEnemyPawn_Turret extends Pawn
+	ClassGroup(CircleWorld)
 	placeable;
 
 var SkelControlLookAt RingAim;						// Skelcontrol for our rotation
@@ -17,6 +18,11 @@ var vector2d LocationPolar;							// X value is Radial, Y value is Angular
 var vector2d InitialLocationPolar;
 var vector InitialLocation;
 var rotator InitialRotation;
+
+var ParticleSystem DeathParticleSystem;				// PS to use when killed
+var name HurtAnimationName;							// Animation Sequence to play when hurt
+var name DeathAnimationName;						// AnimSequence to play when killed
+var AnimNodeSlot PriorityAnimSlot;					// Ref to our priority anim slot
 
 event PostBeginPlay()
 {
@@ -49,8 +55,12 @@ event PostBeginPlay()
 
 simulated event PostInitAnimTree(SkeletalMeshComponent SkelComp)
 {
+	// Fill refs to our skelcontrols for aiming
 	RingAim = SkelControlLookAt(Mesh.FindSkelControl('RingControl'));
 	GunAim = SkelControlLookAt(Mesh.FindSkelControl('GunControl'));
+	
+	// Fill our ref for our one-shot animnode
+	PriorityAnimSlot = AnimNodeSlot(Mesh.FindAnimNode('PrioritySlot'));
 }
 
 event Tick(float DeltaTime)
@@ -92,12 +102,22 @@ function bool Died(Controller Killer, class<DamageType> DamageType, vector HitLo
 	DeathSystem = spawn(class'CircleWorldItem_Emitter', self, , HitLocation, self.Rotation);
 	if (DeathSystem != none)
 	{
-		DeathSystem.ParticleSystemComponent.SetTemplate(ParticleSystem'CircleWorld.bloodexplosion_ps');
+		DeathSystem.ParticleSystemComponent.SetTemplate(DeathParticleSystem);
 		DeathSystem.ParticleSystemComponent.ActivateSystem();
 	}	
-	SetHidden(true);
+	
+	// Play death animation
+	PriorityAnimSlot.PlayCustomAnimByDuration(DeathAnimationName, 0.4, 0.1, 0.1, false, true);
 	
 	return super.Died(Killer, DamageType, HitLocation);
+}
+
+event TakeDamage(int Damage, Controller InstigatedBy, vector HitLocation, vector Momentum, class<DamageType> DamageType, optional TraceHitInfo HitInfo, optional Actor DamageCauser)
+{
+	// Play a hurt animation
+	PriorityAnimSlot.PlayCustomAnimByDuration(HurtAnimationName, 0.4, 0.1, 0.1, false, true);
+	
+	super.TakeDamage(Damage, InstigatedBy, HitLocation, Momentum, DamageType, HitInfo, DamageCauser);
 }
 
 function ShootAtPlayer()
@@ -142,6 +162,11 @@ defaultproperties
 	TurretFireRate = 1
 	TurretSkill = 0.75
 	TurretProjectile = class'CircleWorldItemProjectile_TurretBall'
+
+	DeathParticleSystem = ParticleSystem'CircleWorld.bloodexplosion_ps'		
+	
+	HurtAnimationName = hurt
+	DeathAnimationName = death
 	
 	GroundSpeed = 0
 	ControllerClass = class'CircleWorldAIController_Turret'

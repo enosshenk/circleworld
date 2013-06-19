@@ -50,6 +50,9 @@ var float BoostRegenRate;									// Fuel regenerated per tick when not boosting
 var float BoostRegenTime;									// Time we must be on the ground before our fuel begins to regenerate
 var float JumpLaunchTime;									// How long to play our jump launch animation
 var float VerticalSensitivity;								// A variable used to determine if we're ascending or descending for animations.
+var name HurtAnimationName;									// Animation sequence used for taking damage
+var name PrimaryFireAnimationName;							// AnimSequence used for shooting primary fire
+var name SecondaryFireAnimationName;						// Secondary fire
 
 var bool CirclePawnMoving;									// True if the character is moving
 var bool CirclePawnJumping;									// True if the character is jumping at all
@@ -68,7 +71,7 @@ var bool IsTurning;											// True while playing idle turn animation. Prevent
 var bool ResetSkid;	
 var bool IsRidingLift;										// True while the player is riding on a lift
 var bool IsUnderground;										// True while player location on Z is less than the radius of the level world surface.
-var bool CanShootPrimary;	
+var bool CanShootPrimary;									// Seperate weapon cooldowns for primary and secondary fire
 var bool CanShootSecondary;		
 var bool PrimaryFireDown;									// True while player holds down primary fire button		
 var bool SecondaryFireDown;		
@@ -81,7 +84,7 @@ var ParticleSystemComponent BoostParticleSystem;			// Particle system component 
 var ParticleSystemComponent GroundEffectsParticleSystem;	// Particle system used when our boost exhaust is hitting the ground
 var PointLightComponent BoostLight;							// Light attached for boost effects
 var CircleWorldItem_Lift RiddenLift;						// Lift we're riding on, if any
-var CircleWorldWeapons CircleWorldWeapons;
+var CircleWorldWeapons CircleWorldWeapons;					// Ref to our weapons component
 
 var enum EPrimaryUpgrades
 {
@@ -652,7 +655,10 @@ function PullUp()
 }
 
 
-// Main fire function. FireModeNum 0 is left click, 1 is right click.
+//
+//	Shooting functions
+//
+
 simulated function StartFire(byte FireModeNum)
 {
 	local vector TraceStart, TraceEnd, HitLocation, HitNormal;
@@ -740,7 +746,7 @@ function ShootPrimary()
 		ProjectileRotation = Rotator(Normal(AimPoint - Location));
 		
 		// Play an animation to "shoot"
-		PriorityAnimSlot.PlayCustomAnimByDuration('punch_stand1', 0.45, 0.1, 0.1, false, true);
+		PriorityAnimSlot.PlayCustomAnimByDuration(PrimaryFireAnimationName, 0.45, 0.1, 0.1, false, true);
 		
 		// Spawn projectile
 		Projectile = spawn(CircleWorldWeapons.Blaster.ProjectileClass, self, , ProjectileLocation, ProjectileRotation, , true);
@@ -761,7 +767,7 @@ function ShootPrimary()
 		ProjectileRotation = Rotator(Normal(AimPoint - Location));
 		
 		// Play an animation to "shoot"
-		PriorityAnimSlot.PlayCustomAnimByDuration('punch_stand1', 0.45, 0.1, 0.1, false, true);
+		PriorityAnimSlot.PlayCustomAnimByDuration(PrimaryFireAnimationName, 0.45, 0.1, 0.1, false, true);
 		
 		// Spawn projectile #1 (Center)
 		Projectile = spawn(CircleWorldWeapons.Blaster.ProjectileClass, self, , ProjectileLocation, ProjectileRotation, , true);
@@ -802,7 +808,7 @@ function ShootSecondary()
 	ProjectileRotation = Rotator(Normal(AimPoint - Location));
 	
 	// Play an animation to "shoot"
-	PriorityAnimSlot.PlayCustomAnimByDuration('punch_stand1', 0.45, 0.1, 0.1, false, true);
+	PriorityAnimSlot.PlayCustomAnimByDuration(SecondaryFireAnimationName, 0.45, 0.1, 0.1, false, true);
 	
 	// Spawn projectile
 	Projectile = spawn(CircleWorldWeapons.Lobber.ProjectileClass, self, , ProjectileLocation, ProjectileRotation, , true);
@@ -880,10 +886,11 @@ function ClearSecondaryUpgrade()
 	CircleWorldWeapons.Lobber.ProjectileClass = Default.CircleWorldWeapons.Lobber.ProjectileClass;	
 }
 
+
 event TakeDamage(int Damage, Controller InstigatedBy, vector HitLocation, vector Momentum, class<DamageType> DamageType, optional TraceHitInfo HitInfo, optional Actor DamageCauser)
 {
 	// Play a hurt animation
-	PriorityAnimSlot.PlayCustomAnimByDuration('hurt', 0.4, 0.1, 0.1, false, true);
+	PriorityAnimSlot.PlayCustomAnimByDuration(HurtAnimationName, 0.4, 0.1, 0.1, false, true);
 	
 	super.TakeDamage(Damage, InstigatedBy, HitLocation, Momentum, DamageType, HitInfo, DamageCauser);
 }
@@ -1136,10 +1143,10 @@ defaultproperties
 	MomentumFade = 0.2
 	JumpLaunchTime = 0.4
 	
-	BoostFuel = 100;
-	BoostConsumeRate = 0.05;
-	BoostRegenRate = 0.1;
-	BoostRegenTime = 1;
+	BoostFuel = 100
+	BoostConsumeRate = 0.05
+	BoostRegenRate = 0.1
+	BoostRegenTime = 1
 	
 	CameraPullback = 2048
 	CameraAdjustSpeed = 0.05
@@ -1149,6 +1156,10 @@ defaultproperties
 	
 	CanShootPrimary = true
 	CanShootSecondary = true
+	
+	HurtAnimationName = hurt
+	PrimaryFireAnimationName = punch_stand1
+	SecondaryFireAnimationName = punch_stand2
 	
 	WalkingPhysics=PHYS_Walking
 	bCollideActors=true

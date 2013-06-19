@@ -1,7 +1,7 @@
 class CircleWorldGameInfo extends UDKGame;
 
 var bool DebugHUD;
-var int CoinsCollected;
+var int EnergyLevel;
 var int CameraMode;
 
 defaultproperties

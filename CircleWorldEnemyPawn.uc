@@ -1,17 +1,25 @@
 class CircleWorldEnemyPawn extends Pawn
-	placeable;
+	abstract;
+	
+var CircleWorld_LevelBase LevelBase;				// The level base used
+var vector2d LocationPolar;							// X value is Radial, Y value is Angular
+var vector2d InitialLocationPolar;
+var vector InitialLocation;
 
 var bool EnemyPawnWalking;							// True if this enemy pawn is "moving"
 var bool EnemyPawnMovingRight;						// True if we're moving right
 var float EnemyPawnVelocity;						// Out simulated velocity on the cylinder
 var bool ObstructedForward;							// True if we're bumped into a wall
 var bool HoleForward;								// True if we detect a hole in the floor ahead of us
+var bool CanDamagePlayer;							// If true, damage player on touch
+var float PlayerDamage;								// Amount of damage to cause to the player on touch
 
-var CircleWorld_LevelBase LevelBase;				// The level base used
-var vector2d LocationPolar;							// X value is Radial, Y value is Angular
-var vector2d InitialLocationPolar;
-var vector InitialLocation;
-	
+var ParticleSystem DeathParticleSystem;				// PS to use when killed
+var name HurtAnimationName;							// Animation Sequence to play when hurt
+var name DeathAnimationName;						// AnimSequence to play when killed
+var name AttackAnimationName;						// AnimSequence to play when we touch the player and do damage
+var AnimNodeSlot PriorityAnimSlot;					// Ref to our priority anim slot
+
 event PostBeginPlay()
 {
 	local CircleWorld_LevelBase L;
@@ -32,6 +40,13 @@ event PostBeginPlay()
 	LocationPolar.Y = InitialLocationPolar.Y;
 	
 	super.PostBeginPlay();
+}
+
+	
+simulated event PostInitAnimTree(SkeletalMeshComponent SkelComp)
+{
+	// Fill our ref for our one-shot animnode
+	PriorityAnimSlot = AnimNodeSlot(Mesh.FindAnimNode('PrioritySlot'));
 }
 
 event Tick(float DeltaTime)
@@ -125,6 +140,28 @@ event Tick(float DeltaTime)
 	super.Tick(DeltaTime);
 }
 
+event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vector HitNormal )
+{
+	if (CircleWorldPawn(Other) != none && CanDamagePlayer)
+	{
+		// Bumped the player. Play attack animation.
+		PriorityAnimSlot.PlayCustomAnimByDuration(AttackAnimationName, 0.4, 0.1, 0.1, false, true);
+		
+		// Damage the player
+		Other.TakeDamage(PlayerDamage, Controller, HitLocation, vect(0,0,0), class'DamageType');
+		
+		// Start a timer to prevent instant re-damage
+		CanDamagePlayer = false;
+		SetTimer(0.4, false, 'SetDamagePlayer');
+	}
+	super.Touch(Other, OtherComp, HitLocation, HitNormal);
+}
+
+function SetDamagePlayer()
+{
+	CanDamagePlayer = true;
+}
+
 function SetEnemyPawnVelocity(float NewSpeed)
 {
 	local Rotator TempRot;
@@ -150,17 +187,28 @@ function SetEnemyPawnVelocity(float NewSpeed)
 	
 }
 
+event TakeDamage(int Damage, Controller InstigatedBy, vector HitLocation, vector Momentum, class<DamageType> DamageType, optional TraceHitInfo HitInfo, optional Actor DamageCauser)
+{
+	// Play a hurt animation
+	PriorityAnimSlot.PlayCustomAnimByDuration(HurtAnimationName, 0.4, 0.1, 0.1, false, true);
+	
+	super.TakeDamage(Damage, InstigatedBy, HitLocation, Momentum, DamageType, HitInfo, DamageCauser);
+}
+
 function bool Died(Controller Killer, class<DamageType> DamageType, vector HitLocation)
 {
 	local CircleWorldItem_Emitter DeathSystem;
 	
+	// Spawn and activate a particle system for death
 	DeathSystem = spawn(class'CircleWorldItem_Emitter', self, , HitLocation, self.Rotation);
 	if (DeathSystem != none)
 	{
-		DeathSystem.ParticleSystemComponent.SetTemplate(ParticleSystem'CircleWorld.bloodexplosion_ps');
+		DeathSystem.ParticleSystemComponent.SetTemplate(DeathParticleSystem);
 		DeathSystem.ParticleSystemComponent.ActivateSystem();
 	}	
-	SetHidden(true);
+	
+	// Play death animation
+	PriorityAnimSlot.PlayCustomAnimByDuration(DeathAnimationName, 0.4, 0.1, 0.1, false, true);
 	
 	return super.Died(Killer, DamageType, HitLocation);
 }
@@ -169,55 +217,3 @@ simulated function SetViewRotation(rotator NewRotation);
 simulated function FaceRotation(rotator NewRotation, float DeltaTime);
 function UpdateControllerOnPossess(bool bVehicleTransition);
 // Null this shit
-	
-defaultproperties
-{
-	GroundSpeed = 100
-	ControllerClass = class'CircleWorldAIController_BackForth'
-	Physics=PHYS_Interpolating
-	WalkingPhysics=PHYS_Interpolating
-	bCollideActors=true
-	CollisionType=COLLIDE_TouchAll
-	bCollideWorld=false
-	bBlockActors=false
-	TickGroup=TG_PreAsyncWork
-	MaxPitchLimit=9999999
-	
-	Begin Object Name=CollisionCylinder
-		CollisionRadius=74.000000
-		CollisionHeight=48.000000
-		BlockNonZeroExtent=true
-		BlockZeroExtent=true
-		BlockActors=true
-		CollideActors=true
-	End Object
-	CollisionComponent=CollisionCylinder
-	CylinderComponent=CollisionCylinder
-	Components.Add(CollisionCylinder)
-
-
-	Begin Object Class=SkeletalMeshComponent Name=CirclePawnSkeletalMeshComponent
-/*		SkeletalMesh = SkeletalMesh'Rock.snail'
-		AnimTreeTemplate=AnimTree'CircleWorld.snail_tree'
-		AnimSets(0)=AnimSet'Rock.snail_anim'
-		PhysicsAsset = PhysicsAsset'Rock.snail_Physics' */
-		
-		SkeletalMesh = SkeletalMesh'cylmaster.Enemies.CRAWLER'
-		AnimTreeTemplate = AnimTree'cylmaster.Enemies.crawler_tree'
-		AnimSets(0) = AnimSet'cylmaster.Enemies.crawler-anim'
-		PhysicsAsset = PhysicsAsset'cylmaster.Enemies.CRAWLER_Physics'
-		
-		CastShadow=true
-		bCastDynamicShadow=true
-		bOwnerNoSee=false
-        BlockRigidBody=true
-        CollideActors=true
-        BlockZeroExtent=true
-		BlockNonZeroExtent=true
-		bIgnoreControllersWhenNotRendered=TRUE
-		bUpdateSkelWhenNotRendered=FALSE
-		bHasPhysicsAssetInstance=true
-	End Object
-	Mesh=CirclePawnSkeletalMeshComponent
-	Components.Add(CirclePawnSkeletalMeshComponent) 
-}
