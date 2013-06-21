@@ -25,9 +25,15 @@ event Tick(float DeltaTime)
 
 event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vector HitNormal )
 {
+	local Rotator TempRot;
+	
 	if (CircleWorld_LevelBase(Other) != none || CircleWorldItem_Lift(Other) != none || CircleWorldItem_Door(Other) != none)
 	{
-		if (HitLocation.Z < (Location.Z + 1))
+		// Get a rotator set up the same as our polar coordinate angular
+		TempRot.Pitch = LocationPolar.Y;
+		
+		// Figure out if we hit a floor
+		if (Normal(Location - HitLocation) Dot Vector(TempRot) < 0)
 		{
 			// Bounce
 			ProjectileVelocity.Z *= -1;
