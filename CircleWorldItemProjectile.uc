@@ -131,6 +131,14 @@ event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vect
 		Explode(HitLocation);
 	}
 	super.Touch(Other, OtherComp, HitLocation, HitNormal);
+}
+
+function bool CanExplode(Actor Other)
+{
+	if (CircleWorld_LevelBase(Other) != none || CircleWorldItem_Lift(Other) != none || CircleWorldItem_Door(Other) != none || Pawn(Other) != none)
+		return true;
+	else
+		return false;
 }	
 
 function Explode(vector HitLocation)

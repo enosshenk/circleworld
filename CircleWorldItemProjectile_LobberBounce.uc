@@ -45,8 +45,11 @@ event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vect
 	}
 	else if (Pawn(Other) != none && IsArmed)
 	{
-		// You hit yourself, dumbass.
-		`log("Projectile " $self$ " impacted " $Other);
+		Other.TakeDamage(ProjectileDamage, Pawn(Other).Controller, HitLocation, vect(0,0,0), ProjectileDamageType);
+		Explode(Location);
+	}
+	else if (IsArmed && CanExplode(Other))
+	{
 		Explode(Location);
 	}
 }

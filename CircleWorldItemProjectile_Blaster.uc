@@ -19,7 +19,7 @@ event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vect
 		Other.TakeDamage(ProjectileDamage, Pawn(Other).Controller, HitLocation, vect(0,0,0), ProjectileDamageType);
 		Explode(Location);
 	}
-	else if (IsArmed && Pawn(Other) == none && CircleWorldItemProjectile(Other) == none)
+	else if (IsArmed && CanExplode(Other))
 	{
 		// We hit something else, just explode.
 		Explode(Location);
