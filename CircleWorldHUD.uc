@@ -55,7 +55,7 @@ simulated function DrawHUD()
 		Canvas.SetPos(Canvas.ClipX * 0.1, Canvas.ClipY * 0.1);	
 		Canvas.DrawText("World Properties - CircleAcceleration: " $CircleWorldPawn.CircleAcceleration$ " -- CircleVelocity: " $CircleWorldPawn.CircleVelocity$ " -- CircleVelocityPreAdjust: " $CircleWorldPawn.CircleVelocityPreAdjust$ " -- Circle Rotation: " $LevelBase.Rotation.Pitch);
 		Canvas.SetPos(Canvas.ClipX * 0.1, Canvas.ClipY * 0.15);	
-		Canvas.DrawText("Pawn Properties -- Rot: " $CircleWorldPawn.Rotation.Yaw$ " -- Velocity: X"$CircleWorldPawn.CircleVelocity.X$ "Z" $CircleWorldPawn.Velocity.Z$ " -- AccelZ: " $CircleWorldPawn.Acceleration.Z$ " -- Boost: " $CircleWorldPawn.UsingBoost$ " -- Fuel: " $CircleWorldPawn.BoostFuel$ " -- WasUsingBoost: " $CircleWorldPawn.WasUsingBoost$ " -- AimPoint: " $CircleWorldPawn.AimPoint);
+		Canvas.DrawText("Pawn Properties -- Rot: " $CircleWorldPawn.Rotation.Yaw$ " -- Velocity: X"$CircleWorldPawn.CircleVelocity.X$ "Z" $CircleWorldPawn.Velocity.Z$ " -- AccelZ: " $CircleWorldPawn.Acceleration.Z$ " -- Boost: " $CircleWorldPawn.UsingBoost$ " -- Fuel: " $CircleWorldPawn.GetBoostFuelPercent()$ "% -- WasUsingBoost: " $CircleWorldPawn.WasUsingBoost$ " -- AimPoint: " $CircleWorldPawn.AimPoint);
 		Canvas.SetPos(Canvas.ClipX * 0.1, Canvas.ClipY * 0.2);
 		Canvas.DrawText("Input - aStrafe: " $CircleWorldPlayerController(PlayerOwner).ThisStrafe$ " -- aForward: " $CircleWorldPlayerController(PlayerOwner).ThisUp$ " -- Control State: " $CircleWorldPlayerController(PlayerOwner).GetStateName()$ " -- IsRidingLift: " $CircleWorldPawn.IsRidingLift$ " -- RiddenLift: " $CircleWorldPawn.RiddenLift);
 		
@@ -114,16 +114,22 @@ simulated function DrawHUD()
 		Canvas.SetPos(PlayerPos.X - 1, PlayerPos.Y - 1);
 		Canvas.DrawTile(Texture2D'enginevolumetrics.Fogsheet.Materials.T_EV_BlankWhite_01', 2, 2, 0, 0, 1, 1, MakeLinearColor(0,1,0,1));
 		
-		// Fuel guage stuff
-		
+		// Fuel guage stuff		
 		// Draw a background
-		Canvas.SetPos(Canvas.ClipX / 2 - 102, 18);
-		Canvas.DrawTile(Texture2D'enginevolumetrics.Fogsheet.Materials.T_EV_BlankWhite_01', 204, 44, 0, 0, 1, 1, MakeLinearColor(0,0,0,1));
+		Canvas.SetPos(Canvas.ClipX / 2 - 102, 8);
+		Canvas.DrawTile(Texture2D'enginevolumetrics.Fogsheet.Materials.T_EV_BlankWhite_01', 204, 24, 0, 0, 1, 1, MakeLinearColor(0,0,0,1));
 		// Draw the guage bar
-		Canvas.SetPos(Canvas.ClipX / 2 - 100, 20);
-		Canvas.DrawTile(Texture2D'enginevolumetrics.Fogsheet.Materials.T_EV_BlankWhite_01', CircleWorldPawn.BoostFuel * 2, 40, 0, 0, 1, 1, MakeLinearColor(1,1,1,1));
-	
-	}
+		Canvas.SetPos(Canvas.ClipX / 2 - 100, 10);
+		Canvas.DrawTile(Texture2D'enginevolumetrics.Fogsheet.Materials.T_EV_BlankWhite_01', CircleWorldPawn.GetBoostFuelPercent() * 2, 20, 0, 0, 1, 1, MakeLinearColor(1,1,1,1));
+
+		// Health guage stuff		
+		// Draw a background
+		Canvas.SetPos(Canvas.ClipX / 2 - 102, 32);
+		Canvas.DrawTile(Texture2D'enginevolumetrics.Fogsheet.Materials.T_EV_BlankWhite_01', 204, 24, 0, 0, 1, 1, MakeLinearColor(0,0,0,1));
+		// Draw the guage bar
+		Canvas.SetPos(Canvas.ClipX / 2 - 100, 34);
+		Canvas.DrawTile(Texture2D'enginevolumetrics.Fogsheet.Materials.T_EV_BlankWhite_01', CircleWorldPawn.GetHealthPercent() * 2, 20, 0, 0, 1, 1, MakeLinearColor(1,0,0,1));
+		}
 	
 	super.DrawHUD();
 }

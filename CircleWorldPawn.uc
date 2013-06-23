@@ -45,6 +45,8 @@ var float LastRot;											// Rotation last tick (Yaw)
 var float BoostZ;											// Boost Z accel factor
 var float BoostX;											// Boost X accel factor
 var float BoostFuel;										// Fuel available for boosting
+var float BoostFuelMax;										// Current capacity of boost fuel
+var float BoostUpgradeLevel;								// Upgrade level for boost
 var float BoostConsumeRate;									// Fuel consumed per tick when boosting
 var float BoostRegenRate;									// Fuel regenerated per tick when not boosting
 var float BoostRegenTime;									// Time we must be on the ground before our fuel begins to regenerate
@@ -464,11 +466,11 @@ event Tick(float DeltaTime)
 		SetTimer(BoostRegenTime, false, 'BeginBoostRegenerate');
 	}
 	
-	if (!UsingBoost && BoostRegenerating)
+	if (!UsingBoost && BoostRegenerating && BoostFuel < BoostFuelMax)
 	{
 		BoostFuel += BoostRegenRate;
-		if (BoostFuel > 100)
-			BoostFuel = 100;
+		if (BoostFuel > BoostFuelMax)
+			BoostFuel = BoostFuelMax;
 	}
 	
 	// Set the values as the previous accel and velocity for the next tick
@@ -608,6 +610,22 @@ function bool RidingLift()
 		RiddenLift = none;
 		return false;
 	}	
+}
+
+function float GetBoostFuelPercent()
+{
+	return (BoostFuel / BoostFuelMax) * 100;
+}
+
+function UpgradeBoost()
+{
+	BoostUpgradeLevel += 1;
+	BoostFuelMax = default.BoostFuelMax * BoostUpgradeLevel;
+}
+
+function float GetHealthPercent()
+{
+	return (Float(Health) / Float(HealthMax)) * 100;
 }
 
 //
@@ -1131,6 +1149,9 @@ simulated singular event Rotator GetBaseAimRotation()
 	
 defaultproperties
 {
+	Health = 100
+	HealthMax = 100
+	
 	GroundSpeed = 700
 	AirSpeed = 1200
 	MaxJumpHeight = 1100
@@ -1143,10 +1164,12 @@ defaultproperties
 	MomentumFade = 0.2
 	JumpLaunchTime = 0.4
 	
-	BoostFuel = 100
+	BoostFuel = 50
+	BoostFuelMax = 50
 	BoostConsumeRate = 0.05
 	BoostRegenRate = 0.1
 	BoostRegenTime = 1
+	BoostUpgradeLevel = 1
 	
 	CameraPullback = 2048
 	CameraAdjustSpeed = 0.05

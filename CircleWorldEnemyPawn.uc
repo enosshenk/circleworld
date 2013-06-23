@@ -142,7 +142,7 @@ event Tick(float DeltaTime)
 
 event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vector HitNormal )
 {
-	if (CircleWorldPawn(Other) != none && CanDamagePlayer)
+	if (CircleWorldPawn(Other) != none && CanDamagePlayer && Health > 0)
 	{
 		// Bumped the player. Play attack animation.
 		PriorityAnimSlot.PlayCustomAnimByDuration(AttackAnimationName, 0.4, 0.1, 0.1, false, true);

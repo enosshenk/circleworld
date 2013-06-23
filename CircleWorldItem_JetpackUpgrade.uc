@@ -1,11 +1,10 @@
-class CircleWorldItem_HealthPack extends CircleWorldItem
+class CircleWorldItem_JetpackUpgrade extends CircleWorldItem
 	ClassGroup(CircleWorld)
 	placeable;
 
 var() ParticleSystemComponent ParticleSystemComponent;
 var() bool PickupRespawn;									// Can this pickup respawn
 var() float PickupRespawnTime;								// Time in seconds for pickup to respawn
-var() float HealAmount;										// Amount the pawn is healed when this pickup is taken
 
 var float PickupRespawnTimeElapsed;
 var bool PickupUnavailable;	
@@ -36,8 +35,9 @@ event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vect
 {
 	if (CircleWorldPawn(Other) != none)
 	{
-		// Touched by player. Give him some health.
-		Other.HealDamage(HealAmount, Pawn(Other).Controller, class'DamageType');
+		// Touched by player. Call the boost upgrade function
+		CircleWorldPawn(Other).UpgradeBoost();
+		
 		if (PickupRespawn)
 		{
 			PickupUnavailable = true;
@@ -53,8 +53,6 @@ event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vect
 	
 defaultproperties
 {
-	HealAmount = 50
-	
 	Begin Object Class=CylinderComponent Name=CollisionCylinder
 		CollisionRadius=64.000000
 		CollisionHeight=128.000000
