@@ -3,6 +3,7 @@ class CircleWorldGameInfo extends UDKGame;
 var bool DebugHUD;
 var int EnergyLevel;
 var int CameraMode;
+var CircleWorldPawn CirclePawn;
 
 defaultproperties
 {

@@ -19,6 +19,13 @@ enum EDoorState
 	D_Open
 };
 
+enum EDoorKeys
+{
+	K_Red,
+	K_Blue,
+	K_Green
+};
+
 // Editor Variables
 var() StaticMeshComponent StaticMeshComponent;			// Mesh used for the door
 var() EMoveDirection DoorOpenDirection;					// Direction the door moves when opened
@@ -26,6 +33,8 @@ var() float DoorOpenDistance;							// Distance the door moves to open
 var() bool DoorStayOpen;								// Does this door stay opened, or does it shut after a time
 var() float DoorStayOpenTime;							// If DoorStayOpen is false, this is how long the door remains open before closing again
 var() float DoorOpenSpeed;								// Real speed the door moves at
+var() bool IsLocked;									// True if door requires a key
+var() EDoorKeys KeyRequired;							// The key required to open this door
 
 // Internal Variables
 var float DoorOpenDistanceElapsed;						// Elapsed motion
@@ -36,6 +45,7 @@ var int DoorMovingDirection;							// -1 = moving down 1 = moving up
 
 event PostBeginPlay()
 {
+	
 	// Set up collision because it doesn't work
 	SetCollisionType(COLLIDE_BlockAll);
 	
@@ -69,7 +79,6 @@ event Tick(float DeltaTime)
 	}
 	else
 	{
-		`log("Door moving");
 		// Door is in motion
 		if (DoorMovingDirection == 1)
 		{
@@ -125,10 +134,38 @@ event Tick(float DeltaTime)
 
 function OpenDoor()
 {
-	if (!DoorMoving && DoorState == D_Closed)
+	if (!DoorMoving && DoorState == D_Closed && !IsLocked)
 	{
 		// Door is closed. Let's change that.
 		DoorMoving = true;			
+	}
+	else if (IsLocked)
+	{
+		// Door is locked, see if the player has the right key
+		switch (KeyRequired)
+		{
+			case K_Red:
+				if (CircleWorldGameInfo(WorldInfo.Game).CirclePawn.HasRedKey)
+				{
+					IsLocked = false;
+					DoorMoving = true;
+				}
+				break;
+			case K_Green:
+				if (CircleWorldGameInfo(WorldInfo.Game).CirclePawn.HasGreenKey)
+				{
+					IsLocked = false;
+					DoorMoving = true;
+				}
+				break;
+			case K_Blue:
+				if (CircleWorldGameInfo(WorldInfo.Game).CirclePawn.HasBlueKey)
+				{
+					IsLocked = false;
+					DoorMoving = true;
+				}
+				break;
+		}
 	}
 }
 

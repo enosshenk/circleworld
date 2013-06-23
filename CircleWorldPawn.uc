@@ -78,6 +78,9 @@ var bool CanShootSecondary;
 var bool PrimaryFireDown;									// True while player holds down primary fire button		
 var bool SecondaryFireDown;		
 var bool PrimarySpreadShot;									// True if we should fire multiple projectiles	
+var bool HasRedKey;											// Keys
+var bool HasBlueKey;
+var bool HasGreenKey;
 
 var CircleWorld_LevelBase LevelBase;						// Ref to the cylinder base
 var array<CircleWorld_LevelBackground> LevelBackgrounds;	// Array of background items to rotate with the cylinder
@@ -167,6 +170,8 @@ event PostBeginPlay()
 		MapCameraMaxTransX_Underground = 256;
 		MapCameraMaxTransZ_Underground = 256;	
 	}
+	
+	CircleWorldGameInfo(WorldInfo.Game).CirclePawn = self;
 	
 	super.PostBeginPlay();
 }

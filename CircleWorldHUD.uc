@@ -62,8 +62,6 @@ simulated function DrawHUD()
 		ProjectLoc = Canvas.Project(CircleWorldPawn.AimPoint);
 		Canvas.SetPos(ProjectLoc.X - 8, ProjectLoc.Y - 8);
 		Canvas.DrawTile(Texture2D'CircleWorld.velocityvector', 16, 16, 0, 0, 16, 16, MakeLinearColor(1,0,0,1));
-//		Canvas.Draw2DLine(ProjectLoc.X - 4, ProjectLoc.X + 4, ProjectLoc.Y, ProjectLoc.Y, MakeColor(255,0,0,255));
-//		Canvas.Draw2DLine(ProjectLoc.X, ProjectLoc.X, ProjectLoc.Y - 4, ProjectLoc.Y + 4, MakeColor(255,0,0,255));
 		
 		foreach Projectiles(PU)
 		{
@@ -129,6 +127,23 @@ simulated function DrawHUD()
 		// Draw the guage bar
 		Canvas.SetPos(Canvas.ClipX / 2 - 100, 34);
 		Canvas.DrawTile(Texture2D'enginevolumetrics.Fogsheet.Materials.T_EV_BlankWhite_01', CircleWorldPawn.GetHealthPercent() * 2, 20, 0, 0, 1, 1, MakeLinearColor(1,0,0,1));
+		
+		// Draw key icons
+		if (CircleWorldPawn.HasRedKey)
+		{
+			Canvas.SetPos(Canvas.ClipX / 2 - 96, 40);
+			Canvas.DrawTile(Texture2D'CircleWorld.Key', 32,32, 0, 0, 32, 32, MakeLinearColor(1,0,0,1));
+		}
+		if (CircleWorldPawn.HasGreenKey)
+		{
+			Canvas.SetPos(Canvas.ClipX / 2 - 16, 40);
+			Canvas.DrawTile(Texture2D'CircleWorld.Key', 32,32, 0, 0, 32, 32, MakeLinearColor(0,1,0,1));
+		}
+		if (CircleWorldPawn.HasBlueKey)
+		{
+			Canvas.SetPos(Canvas.ClipX / 2 + 48, 40);
+			Canvas.DrawTile(Texture2D'CircleWorld.Key', 32,32, 0, 0, 32, 32, MakeLinearColor(0,0,1,1));
+		}
 		}
 	
 	super.DrawHUD();
