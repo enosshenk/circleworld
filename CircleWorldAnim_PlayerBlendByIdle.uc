@@ -22,14 +22,22 @@ simulated event TickAnim(float DeltaSeconds)
     if (Owner == None)
         return;
 
-	if (!Owner.CirclePawnMoving)
+	if (!Owner.CirclePawnMoving && DesiredChild != 0)
+	{
         DesiredChild = 0;
-    else if (Owner.WasUsingBoost)
+	}
+    else if (Owner.WasUsingBoost && DesiredChild != 1)
+	{
         DesiredChild = 1;
-    else if (Owner.CirclePawnJumping && !Owner.WasUsingBoost)
+	}
+    else if (Owner.CirclePawnJumping && !Owner.WasUsingBoost && DesiredChild != 2)
+	{
         DesiredChild = 2;
-    else if (Owner.CirclePawnMoving)
+	}
+    else if (Owner.CirclePawnMoving && DesiredChild != 3)
+	{
         DesiredChild = 3;
+	}
 		
     // If the current child is not the child we want, change the blend.
     if (ActiveChildIndex != DesiredChild)

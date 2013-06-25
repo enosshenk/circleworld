@@ -64,6 +64,7 @@ var bool Sprinting;											// True when the sprint key is held
 var bool LedgeHanging;										// True when we're hanging on a ledge.
 var bool UsingBoost;										// True while we're using our jetpack
 var bool WasUsingBoost;										// True if we used boost any time before we land on solid ground
+var bool BoostLand;											// True if we should play a boost landing animation
 var bool CirclePawnBoostUp;									// Boosting and ascending
 var bool CirclePawnBoostDown;								// Boosting and descending
 var bool BoostRegenerating;									// True if we're regenerating fuel
@@ -290,8 +291,9 @@ event Tick(float DeltaTime)
 		if (CollisionCheckFeet() == false)
 		{
 			`log("Resetting walking collision");
-			// Reset us to walking on solid ground
 			WasUsingBoost = false;
+			BoostLand = true;
+			// Reset us to walking on solid ground
 			Controller.GotoState('PlayerWalking');
 			SetPhysics(PHYS_Walking);
 		}	
@@ -493,6 +495,7 @@ event Landed(vector HitNormal, Actor FloorActor)
 {
 	UsingBoost = false;
 	WasUsingBoost = false;
+	BoostLand = false;
 	Controller.GotoState('PlayerWalking');
 }
 

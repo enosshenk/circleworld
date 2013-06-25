@@ -24,8 +24,10 @@ simulated event TickAnim(float DeltaSeconds)
 
 	if (Owner.CirclePawnJumpUp)
         DesiredChild = 0;
-    else if (Owner.CirclePawnJumpDown)
+    else if (Owner.CirclePawnJumpDown && !Owner.BoostLand)
         DesiredChild = 1;
+	else if (Owner.BoostLand)
+		DesiredChild = 2;
 		
     // If the current child is not the child we want, change the blend.
     if (ActiveChildIndex != DesiredChild)
@@ -37,6 +39,7 @@ defaultproperties
 	CategoryDesc="CircleWorld"
 	Children(0)=(name="Up")
 	Children(1)=(name="Down")
+	Children(2)=(name="Jetpack PreLand")
 	
 	bFixNumChildren = true
     bTickAnimInScript=true
