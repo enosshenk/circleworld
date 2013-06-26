@@ -25,6 +25,8 @@ simulated event TickAnim(float DeltaSeconds)
         DesiredChild = 1;
     else
         DesiredChild = 0;
+	if (Owner.Health <= 0)
+		DesiredChild = 2;
 		
     // If the current child is not the child we want, change the blend.
     if (ActiveChildIndex != DesiredChild)
@@ -36,6 +38,7 @@ defaultproperties
 	CategoryDesc="CircleWorld"
 	Children(0)=(name="Idle")
 	Children(1)=(name="Moving")
+	Children(2)=(name="Dead")
 	
 	bFixNumChildren = true
     bTickAnimInScript=true

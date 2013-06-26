@@ -13,14 +13,14 @@ defaultproperties
 	bCollideWorld=false
 	bBlockActors=false
 	TickGroup=TG_PreAsyncWork
-	MaxPitchLimit=9999999
+	
+	PrePivot = (X=0, Y=0, Z=0)
 
 	DeathParticleSystem = ParticleSystem'CircleWorld.bloodexplosion_ps'		
 	CanDamagePlayer = true	
 	PlayerDamage = 10
 	
 	HurtAnimationName = hurt
-	DeathAnimationName = death
 	AttackAnimationName = attack
 	
 	Begin Object Name=CollisionCylinder

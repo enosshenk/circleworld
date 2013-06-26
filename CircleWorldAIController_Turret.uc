@@ -119,3 +119,8 @@ state Firing
 	}
 }
 
+state Dead
+{
+	Begin:
+}
+

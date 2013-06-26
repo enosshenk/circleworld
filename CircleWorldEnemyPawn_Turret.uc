@@ -58,9 +58,6 @@ simulated event PostInitAnimTree(SkeletalMeshComponent SkelComp)
 	// Fill refs to our skelcontrols for aiming
 	RingAim = SkelControlLookAt(Mesh.FindSkelControl('RingControl'));
 	GunAim = SkelControlLookAt(Mesh.FindSkelControl('GunControl'));
-	
-	// Fill our ref for our one-shot animnode
-	PriorityAnimSlot = AnimNodeSlot(Mesh.FindAnimNode('PrioritySlot'));
 }
 
 event Tick(float DeltaTime)
@@ -106,8 +103,7 @@ function bool Died(Controller Killer, class<DamageType> DamageType, vector HitLo
 		DeathSystem.ParticleSystemComponent.ActivateSystem();
 	}	
 	
-	// Play death animation
-	PriorityAnimSlot.PlayCustomAnimByDuration(DeathAnimationName, 0.4, 0.1, 0.1, false, true);
+	SetHidden(true);
 	
 	return super.Died(Killer, DamageType, HitLocation);
 }
@@ -164,9 +160,6 @@ defaultproperties
 	TurretProjectile = class'CircleWorldItemProjectile_TurretBall'
 
 	DeathParticleSystem = ParticleSystem'CircleWorld.bloodexplosion_ps'		
-	
-	HurtAnimationName = hurt
-	DeathAnimationName = death
 	
 	GroundSpeed = 0
 	ControllerClass = class'CircleWorldAIController_Turret'

@@ -91,6 +91,7 @@ var ParticleSystemComponent GroundEffectsParticleSystem;	// Particle system used
 var PointLightComponent BoostLight;							// Light attached for boost effects
 var CircleWorldItem_Lift RiddenLift;						// Lift we're riding on, if any
 var CircleWorldWeapons CircleWorldWeapons;					// Ref to our weapons component
+var DynamicLightEnvironmentComponent MyLightEnvironment;
 
 var enum EPrimaryUpgrades
 {
@@ -283,7 +284,7 @@ event Tick(float DeltaTime)
 			WasUsingBoost = false;
 			Controller.GotoState('PlayerWalking');
 			SetPhysics(PHYS_Falling);
-			Velocity.Z -= 16;			
+//			Velocity.Z -= 16;			
 		}
 	}
 	else if (WasUsingBoost && !UsingBoost && !IsRidingLift)
@@ -1211,7 +1212,12 @@ defaultproperties
 	CylinderComponent=CollisionCylinder
 	Components.Add(CollisionCylinder)
 
-
+	Begin Object Class=DynamicLightEnvironmentComponent Name=LightEnvironment0
+		bIsCharacterLightEnvironment=TRUE
+	End Object
+	Components.Add(LightEnvironment0)
+	MyLightEnvironment=LightEnvironment0
+	
 	Begin Object Class=SkeletalMeshComponent Name=CirclePawnSkeletalMeshComponent
 		SkeletalMesh = SkeletalMesh'RockCharacter.TheRock'
 		AnimTreeTemplate=AnimTree'RockCharacter.Rock_Tree'
@@ -1227,6 +1233,7 @@ defaultproperties
 		bIgnoreControllersWhenNotRendered=TRUE
 		bUpdateSkelWhenNotRendered=FALSE
 		bHasPhysicsAssetInstance=true
+		LightEnvironment=LightEnvironment0
 	End Object
 	Mesh=CirclePawnSkeletalMeshComponent
 	Components.Add(CirclePawnSkeletalMeshComponent) 

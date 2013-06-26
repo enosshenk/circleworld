@@ -16,7 +16,6 @@ var float PlayerDamage;								// Amount of damage to cause to the player on tou
 
 var ParticleSystem DeathParticleSystem;				// PS to use when killed
 var name HurtAnimationName;							// Animation Sequence to play when hurt
-var name DeathAnimationName;						// AnimSequence to play when killed
 var name AttackAnimationName;						// AnimSequence to play when we touch the player and do damage
 var AnimNodeSlot PriorityAnimSlot;					// Ref to our priority anim slot
 
@@ -206,9 +205,6 @@ function bool Died(Controller Killer, class<DamageType> DamageType, vector HitLo
 		DeathSystem.ParticleSystemComponent.SetTemplate(DeathParticleSystem);
 		DeathSystem.ParticleSystemComponent.ActivateSystem();
 	}	
-	
-	// Play death animation
-	PriorityAnimSlot.PlayCustomAnimByDuration(DeathAnimationName, 0.4, 0.1, 0.1, false, true);
 	
 	return super.Died(Killer, DamageType, HitLocation);
 }
