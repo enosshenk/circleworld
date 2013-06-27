@@ -170,7 +170,14 @@ event Tick(float DeltaTime)
 
 	// Set new rotation based on our polar angular value
 	NewRotation = Rotation;
-	NewRotation.Pitch = (LocationPolar.Y - 16384) * -1;		// Subtract 16384 because UnrealEngine sets 0 rotation as 3 oclock position
+	if (EnemyPawnDirection == 1)
+	{
+		NewRotation.Pitch = (LocationPolar.Y - 16384) * -1;
+	}
+	else
+	{
+		NewRotation.Pitch = LocationPolar.Y - 16384;
+	}
 	SetRotation(NewRotation);
 	
 	super.Tick(DeltaTime);
