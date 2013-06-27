@@ -74,7 +74,7 @@ simulated function DrawHUD()
 		{
 			ProjectLoc = Canvas.Project(EP.Location);
 			Canvas.SetPos(ProjectLoc.X, ProjectLoc.Y);
-			Canvas.DrawText("PawnVelocity: " $EP.EnemyPawnVelocity$ " -- Obstructed: " $EP.ObstructedForward$ " -- HoleForward: " $EP.HoleForward$ " -- Pitch: " $EP.Rotation.Pitch$ " -- Yaw: " $EP.Rotation.Yaw$ " -- EnemyPawnMovingRight: " $EP.EnemyPawnMovingRight);
+			Canvas.DrawText("PawnVelocity: " $EP.EnemyPawnVelocity$ " -- Obstructed: " $EP.ObstructedForward$ " -- HoleForward: " $EP.HoleForward$ " -- Pitch: " $EP.Rotation.Pitch$ " -- Yaw: " $EP.Rotation.Yaw$ " -- EnemyPawnDirection: " $EP.EnemyPawnDirection);
 		}		
 
 		foreach Turrets(T)

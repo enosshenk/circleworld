@@ -84,7 +84,7 @@ function InitProjectile(rotator NewRotation, float AddSpeed)
 
 event Tick(float DeltaTime)
 {
-	local vector NewLocation;
+	local vector NewLocation, TempVector;
 	local rotator NewRotation;
 	
 	if (ProjectileLifeElapsed >= ProjectileLife)
@@ -116,6 +116,15 @@ event Tick(float DeltaTime)
 		NewRotation = Rotation;
 		NewRotation.Pitch = (LocationPolar.Y + ProjectileRotation.Pitch) - 16384;		// Subtract 16384 because UnrealEngine sets 0 rotation as 3 oclock position
 		SetRotation(NewRotation);
+		
+		// Hacky collision check
+		TempVector = Location;
+		TempVector += vect(32,0,0) >> NewRotation;
+		if (!FastTrace(TempVector, Location))
+		{
+			// FastTrace hit world geometry. Explode.
+			Explode(Location);
+		}
 	}
 	
 	ProjectileLifeElapsed += DeltaTime;
@@ -135,7 +144,7 @@ event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vect
 
 function bool CanExplode(Actor Other)
 {
-	if (CircleWorld_LevelBase(Other) != none || CircleWorldItem_Lift(Other) != none || CircleWorldItem_Door(Other) != none || Pawn(Other) != none)
+	if (CircleWorld_LevelBase(Other) != none || CircleWorldItem_Lift(Other) != none || CircleWorldItem_Door(Other) != none || Pawn(Other) != none || CircleWorldEnemyPawn(Other) != none)
 		return true;
 	else
 		return false;

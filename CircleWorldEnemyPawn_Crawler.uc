@@ -4,17 +4,17 @@ class CircleWorldEnemyPawn_Crawler extends CircleWorldEnemyPawn
 
 defaultproperties
 {
-	GroundSpeed = 100
-	ControllerClass = class'CircleWorldAIController_Crawler'
+	Health = 50
+	HealthMax = 50
+	EnemyPawnGroundSpeed = 100
 	Physics=PHYS_Interpolating
-	WalkingPhysics=PHYS_Interpolating
 	bCollideActors=true
 	CollisionType=COLLIDE_TouchAll
 	bCollideWorld=false
 	bBlockActors=false
 	TickGroup=TG_PreAsyncWork
 	
-	PrePivot = (X=0, Y=0, Z=0)
+	PrePivot = (X=0, Y=0, Z=-64)
 
 	DeathParticleSystem = ParticleSystem'CircleWorld.bloodexplosion_ps'		
 	CanDamagePlayer = true	
@@ -38,10 +38,10 @@ defaultproperties
 
 	Begin Object Class=SkeletalMeshComponent Name=CirclePawnSkeletalMeshComponent
 		
-		SkeletalMesh = SkeletalMesh'cylmaster.Enemies.CRAWLER'
-		AnimTreeTemplate = AnimTree'cylmaster.Enemies.crawler_tree'
-		AnimSets(0) = AnimSet'cylmaster.Enemies.crawler-anim'
-		PhysicsAsset = PhysicsAsset'cylmaster.Enemies.CRAWLER_Physics'
+		SkeletalMesh = SkeletalMesh'Rock.snail'
+		AnimTreeTemplate = AnimTree'Rock.snail_tree'
+		AnimSets(0) = AnimSet'Rock.snail_anim'
+		PhysicsAsset = PhysicsAsset'Rock.snail_Physics'
 		
 		CastShadow=true
 		bCastDynamicShadow=true

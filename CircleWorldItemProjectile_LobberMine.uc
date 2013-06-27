@@ -24,7 +24,7 @@ event Tick(float DeltaTime)
 
 event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vector HitNormal )
 {
-	if (Pawn(Other) != none && CircleWorldPawn(Other) == none)
+	if ((Pawn(Other) != none || CircleWorldEnemyPawn(Other) != none) && CircleWorldPawn(Other) == none)
 	{
 		// Shot landed on a pawn that isn't the player. Deal damage and don't spawn the mine.
 		Other.TakeDamage(ProjectileDamage, Pawn(Other).Controller, HitLocation, vect(0,0,0), ProjectileDamageType);
