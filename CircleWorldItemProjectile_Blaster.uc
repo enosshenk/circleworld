@@ -13,7 +13,7 @@ event PostBeginPlay()
 
 event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vector HitNormal )
 {
-	if (IsArmed && (Pawn(Other) != none || CircleWorldEnemyPawn(Other) != none))
+	if (IsArmed && (Pawn(Other) != none || CircleWorldEnemyPawn(Other) != none || CircleWorldEnemyPawn_Turret(Other) != none || CircleWorldEnemyPawn_SimpleTurret(Other) != none))
 	{
 		// We impacted another pawn directly. Do full damage then explode.
 		Other.TakeDamage(ProjectileDamage, Pawn(Other).Controller, HitLocation, vect(0,0,0), ProjectileDamageType);
@@ -38,7 +38,7 @@ defaultproperties
 	ProjectileLife = 10
 	ProjectileSpeed = 300
 	ProjectileDamage = 15
-	ProjectileDamageRadius = 8
+	ProjectileDamageRadius = 256
 	ProjectileDamageMomentum = 10
 	ProjectileDamageType = class'DamageType'
 	

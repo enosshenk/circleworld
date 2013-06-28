@@ -250,6 +250,33 @@ event TakeDamage(int Damage, Controller InstigatedBy, vector HitLocation, vector
 	super.TakeDamage(Damage, InstigatedBy, HitLocation, Momentum, DamageType, HitInfo, DamageCauser);
 }
 
+simulated function TakeRadiusDamage
+(
+	Controller			InstigatedBy,
+	float				BaseDamage,
+	float				DamageRadius,
+	class<DamageType>	DamageType,
+	float				Momentum,
+	vector				HurtOrigin,
+	bool				bFullDamage,
+	Actor               DamageCauser,
+	optional float      DamageFalloffExponent=1.f
+)
+{
+	Health -= BaseDamage;
+	if ( Health <= 0 )
+	{
+		Died(InstigatedBy, DamageType, Location);
+	}
+	else
+	{
+		// Play a hurt animation
+		PriorityAnimSlot.PlayCustomAnimByDuration(HurtAnimationName, 0.4, 0.1, 0.1, false, true);
+	}
+	
+	super.TakeRadiusDamage(InstigatedBy, BaseDamage, DamageRadius, DamageType, Momentum, HurtOrigin, bFullDamage, DamageCauser, DamageFalloffExponent);
+}
+
 function Died(Controller Killer, class<DamageType> DamageType, vector HitLocation)
 {
 	local CircleWorldItem_Emitter DeathSystem;

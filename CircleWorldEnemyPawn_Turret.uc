@@ -110,10 +110,45 @@ function bool Died(Controller Killer, class<DamageType> DamageType, vector HitLo
 
 event TakeDamage(int Damage, Controller InstigatedBy, vector HitLocation, vector Momentum, class<DamageType> DamageType, optional TraceHitInfo HitInfo, optional Actor DamageCauser)
 {
-	// Play a hurt animation
-	PriorityAnimSlot.PlayCustomAnimByDuration(HurtAnimationName, 0.4, 0.1, 0.1, false, true);
+	Health -= Damage;
+	if (HitLocation == vect(0,0,0))
+	{
+		HitLocation = Location;
+	}
+
+	if ( Health <= 0 )
+	{
+		Died(InstigatedBy, DamageType, HitLocation);
+	}
 	
 	super.TakeDamage(Damage, InstigatedBy, HitLocation, Momentum, DamageType, HitInfo, DamageCauser);
+}
+
+simulated function TakeRadiusDamage
+(
+	Controller			InstigatedBy,
+	float				BaseDamage,
+	float				DamageRadius,
+	class<DamageType>	DamageType,
+	float				Momentum,
+	vector				HurtOrigin,
+	bool				bFullDamage,
+	Actor               DamageCauser,
+	optional float      DamageFalloffExponent=1.f
+)
+{
+	Health -= BaseDamage;
+	if ( Health <= 0 )
+	{
+		Died(InstigatedBy, DamageType, Location);
+	}
+	else
+	{
+		// Play a hurt animation
+		PriorityAnimSlot.PlayCustomAnimByDuration(HurtAnimationName, 0.4, 0.1, 0.1, false, true);
+	}
+	
+	super.TakeRadiusDamage(InstigatedBy, BaseDamage, DamageRadius, DamageType, Momentum, HurtOrigin, bFullDamage, DamageCauser, DamageFalloffExponent);
 }
 
 function ShootAtPlayer()
@@ -159,7 +194,7 @@ defaultproperties
 	TurretSkill = 0.75
 	TurretProjectile = class'CircleWorldItemProjectile_TurretBall'
 
-	DeathParticleSystem = ParticleSystem'CircleWorld.bloodexplosion_ps'		
+	DeathParticleSystem = ParticleSystem'CircleTurret.explosion_ps'
 	
 	GroundSpeed = 0
 	ControllerClass = class'CircleWorldAIController_Turret'

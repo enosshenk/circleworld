@@ -13,7 +13,7 @@ event PostBeginPlay()
 
 event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vector HitNormal )
 {
-	if (IsArmed)
+	if (IsArmed && CircleWorldEnemyPawn_Turret(Other) == none && CircleWorldEnemyPawn_SimpleTurret(Other) == none)
 	{
 		`log("Projectile " $self$ " impacted " $Other);
 		Explode(Location);
