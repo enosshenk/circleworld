@@ -168,12 +168,19 @@ exec function CircleStopJump()
 	}
 }
 
-function BoostLiftoff()
+exec function BoostLiftoff()
 {
 	GotoState('PlayerFlying');
 	CircleWorldPawn(Pawn).UsingBoost = true;
 	CircleWorldPawn(Pawn).WasUsingBoost = true;
 	CircleWorldPawn(Pawn).BoostParticleSystem.SetActive(true);	
+}
+
+exec function BoostStop()
+{
+	GotoState('PlayerWalking');
+	CircleWorldPawn(Pawn).UsingBoost = false;
+	CircleWorldPawn(Pawn).BoostParticleSystem.SetActive(false);	
 }
 
 exec function AddPrimaryUpgrade(int NewUpgrade)
