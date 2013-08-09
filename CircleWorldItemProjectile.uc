@@ -187,13 +187,14 @@ defaultproperties
 	ProjectileUseGravity = false
 	ProjectileGravityFactor = 1
 	ProjectileLife = 10
-	ProjectileSpeed = 100
+	ProjectileSpeed = 800
 	ProjectileDamage = 50
 	ProjectileDamageRadius = 1
 	ProjectileDamageMomentum = 1
 	ProjectileDamageType = class'DamageType'
-	ProjectileParticleSystem=ParticleSystem'CircleWorld.projectiletest_ps'
-	ProjectileExplosionSystem=ParticleSystem'CircleWorld.projectiletextexplosion_ps'
+	
+	ProjectileParticleSystem=ParticleSystem'TheCircleWorld.FX.laser2'
+	ProjectileExplosionSystem=ParticleSystem'TheCircleWorld.FX.lobber_exp1'
 	
 	TickGroup=TG_PreAsyncWork
 	bNoDelete = false

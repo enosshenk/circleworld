@@ -16,16 +16,16 @@ defaultproperties
 	
 	PrePivot = (X=0, Y=0, Z=-64)
 
-	DeathParticleSystem = ParticleSystem'CircleWorld.bloodexplosion_ps'		
-	CanDamagePlayer = true	
+	DeathParticleSystem = ParticleSystem'TheCircleWorld.FX.gore1'
+	CanDamagePlayer = true 
 	PlayerDamage = 10
-	
+
 	HurtAnimationName = hurt
 	AttackAnimationName = attack
-	
+
 	Begin Object Name=CollisionCylinder
-		CollisionRadius=74.000000
-		CollisionHeight=48.000000
+		CollisionRadius=17.000000
+		CollisionHeight=17.000000
 		BlockNonZeroExtent=true
 		BlockZeroExtent=true
 		BlockActors=true
@@ -36,13 +36,12 @@ defaultproperties
 	Components.Add(CollisionCylinder)
 
 
-	Begin Object Class=SkeletalMeshComponent Name=CirclePawnSkeletalMeshComponent
-		
-		SkeletalMesh = SkeletalMesh'Rock.snail'
-		AnimTreeTemplate = AnimTree'Rock.snail_tree'
-		AnimSets(0) = AnimSet'Rock.snail_anim'
-		PhysicsAsset = PhysicsAsset'Rock.snail_Physics'
-		
+
+	Begin Object Class=SkeletalMeshComponent Name=CirclePawnSkeletalMeshComponent		
+		SkeletalMesh = SkeletalMesh'TheCircleWorld.Meshes.blobby1'
+		AnimTreeTemplate = AnimTree'TheCircleWorld.AnimTree.blobby_tree'
+		AnimSets(0) = AnimSet'TheCircleWorld.AnimSet.blobby_anim'
+		PhysicsAsset = PhysicsAsset'TheCircleWorld.Meshes.blobby1_Physics'		
 		CastShadow=true
 		bCastDynamicShadow=true
 		bOwnerNoSee=false

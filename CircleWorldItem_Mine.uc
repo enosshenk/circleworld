@@ -126,15 +126,15 @@ event Tick(float DeltaTime)
 defaultproperties
 {
 	MineTimeout = 120
-	MineDamage = 30
-	MineDamageRadius = 256
+	MineDamage = 300
+	MineDamageRadius = 2000
 	MineDamageType = class'DamageType'
-	
-	
-	ExplosionSystem=ParticleSystem'CircleTurret.explosion_ps'
-	
+
+
+	ExplosionSystem=ParticleSystem'TheCircleWorld.FX.nuke'
+
 	BaseLightClass = class'CircleWorldProjectileLight'
-	ExplosionLightClass = class'CircleWorldExplosionLight'	
+	ExplosionLightClass = class'CircleWorldExplosionLight'  
 	
 	Begin Object Class=CylinderComponent Name=CollisionCylinder
 		CollisionRadius=64.000000
@@ -145,7 +145,7 @@ defaultproperties
 	Components.Add(CollisionCylinder)
 	
 	Begin Object Class=ParticleSystemComponent Name=ParticleSystemComponent0
-		Template=ParticleSystem'CircleWorld.fireball_ps'
+		Template=ParticleSystem'TheCircleWorld.FX.laser2'
 	End Object
 	ParticleSystemComponent=ParticleSystemComponent0
 	Components.Add(ParticleSystemComponent0)

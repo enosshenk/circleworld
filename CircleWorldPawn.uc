@@ -1158,32 +1158,33 @@ simulated singular event Rotator GetBaseAimRotation()
 	
 defaultproperties
 {
-	Health = 100
-	HealthMax = 100
+	Health = 1000
+	HealthMax = 1000
 	
-	GroundSpeed = 700
-	AirSpeed = 1200
-	MaxJumpHeight = 1100
-	JumpZ = 0900.000000
-	BoostZ = 30
-	BoostX = 10
-	AirControl = 0.03
-	MaxFallSpeed = 1024
-	JumpMomentum = 0.9
-	MomentumFade = 0.2
-	JumpLaunchTime = 0.4
+	GroundSpeed = 1500
+	AirSpeed = 2100
+	MaxJumpHeight = 3500
+	JumpZ = 2000
+	BoostZ = 6000
+	BoostX = 50
+	AirControl = 0.1
 	
-	BoostFuel = 50
-	BoostFuelMax = 50
-	BoostConsumeRate = 0.05
+	MaxFallSpeed = 2100
+	JumpMomentum =  .3
+	MomentumFade = .5
+	JumpLaunchTime = .2
+
+	BoostFuel = 200
+	BoostFuelMax = 999
+	BoostConsumeRate = 0.1
 	BoostRegenRate = 0.1
 	BoostRegenTime = 1
-	BoostUpgradeLevel = 1
-	
-	CameraPullback = 2048
-	CameraAdjustSpeed = 0.05
-	CameraTranslateDistance = 200
-	CameraRotateFactor = 1
+	BoostUpgradeLevel = 8
+
+	CameraPullback = 2000
+	CameraAdjustSpeed = 0.02
+	CameraTranslateDistance = 400
+	CameraRotateFactor = .01
 	CameraFOVFactor = 10
 	
 	CanShootPrimary = true
@@ -1201,8 +1202,8 @@ defaultproperties
 	TickGroup=TG_PreAsyncWork
 	
 	Begin Object Name=CollisionCylinder
-		CollisionRadius=64.000000
-		CollisionHeight=128.000000
+		CollisionRadius=90.000000
+		CollisionHeight=80.000000
 		BlockNonZeroExtent=true
 		BlockZeroExtent=true
 		BlockActors=true
@@ -1219,10 +1220,11 @@ defaultproperties
 	MyLightEnvironment=LightEnvironment0
 	
 	Begin Object Class=SkeletalMeshComponent Name=CirclePawnSkeletalMeshComponent
-		SkeletalMesh = SkeletalMesh'RockCharacter.TheRock'
-		AnimTreeTemplate=AnimTree'RockCharacter.Rock_Tree'
-		AnimSets(0)=AnimSet'RockCharacter.Rock_Anim'
-		PhysicsAsset = PhysicsAsset'RockCharacter.therock_Physics'		
+		SkeletalMesh = SkeletalMesh'TheCircleWorld.Player.Stanley_ref'
+		AnimTreeTemplate=AnimTree'TheCircleWorld.AnimTree.Player1_tree'
+		PhysicsAsset = PhysicsAsset'TheCircleWorld.Player.Stanley_ref_Physics'
+		AnimSets(0)=AnimSet'TheCircleWorld.AnimSet.Player1_anim'
+		PhysicsAsset = PhysicsAsset'CircleWorldContent.Player.Player1_Physics'	
 		CastShadow=true
 		bCastDynamicShadow=true
 		bOwnerNoSee=false
@@ -1239,13 +1241,13 @@ defaultproperties
 	Components.Add(CirclePawnSkeletalMeshComponent) 
 	
 	Begin Object class=ParticleSystemComponent name=ParticleSystemComponent0
-		Template=ParticleSystem'CircleWorld.Boost_PS'
+		Template=ParticleSystem'TheCircleWorld.FX.jetfire1'
 		bAutoActivate=false
 	End Object
 	BoostParticleSystem = ParticleSystemComponent0
 	
 	Begin Object class=ParticleSystemComponent name=ParticleSystemComponent1
-		Template=ParticleSystem'CircleWorld.GroundEffects_PS'
+		Template=ParticleSystem'TheCircleWorld.FX.groundfx'
 		bAutoActivate=false
 	End Object
 	GroundEffectsParticleSystem = ParticleSystemComponent1
@@ -1254,9 +1256,9 @@ defaultproperties
 		CastShadows = true
 		CastStaticShadows = false
 		CastDynamicShadows = true
-		Radius = 512
-		Brightness=1.0
-		LightColor=(R=255,G=255,B=255)
+		Radius = 900
+		Brightness=3
+		LightColor=(R=255,G=88,B=0)
 	End Object
 	BoostLight = PointLightComponent0
 	

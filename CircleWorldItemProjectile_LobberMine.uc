@@ -43,16 +43,16 @@ event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vect
 defaultproperties
 {
 	ProjectileUseGravity = true
-	ProjectileGravityFactor = 2
-	ProjectileLife = 10
-	ProjectileSpeed = 150
-	ProjectileDamage = 20
-	ProjectileDamageRadius = 256
+	ProjectileGravityFactor = 3
+	ProjectileLife = 12
+	ProjectileSpeed = 300
+	ProjectileDamage = 99
+	ProjectileDamageRadius = 300
 	ProjectileDamageMomentum = 10
 	ProjectileDamageType = class'DamageType'
-	ProjectileParticleSystem=ParticleSystem'CircleWorld.fireball_ps'
-	ProjectileExplosionSystem=ParticleSystem'CircleTurret.explosion_ps'
-	
-	FlightLightClass = class'CircleWorldProjectileLight'
+	ProjectileParticleSystem=ParticleSystem'TheCircleWorld.FX.fireball'
+	ProjectileExplosionSystem=ParticleSystem'TheCircleWorld.FX.lobber_exp1'
+
+	//FlightLightClass = class'CircleWorldProjectileLight'
 	ExplosionLightClass = class'CircleWorldExplosionLight'
 }

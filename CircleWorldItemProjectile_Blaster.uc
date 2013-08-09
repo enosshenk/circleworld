@@ -33,18 +33,19 @@ function SetArm()
 
 defaultproperties
 {
-	ProjectileUseGravity = false
-	ProjectileGravityFactor = 2
-	ProjectileLife = 10
-	ProjectileSpeed = 300
+	ProjectileUseGravity = true
+	ProjectileGravityFactor = 0
+	ProjectileLife = 8
+	ProjectileSpeed = 800
 	ProjectileDamage = 15
-	ProjectileDamageRadius = 256
+	ProjectileDamageRadius = 196
 	ProjectileDamageMomentum = 10
 	ProjectileDamageType = class'DamageType'
-	
-	ProjectileParticleSystem=ParticleSystem'CircleTurret.fireball_ps'
-	ProjectileExplosionSystem=ParticleSystem'CircleTurret.explosion_ps'
-	
-	FlightLightClass = class'CircleWorldProjectileLight'
+
+	ProjectileParticleSystem=ParticleSystem'TheCircleWorld.FX.laser1'
+	ProjectileExplosionSystem=ParticleSystem'TheCircleWorld.FX.blaster_exp1'
+
+
+	// FlightLightClass = class'CircleWorldProjectileLight'
 	ExplosionLightClass = class'CircleWorldExplosionLight'
 }
