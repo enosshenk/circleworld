@@ -14,7 +14,7 @@ defaultproperties
 	bBlockActors=false
 	TickGroup=TG_PreAsyncWork
 	
-	PrePivot = (X=0, Y=0, Z=-64)
+	PrePivot = (X=0, Y=0, Z=0)
 
 	DeathParticleSystem = ParticleSystem'TheCircleWorld.FX.gore1'
 	CanDamagePlayer = true 
@@ -24,8 +24,8 @@ defaultproperties
 	AttackAnimationName = attack
 
 	Begin Object Name=CollisionCylinder
-		CollisionRadius=17.000000
-		CollisionHeight=17.000000
+		CollisionRadius=128.000000
+		CollisionHeight=64.000000
 		BlockNonZeroExtent=true
 		BlockZeroExtent=true
 		BlockActors=true

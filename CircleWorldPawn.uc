@@ -202,41 +202,15 @@ event Tick(float DeltaTime)
 			SetTimer(0.1, false, 'DisableRidingOnLift');
 	}
 	
-	// Find out if we're underground
-	if (Location.Z >= LevelBase.WorldRadius)
-	{
-		// We are higher than surface
-		IsUnderground = false;
-	}
-	else
-	{
-		// Below surface
-		IsUnderground = true;
-	}
+	// Set underground flag
+	IsUnderground = CheckUnderground();
 
 	// Set our new velocity based on the acceleration given by PlayerController
-	if (Physics == PHYS_Falling)
-	{
-		CircleForce = CircleAcceleration;
-		CircleForce += LastVelocity * JumpMomentum;
-		NewVelocity = (LastVelocity * MomentumFade + CircleForce);
-		CircleVelocity = ClampLength(NewVelocity, GroundSpeed);
-		CircleVelocityPreAdjust = CircleVelocity;
-	}
-	else if (Physics == PHYS_Flying)
-	{
-		CircleForce = CircleAcceleration;
-		NewVelocity = (LastVelocity * MomentumFade + CircleForce);
-		CircleVelocity = ClampLength(NewVelocity, AirSpeed);
-		CircleVelocityPreAdjust = CircleVelocity;		
-	}
-	else
-	{
-		CircleForce = CircleAcceleration;
-		NewVelocity = (LastVelocity * MomentumFade + CircleForce);
-		CircleVelocity = ClampLength(NewVelocity, GroundSpeed);
-		CircleVelocityPreAdjust = CircleVelocity;
-	}
+		
+	NewVelocity += (CircleVelocity * DeltaTime) + CircleAcceleration;
+	CircleVelocity = ClampLength(NewVelocity, GroundSpeed);
+	CircleVelocityPreAdjust = CircleVelocity;	
+
 
 	if (IsRidingLift && RiddenLift.CircleLiftType == CW_Horizontal)
 	{
@@ -270,9 +244,18 @@ event Tick(float DeltaTime)
 	if (CollisionCheckForward() == true)
 	{
 		// Collision trace says we're hitting a wall. Stop our motion.
-		CircleVelocity.X = 0;
-		LevelBase.PawnVelocity.X = 0;
-		LastVelocity.X = 0;
+		if (CircleVelocity.X > 0)
+		{
+			CircleVelocity.X = -10;
+			LevelBase.PawnVelocity.X = -10;
+			LastVelocity.X = -10;
+		}
+		else
+		{
+			CircleVelocity.X = 10;
+			LevelBase.PawnVelocity.X = 10;
+			LastVelocity.X = 10;		
+		}
 	}
 
 	if (!Sprinting && !CirclePawnJumping && !UsingBoost && !WasUsingBoost && !IsRidingLift)
@@ -635,6 +618,19 @@ function UpgradeBoost()
 function float GetHealthPercent()
 {
 	return (Float(Health) / Float(HealthMax)) * 100;
+}
+
+function bool CheckUnderground()
+{
+	// Find out if we're underground
+	if (Location.Z >= LevelBase.WorldRadius)
+	{
+		return false;
+	}
+	else
+	{
+		return true;
+	}
 }
 
 //

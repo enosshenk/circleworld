@@ -203,8 +203,8 @@ defaultproperties
 	CollisionType = COLLIDE_TouchAll
 	
 	Begin Object class=CylinderComponent Name=CollisionCylinder
-		CollisionRadius=+016.000000
-		CollisionHeight=+032.000000
+		CollisionRadius=+048.000000
+		CollisionHeight=+064.000000
 		HiddenGame=false
 		bDrawNonColliding=true
 	End Object
