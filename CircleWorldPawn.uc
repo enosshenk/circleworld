@@ -206,11 +206,19 @@ event Tick(float DeltaTime)
 	IsUnderground = CheckUnderground();
 
 	// Set our new velocity based on the acceleration given by PlayerController
-		
-	NewVelocity += (CircleVelocity * DeltaTime) + CircleAcceleration;
-	CircleVelocity = ClampLength(NewVelocity, GroundSpeed);
-	CircleVelocityPreAdjust = CircleVelocity;	
-
+	if (Physics == PHYS_Falling || Physics == PHYS_Flying)
+	{
+		NewVelocity += (LastVelocity * 0.95) + (CircleAcceleration * AirControl);
+		CircleVelocity = ClampLength(NewVelocity, AirSpeed);
+		CircleVelocityPreAdjust = CircleVelocity;	
+	
+	}
+	else
+	{
+		NewVelocity += (LastVelocity * 0.5) + CircleAcceleration;
+		CircleVelocity = ClampLength(NewVelocity, GroundSpeed);
+		CircleVelocityPreAdjust = CircleVelocity;	
+	}
 
 	if (IsRidingLift && RiddenLift.CircleLiftType == CW_Horizontal)
 	{
@@ -287,7 +295,7 @@ event Tick(float DeltaTime)
 	if (WasUsingBoost)
 		VerticalSensitivity = 150;
 	else
-		VerticalSensitivity = 10;
+		VerticalSensitivity = 100;
 	
 	// Set some flags
 	if (Velocity.Z > VerticalSensitivity)
@@ -1178,7 +1186,7 @@ defaultproperties
 	BoostUpgradeLevel = 8
 
 	CameraPullback = 2000
-	CameraAdjustSpeed = 0.02
+	CameraAdjustSpeed = 0.01
 	CameraTranslateDistance = 400
 	CameraRotateFactor = .01
 	CameraFOVFactor = 10
