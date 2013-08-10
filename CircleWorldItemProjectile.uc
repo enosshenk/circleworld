@@ -125,6 +125,9 @@ event Tick(float DeltaTime)
 			// FastTrace hit world geometry. Explode.
 			Explode(Location);
 		}
+		
+		// Set real in-engine velocity to hopefully improve collision
+		Velocity = ProjectileVelocity;
 	}
 	
 	ProjectileLifeElapsed += DeltaTime;

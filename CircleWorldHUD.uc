@@ -2,9 +2,9 @@ class CircleWorldHUD extends HUD;
 
 var CircleWorldPawn CircleWorldPawn;
 var CircleWorld_LevelBase LevelBase;
-var array<CircleWorldItemProjectile> Projectiles;
-var array<CircleWorldEnemyPawn> Enemies;
 var array<CircleWorldEnemyPawn_Turret> Turrets;
+var array<CircleWorldEnemyPawn> Enemies;
+var CircleWorldPawn_Elephant Elephant;
 var Vector2D PlayerPos;
 
 simulated function DrawHUD()
@@ -13,9 +13,9 @@ simulated function DrawHUD()
 	local CircleWorldPawn P;
 	local vector ProjectLoc;
 	local rotator MapRot;
-	local CircleWorldItemProjectile PU;
 	local CircleWorldEnemyPawn EP;
 	local CircleWorldEnemyPawn_Turret T;
+	local CircleWorldPawn_Elephant E;
 	local int i;
 	
 	foreach WorldInfo.AllActors(class'CircleWorld_LevelBase', C)
@@ -23,15 +23,14 @@ simulated function DrawHUD()
 		LevelBase = C;
 	}
 	
+	foreach WorldInfo.AllActors(class'CircleWorldPawn_Elephant', E)
+	{
+		Elephant = E;
+	}
+	
 	foreach WorldInfo.AllActors(class'CircleWorldPawn', P)
 	{
 		CircleWorldPawn = P;
-	}
-	
-	foreach WorldInfo.AllActors(class'CircleWorldItemProjectile', PU)
-	{
-		Projectiles[i] = PU;
-		i += 1;
 	}
 	
 	i = 0;
@@ -63,13 +62,6 @@ simulated function DrawHUD()
 		Canvas.SetPos(ProjectLoc.X - 8, ProjectLoc.Y - 8);
 		Canvas.DrawTile(Texture2D'CircleWorld.velocityvector', 16, 16, 0, 0, 16, 16, MakeLinearColor(1,0,0,1));
 		
-		foreach Projectiles(PU)
-		{
-			ProjectLoc = Canvas.Project(PU.Location);
-			Canvas.SetPos(ProjectLoc.X, ProjectLoc.Y);
-			Canvas.DrawText("ProjectileVelocity: " $PU.ProjectileVelocity$ " -- Real Loc: " $PU.Location);
-		}
-		
 		foreach Enemies(EP)
 		{
 			ProjectLoc = Canvas.Project(EP.Location);
@@ -83,6 +75,10 @@ simulated function DrawHUD()
 			Canvas.SetPos(ProjectLoc.X, ProjectLoc.Y);
 			Canvas.DrawText("State: " $T.Controller.GetStateName()$ " -- Target: " $T.PlayerTarget$ " -- IsAiming: " $T.IsAiming);
 		}	
+		
+		ProjectLoc = Canvas.Project(Elephant.Location);
+		Canvas.SetPos(ProjectLoc.X, ProjectLoc.Y);
+		Canvas.DrawText("Polar Y: " $Elephant.LocationPolar.Y);		
 		
 	}	
 	else

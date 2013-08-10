@@ -92,6 +92,7 @@ var PointLightComponent BoostLight;							// Light attached for boost effects
 var CircleWorldItem_Lift RiddenLift;						// Lift we're riding on, if any
 var CircleWorldWeapons CircleWorldWeapons;					// Ref to our weapons component
 var DynamicLightEnvironmentComponent MyLightEnvironment;
+var CircleWorldPawn_Elephant Elephant;						// Ref to the elephant
 
 var enum EPrimaryUpgrades
 {
@@ -109,6 +110,7 @@ event PostBeginPlay()
 {
 	local CircleWorld_LevelBase C;
 	local CircleWorld_LevelBackground B;
+	local vector ElephantSpawn;
 	
 	// Get our reference to the level cylinder
 	foreach WorldInfo.AllActors(class'CircleWorld_LevelBase', C)
@@ -127,6 +129,11 @@ event PostBeginPlay()
 	AttachComponent(GroundEffectsParticleSystem);
 	Mesh.AttachComponentToSocket(BoostLight, 'BoostSocket');
 	BoostLight.SetEnabled(false);
+	
+	// Spawn the elephant
+	ElephantSpawn = Location - vect(0,160,0);
+	Elephant = Spawn(class'CircleWorldPawn_Elephant', self,, ElephantSpawn, Rotation,, true);
+	Elephant.PlayerPawn = self;
 	
 	// Collect camera settings from MapInfo, if any
 	if (CircleWorldMapInfo(WorldInfo.GetMapInfo()) != none)
@@ -374,7 +381,7 @@ event Tick(float DeltaTime)
 			if (!IsTimerActive('SetSkid'))
 				SetTimer(0.1, false, 'SetSkid');
 			SetTimer(0.45, false, 'ClearSkid');
-			PriorityAnimSlot.PlayCustomAnimByDuration('turn_run', 0.45, 0.1, 0.1, false, true);	
+			PriorityAnimSlot.PlayCustomAnim('turn_run', 1, 0.1, 0.1, false, true);	
 		}
 		
 		if (Rotation.Yaw == 0 && !IsTurning && !IsSkidding)
@@ -385,7 +392,7 @@ event Tick(float DeltaTime)
 				// We have reversed facing since last frame. Play our turn in place animation
 				IsTurning = true;
 				SetTimer(0.45, false, 'ResetTurning');
-				PriorityAnimSlot.PlayCustomAnimByDuration('turn_idle', 0.45, 0.1, 0.1, false, true);
+				PriorityAnimSlot.PlayCustomAnim('turn_idle', 1, 0.1, 0.1, false, true);
 			}
 			LastRot = 0;			
 		}
@@ -397,7 +404,7 @@ event Tick(float DeltaTime)
 				// We have reversed facing since last frame.
 				IsTurning = true;
 				SetTimer(0.45, false, 'ResetTurning');
-				PriorityAnimSlot.PlayCustomAnimByDuration('turn_idle', 0.45, 0.1, 0.1, false, true);			
+				PriorityAnimSlot.PlayCustomAnim('turn_idle', 1, 0.1, 0.1, false, true);			
 			}
 			LastRot = 32768;
 		}
@@ -744,21 +751,37 @@ simulated function StopFire(byte FireModeNum)
 
 function RepeatShootPrimary()
 {
-	if (PrimaryFireDown && CircleCanShoot(0))
+	if (PrimaryFireDown)
 	{
-		// Button is still held, and we can fire
-		ShootPrimary();
-		SetTimer(CircleWorldWeapons.Blaster.FireCooldown, false, 'RepeatShootPrimary');
+		if (CircleCanShoot(0))
+		{
+			// Button is still held, and we can fire
+			ShootPrimary();
+			SetTimer(CircleWorldWeapons.Blaster.FireCooldown, false, 'RepeatShootPrimary');
+		}
+		else
+		{
+			// Player wants to fire, but we can't. Repeat the check.
+			SetTimer(CircleWorldWeapons.Blaster.FireCooldown, false, 'RepeatShootPrimary');
+		}
 	}
 }
 
 function RepeatShootSecondary()
 {
-	if (SecondaryFireDown && CircleCanShoot(1))
+	if (SecondaryFireDown)
 	{
-		// Button is still held, and we can fire
-		ShootSecondary();
-		SetTimer(CircleWorldWeapons.Lobber.FireCooldown, false, 'RepeatShootSecondary');
+		if (CircleCanShoot(1))
+		{
+			// Button is still held, and we can fire
+			ShootSecondary();
+			SetTimer(CircleWorldWeapons.Blaster.FireCooldown, false, 'RepeatShootSecondary');
+		}
+		else
+		{
+			// Player wants to fire, but we can't. Repeat the check.
+			SetTimer(CircleWorldWeapons.Blaster.FireCooldown, false, 'RepeatShootSecondary');
+		}
 	}
 }
 
@@ -777,7 +800,7 @@ function ShootPrimary()
 		ProjectileRotation = Rotator(Normal(AimPoint - Location));
 		
 		// Play an animation to "shoot"
-		PriorityAnimSlot.PlayCustomAnimByDuration(PrimaryFireAnimationName, 0.45, 0.1, 0.1, false, true);
+		PriorityAnimSlot.PlayCustomAnim(PrimaryFireAnimationName, 1, 0.1, 0.1, false, true);
 		
 		// Spawn projectile
 		Projectile = spawn(CircleWorldWeapons.Blaster.ProjectileClass, self, , ProjectileLocation, ProjectileRotation, , true);
@@ -798,7 +821,7 @@ function ShootPrimary()
 		ProjectileRotation = Rotator(Normal(AimPoint - Location));
 		
 		// Play an animation to "shoot"
-		PriorityAnimSlot.PlayCustomAnimByDuration(PrimaryFireAnimationName, 0.45, 0.1, 0.1, false, true);
+		PriorityAnimSlot.PlayCustomAnim(PrimaryFireAnimationName, 1, 0.1, 0.1, false, true);
 		
 		// Spawn projectile #1 (Center)
 		Projectile = spawn(CircleWorldWeapons.Blaster.ProjectileClass, self, , ProjectileLocation, ProjectileRotation, , true);
@@ -839,7 +862,7 @@ function ShootSecondary()
 	ProjectileRotation = Rotator(Normal(AimPoint - Location));
 	
 	// Play an animation to "shoot"
-	PriorityAnimSlot.PlayCustomAnimByDuration(SecondaryFireAnimationName, 0.45, 0.1, 0.1, false, true);
+	PriorityAnimSlot.PlayCustomAnim(SecondaryFireAnimationName, 1, 0.1, 0.1, false, true);
 	
 	// Spawn projectile
 	Projectile = spawn(CircleWorldWeapons.Lobber.ProjectileClass, self, , ProjectileLocation, ProjectileRotation, , true);
@@ -921,7 +944,7 @@ function ClearSecondaryUpgrade()
 event TakeDamage(int Damage, Controller InstigatedBy, vector HitLocation, vector Momentum, class<DamageType> DamageType, optional TraceHitInfo HitInfo, optional Actor DamageCauser)
 {
 	// Play a hurt animation
-	PriorityAnimSlot.PlayCustomAnimByDuration(HurtAnimationName, 0.4, 0.1, 0.1, false, true);
+	PriorityAnimSlot.PlayCustomAnim(HurtAnimationName, 1, 0.1, 0.1, false, true);
 	
 	super.TakeDamage(Damage, InstigatedBy, HitLocation, Momentum, DamageType, HitInfo, DamageCauser);
 }
