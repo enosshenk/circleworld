@@ -29,6 +29,7 @@ var ParticleSystemComponent PooledSystem;			// Ref for the flight effects
 var CircleWorldItem_Emitter PooledExplosionSystem;	// Ref for the explosion effects
 var CircleWorldProjectileLight FlightLight;		// Refs to the lights
 var CircleWorldExplosionLight ExplosionLight;	
+var SoundCue ExplosionSound;
 
 event PostBeginPlay()
 {
@@ -172,6 +173,9 @@ function Explode(vector HitLocation)
 	// Damage radius!
 	HurtRadius(ProjectileDamage, ProjectileDamageRadius, ProjectileDamageType, ProjectileDamageMomentum, Location);
 	
+	// Play sound
+	PlaySound(ExplosionSound);
+	
 	self.Destroy();
 }
 
@@ -198,6 +202,8 @@ defaultproperties
 	
 	ProjectileParticleSystem=ParticleSystem'TheCircleWorld.FX.laser2'
 	ProjectileExplosionSystem=ParticleSystem'TheCircleWorld.FX.lobber_exp1'
+	
+	ExplosionSound = SoundCue'Rock.Sound.chickenhurt1_Cue'
 	
 	TickGroup=TG_PreAsyncWork
 	bNoDelete = false

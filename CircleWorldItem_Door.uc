@@ -3,16 +3,10 @@
 // A CWItem subclass that blocks players until opened. Can be locked or not.
 //
 
-class CircleWorldItem_Door extends CircleWorldItem
+class CircleWorldItem_Door extends Actor
 	ClassGroup(CircleWorld)
 	placeable;
 	
-enum EMoveDirection
-{
-	D_Up,
-	D_Down
-};
-
 enum EDoorState
 {
 	D_Closed,
@@ -27,33 +21,52 @@ enum EDoorKeys
 };
 
 // Editor Variables
-var() StaticMeshComponent StaticMeshComponent;			// Mesh used for the door
-var() EMoveDirection DoorOpenDirection;					// Direction the door moves when opened
-var() float DoorOpenDistance;							// Distance the door moves to open
+var() SkeletalMeshComponent SkeletalMeshComponent;			// Mesh used for the door
 var() bool DoorStayOpen;								// Does this door stay opened, or does it shut after a time
 var() float DoorStayOpenTime;							// If DoorStayOpen is false, this is how long the door remains open before closing again
-var() float DoorOpenSpeed;								// Real speed the door moves at
 var() bool IsLocked;									// True if door requires a key
 var() EDoorKeys KeyRequired;							// The key required to open this door
+var() SoundCue OpenSound;								// Sound played when door opens
+var() SoundCue CloseSound;								// Sound played when door closes
 
 // Internal Variables
-var float DoorOpenDistanceElapsed;						// Elapsed motion
 var float DoorStayOpenTimeElapsed;						// Elapsed time open
-var bool DoorMoving;									// true when door is in motion
-var EDoorState DoorState;
-var int DoorMovingDirection;							// -1 = moving down 1 = moving up
+var EDoorState DoorState;								// Door open/closed state at level start
+
+var CircleWorld_LevelBase LevelBase;				// The level base used
+var vector2d LocationPolar;							// X value is Radial, Y value is Angular
+var vector2d InitialLocationPolar;
+var vector InitialLocation;
+var rotator InitialRotation;
+var rotator InitialLevelRot;
 
 event PostBeginPlay()
 {
+	local CircleWorld_LevelBase L;
+	SetPhysics(PHYS_Rotating);
+	
+	foreach WorldInfo.AllActors(class'CircleWorld_LevelBase', L)
+	{
+		LevelBase = L;
+	}	
+	
+	InitialLocation = Location;
+
+	// Get our initial polar coordinates from our cartesian coordinates
+	InitialLocationPolar.X = Sqrt(Location.X ** 2 + Location.Z ** 2);
+	InitialLocationPolar.Y = atan2(Location.Z, Location.X) * RadToUnrRot;
+//	`log("Emitter Initial Polar: R" $InitialLocationPolar.X$ " A" $InitialLocationPolar.Y);
+//	`log("Emitter Initial Cartesian: " $InitialLocation);
+	
+	LocationPolar.X = InitialLocationPolar.X;
+	LocationPolar.Y = InitialLocationPolar.Y;
+	
+	InitialRotation = Rotation;
+	
+	InitialLevelRot = LevelBase.Rotation;
 	
 	// Set up collision because it doesn't work
 	SetCollisionType(COLLIDE_BlockAll);
-	
-	// Set the initial direction
-	if (DoorOpenDirection == D_Up)
-		DoorMovingDirection = 1;
-	else
-		DoorMovingDirection = -1;
 	
 	super.PostBeginPlay();
 }
@@ -62,116 +75,102 @@ event Tick(float DeltaTime)
 {
 	local vector NewLocation;
 	local rotator NewRotation;
-	
 
-	if (!DoorMoving)
+	// Movement stuff
+	if (!DoorStayOpen && DoorState == D_Open)
 	{
-		if (!DoorStayOpen && DoorState == D_Open)
+		// Update open timer
+		DoorStayOpenTimeElapsed += DeltaTime;
+		if (DoorStayOpenTimeElapsed >= DoorStayOpenTime)
 		{
-			DoorStayOpenTimeElapsed += DeltaTime;
-			if (DoorStayOpenTimeElapsed >= DoorStayOpenTime)
-			{
-				// Time's up, shut the door
-				DoorMoving = true;
-				DoorOpenDistanceElapsed = 0;
-			}
-		}
-	}
-	else
-	{
-		// Door is in motion
-		if (DoorMovingDirection == 1)
-		{
-			DoorOpenDistanceElapsed += DoorOpenSpeed;
-			LocationPolar.X += DoorOpenSpeed;
-		}
-		else
-		{
-			DoorOpenDistanceElapsed -= DoorOpenSpeed;
-			LocationPolar.X -= DoorOpenSpeed;
-		}
-			
-		// See if we should stop moving
-		if (Abs(DoorOpenDistanceElapsed) >= Abs(DoorOpenDistance))
-		{
-			// Door has completed motion
-			DoorMoving = false;
-			DoorStayOpenTimeElapsed = 0;
-			DoorOpenDistanceElapsed = 0;
-			
-			// Set door state
-			if (DoorMovingDirection == 1 && DoorOpenDirection == D_Up)		// Was moving up, door moves up. Set to open
-				DoorState = D_Open;
-			if (DoorMovingDirection == -1 && DoorOpenDirection == D_Up)		// Was moving down, door moves up. Set to closed
-				DoorState = D_Closed;
-			if (DoorMovingDirection == 1 && DoorOpenDirection == D_Down)	// Was moving up, door moves down. Set to closed
-				DoorState = D_Closed;
-			if (DoorMovingDirection == -1 && DoorOpenDirection == D_Down)	// Was moving down, door moves down. Set to open
-				DoorState = D_Open;
-				
-			// Set our new travel direction
-			if (DoorMovingDirection == 1)
-				DoorMovingDirection = -1;
-			else
-				DoorMovingDirection = 1;
+			// Shut the door
+			CloseDoor();
 		}
 	}
 	
 	// Check the level base for rotation change
-	LocationPolar.Y = (LevelBase.Rotation.Pitch * -1) + InitialLocationPolar.Y;
+	LocationPolar.Y = (InitialLevelRot.Pitch + LevelBase.Rotation.Pitch * -1) + InitialLocationPolar.Y;
 
 	// Set new cartesian location based on our polar coordinates
-	NewLocation.X = LocationPolar.X * cos(LocationPolar.Y * UnrRotToRad);
-	NewLocation.Z = LocationPolar.X * sin(LocationPolar.Y * UnrRotToRad);
+	NewLocation.X = InitialLocationPolar.X * cos(LocationPolar.Y * UnrRotToRad);
+	NewLocation.Z = InitialLocationPolar.X * sin(LocationPolar.Y * UnrRotToRad);
 	NewLocation.Y = Location.Y;
 	SetLocation(NewLocation);
 	
 	// Set new rotation based on our polar angular value
 	NewRotation = Rotation;
-	NewRotation.Pitch = LocationPolar.Y - 16384;		// Subtract 16384 because UnrealEngine sets 0 rotation as 3 oclock position
+
+	NewRotation.Pitch = InitialRotation.Pitch + LocationPolar.Y - 16384;		// Subtract 16384 because UnrealEngine sets 0 rotation as 3 oclock position
+
 	SetRotation(NewRotation);
+	
+	super.Tick(DeltaTime);
 }
 
 function OpenDoor()
 {
-	if (!DoorMoving && DoorState == D_Closed && !IsLocked)
+	if (DoorState != D_Open)
 	{
-		// Door is closed. Let's change that.
-		DoorMoving = true;			
-	}
-	else if (IsLocked)
-	{
-		// Door is locked, see if the player has the right key
-		switch (KeyRequired)
+		if (IsLocked)
 		{
-			case K_Red:
-				if (CircleWorldGameInfo(WorldInfo.Game).CirclePawn.HasRedKey)
-				{
-					IsLocked = false;
-					DoorMoving = true;
-				}
-				break;
-			case K_Green:
-				if (CircleWorldGameInfo(WorldInfo.Game).CirclePawn.HasGreenKey)
-				{
-					IsLocked = false;
-					DoorMoving = true;
-				}
-				break;
-			case K_Blue:
-				if (CircleWorldGameInfo(WorldInfo.Game).CirclePawn.HasBlueKey)
-				{
-					IsLocked = false;
-					DoorMoving = true;
-				}
-				break;
+			// Door is locked, see if the player has the right key
+			switch (KeyRequired)
+			{
+				case K_Red:
+					if (CircleWorldGameInfo(WorldInfo.Game).CirclePawn.HasRedKey)
+					{
+						IsLocked = false;
+						DoorState = D_Open;
+						SetCollisionType(COLLIDE_NoCollision);
+						DoorStayOpenTimeElapsed = 0;
+						PlaySound(OpenSound);
+					}
+					break;
+				case K_Green:
+					if (CircleWorldGameInfo(WorldInfo.Game).CirclePawn.HasGreenKey)
+					{
+						IsLocked = false;
+						DoorState = D_Open;
+						SetCollisionType(COLLIDE_NoCollision);
+						DoorStayOpenTimeElapsed = 0;
+						PlaySound(OpenSound);
+					}
+					break;
+				case K_Blue:
+					if (CircleWorldGameInfo(WorldInfo.Game).CirclePawn.HasBlueKey)
+					{
+						IsLocked = false;
+						DoorState = D_Open;
+						SetCollisionType(COLLIDE_NoCollision);
+						DoorStayOpenTimeElapsed = 0;
+						PlaySound(OpenSound);
+					}
+					break;	
+			}
 		}
+		else
+		{
+			DoorState = D_Open;
+			SetCollisionType(COLLIDE_NoCollision);
+			DoorStayOpenTimeElapsed = 0;
+			PlaySound(OpenSound);
+		}
+	}
+}
+
+function CloseDoor()
+{
+	if (DoorState != D_Closed)
+	{
+		DoorState = D_Closed;
+		SetCollisionType(COLLIDE_BlockAll);
+		PlaySound(OpenSound);
 	}
 }
 
 event bool EncroachingOn(Actor Other)
 {
-	if (DoorMoving && CircleWorldPawn(Other) != none)
+	if (DoorState == D_Closed && CircleWorldPawn(Other) != none)
 	{
 		Other.TakeDamage(500, CircleWorldPawn(Other).Controller, Other.Location, VRand(), class'DmgType_Crushed');
 	}
@@ -180,13 +179,12 @@ event bool EncroachingOn(Actor Other)
 
 defaultproperties
 {
-	DoorOpenDirection = D_Up
-	DoorOpenDistance = 512
 	DoorStayOpen = false
 	DoorStayOpenTime = 5
-	DoorOpenSpeed = 10
-	
 	DoorState = D_Closed
+	
+	OpenSound = SoundCue'Rock.Sound.chickenhurt1_Cue'
+	CloseSound = SoundCue'Rock.Sound.chickenhurt1_Cue'
 	
 	bWorldGeometry = true
 	bNoDelete = false
@@ -194,12 +192,25 @@ defaultproperties
 	bCollideComplex = true	
 	CollisionType = COLLIDE_BlockAll
 	TickGroup=TG_PreAsyncWork
-	
-	Begin Object Class=StaticMeshComponent Name=StaticMeshComponent0
-		StaticMesh = StaticMesh'EngineMeshes.Cube'
-		bUsePrecomputedShadows=FALSE
+
+
+	Begin Object Class=SkeletalMeshComponent Name=CircleSkeletalMeshComponent		
+		SkeletalMesh = SkeletalMesh'door.door2'
+		AnimTreeTemplate = AnimTree'door.door2_tree'
+		AnimSets(0) = AnimSet'door.door2_anim'
+		PhysicsAsset = PhysicsAsset'door.door2_physics'
+		CastShadow=true
+		bCastDynamicShadow=true
+		bOwnerNoSee=false
+        BlockRigidBody=true
+        CollideActors=true
+        BlockZeroExtent=true
+		BlockNonZeroExtent=true
+		bIgnoreControllersWhenNotRendered=TRUE
+		bUpdateSkelWhenNotRendered=FALSE
+		bHasPhysicsAssetInstance=true
 	End Object
-	CollisionComponent=StaticMeshComponent0
-	StaticMeshComponent=StaticMeshComponent0
-	Components.Add(StaticMeshComponent0)
+	CollisionComponent=CircleSkeletalMeshComponent
+	SkeletalMeshComponent=CircleSkeletalMeshComponent
+	Components.Add(CircleSkeletalMeshComponent) 
 }

@@ -89,6 +89,10 @@ var AnimNodeSlot PriorityAnimSlot;							// Ref to our AnimNodeSlot for playing 
 var ParticleSystemComponent BoostParticleSystem;			// Particle system component for our boost effects
 var ParticleSystemComponent GroundEffectsParticleSystem;	// Particle system used when our boost exhaust is hitting the ground
 var PointLightComponent BoostLight;							// Light attached for boost effects
+
+var PointLightComponent MuzzleFlashLight;					// Light attached for muzzle flash effects
+var Color MuzzleFlashPrimary;
+var Color MuzzleFlashSecondary;
 var CircleWorldItem_Lift RiddenLift;						// Lift we're riding on, if any
 var CircleWorldWeapons CircleWorldWeapons;					// Ref to our weapons component
 var DynamicLightEnvironmentComponent MyLightEnvironment;
@@ -129,6 +133,10 @@ event PostBeginPlay()
 	AttachComponent(GroundEffectsParticleSystem);
 	Mesh.AttachComponentToSocket(BoostLight, 'BoostSocket');
 	BoostLight.SetEnabled(false);
+	
+	// attach muzzleflash light
+	Mesh.AttachComponentToSocket(MuzzleFlashLight, 'FireSocket');
+	MuzzleFlashLight.SetEnabled(false);
 	
 	// Spawn the elephant
 	ElephantSpawn = Location - vect(0,160,0);
@@ -709,6 +717,9 @@ simulated function StartFire(byte FireModeNum)
 		TraceEnd -= vect(512,0,0);
 	else if (Rotation.Yaw == 0)
 		TraceEnd += vect(512,0,0);
+
+	if (CircleWorldGameInfo(WorldInfo.Game).DebugHUD)
+		DrawDebugLine(TraceStart, TraceEnd, 255, 255, 0);		
 	
 	HitActor = Trace(HitLocation, HitNormal, TraceEnd, TraceStart, true);
 	if (CircleWorldItem_Door(HitActor) != none)
@@ -847,6 +858,11 @@ function ShootPrimary()
 		SetTimer(CircleWorldWeapons.Blaster.FireCooldown - 0.02, false, 'EnablePrimary');
 
 	}
+	
+	// Turn on muzzle flash light
+	MuzzleFlashLight.SetLightProperties(MuzzleFlashLight.default.Brightness, MuzzleFlashPrimary);
+	MuzzleFlashLight.SetEnabled(true);
+	SetTimer(0.1, false, 'MuzzleFlashOff');
 }
 
 function ShootSecondary()
@@ -873,6 +889,16 @@ function ShootSecondary()
 	
 	// Initialize the projectile with rotation and added velocity
 	Projectile.InitProjectile(ProjectileRotation, Abs(CircleVelocity.X));
+	
+	// Turn on muzzle flash light
+	MuzzleFlashLight.SetLightProperties(MuzzleFlashLight.default.Brightness, MuzzleFlashSecondary);
+	MuzzleFlashLight.SetEnabled(true);
+	SetTimer(0.1, false, 'MuzzleFlashOff');
+}
+
+function MuzzleFlashOff()
+{
+	MuzzleFlashLight.SetEnabled(false);
 }
 
 function EnablePrimary()
@@ -1288,6 +1314,19 @@ defaultproperties
 		LightColor=(R=255,G=88,B=0)
 	End Object
 	BoostLight = PointLightComponent0
+	
+	Begin Object class=PointLightComponent name=PointLightComponent1
+		CastShadows = true
+		CastStaticShadows = false
+		CastDynamicShadows = true
+		Radius = 900
+		Brightness=3
+		LightColor=(R=255,G=255,B=255)
+	End Object
+	MuzzleFlashLight = PointLightComponent1
+	
+	MuzzleFlashPrimary = (R=50, G=200, B=255)
+	MuzzleFlashSecondary = (R=200, G=75, B=75)
 	
 	Begin Object class=CircleWorldWeapons name=CircleWorldWeapons0
 	End Object

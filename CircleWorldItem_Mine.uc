@@ -22,6 +22,7 @@ var class<CircleWorldExplosionLight> ExplosionLightClass;	// Class to be spawned
 var CircleWorldItem_Emitter PooledExplosionSystem;	// Ref for the explosion effects
 var CircleWorldProjectileLight FlightLight;		// Refs to the lights
 var CircleWorldExplosionLight ExplosionLight;	
+var SoundCue ExplosionSound;
 	
 event PostBeginPlay()
 {
@@ -87,6 +88,9 @@ function Explode(vector HitLocation)
 	// Damage radius!
 	HurtRadius(MineDamage, MineDamageRadius, MineDamageType, 0, Location);
 	
+	// Play sound
+	PlaySound(ExplosionSound);
+	
 	self.Destroy();
 }
 
@@ -135,6 +139,8 @@ defaultproperties
 
 	BaseLightClass = class'CircleWorldProjectileLight'
 	ExplosionLightClass = class'CircleWorldExplosionLight'  
+	
+	ExplosionSound = SoundCue'Rock.Sound.chickenhurt1_Cue'
 	
 	Begin Object Class=CylinderComponent Name=CollisionCylinder
 		CollisionRadius=64.000000

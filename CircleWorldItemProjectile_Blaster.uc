@@ -45,7 +45,8 @@ defaultproperties
 	ProjectileParticleSystem=ParticleSystem'TheCircleWorld.FX.laser1'
 	ProjectileExplosionSystem=ParticleSystem'TheCircleWorld.FX.blaster_exp1'
 
-
+	ExplosionSound = SoundCue'Rock.Sound.chickenhurt1_Cue'
+	
 	// FlightLightClass = class'CircleWorldProjectileLight'
 	ExplosionLightClass = class'CircleWorldExplosionLight'
 }
