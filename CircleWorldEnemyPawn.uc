@@ -27,6 +27,9 @@ var name HurtAnimationName;							// Animation Sequence to play when hurt
 var name AttackAnimationName;						// AnimSequence to play when we touch the player and do damage
 var AnimNodeSlot PriorityAnimSlot;					// Ref to our priority anim slot
 
+var SoundCue HurtSound;								// Sound to play when hurt
+var SoundCue DeathSound;							// Sound to play when we die
+
 event PostBeginPlay()
 {
 	local CircleWorld_LevelBase L;
@@ -245,6 +248,7 @@ event TakeDamage(int Damage, Controller InstigatedBy, vector HitLocation, vector
 	{
 		// Play a hurt animation
 		PriorityAnimSlot.PlayCustomAnimByDuration(HurtAnimationName, 0.4, 0.1, 0.1, false, true);
+		PlaySound(HurtSound);
 	}
 	
 	super.TakeDamage(Damage, InstigatedBy, HitLocation, Momentum, DamageType, HitInfo, DamageCauser);
@@ -272,6 +276,7 @@ simulated function TakeRadiusDamage
 	{
 		// Play a hurt animation
 		PriorityAnimSlot.PlayCustomAnimByDuration(HurtAnimationName, 0.4, 0.1, 0.1, false, true);
+		PlaySound(HurtSound);
 	}
 	
 	super.TakeRadiusDamage(InstigatedBy, BaseDamage, DamageRadius, DamageType, Momentum, HurtOrigin, bFullDamage, DamageCauser, DamageFalloffExponent);
@@ -290,7 +295,9 @@ function Died(Controller Killer, class<DamageType> DamageType, vector HitLocatio
 	{
 		DeathSystem.ParticleSystemComponent.SetTemplate(DeathParticleSystem);
 		DeathSystem.ParticleSystemComponent.ActivateSystem();
-	}	
+	}
+
+	PlaySound(DeathSound);
 }
 
 defaultproperties

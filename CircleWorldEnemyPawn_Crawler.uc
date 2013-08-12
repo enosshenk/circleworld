@@ -22,6 +22,9 @@ defaultproperties
 
 	HurtAnimationName = hurt
 	AttackAnimationName = attack
+	
+	HurtSound = SoundCue'Rock.Sound.chickenhurt1_Cue'
+	DeathSound = SoundCue'Rock.Sound.chickenhurt2_Cue'
 
 	Begin Object Name=CollisionCylinder
 		CollisionRadius=128.000000
@@ -38,10 +41,10 @@ defaultproperties
 
 
 	Begin Object Class=SkeletalMeshComponent Name=CirclePawnSkeletalMeshComponent		
-		SkeletalMesh = SkeletalMesh'TheCircleWorld.Meshes.blobby1'
+		SkeletalMesh = SkeletalMesh'TheCircleWorld.Pawns.blobby1'
 		AnimTreeTemplate = AnimTree'TheCircleWorld.AnimTree.blobby_tree'
 		AnimSets(0) = AnimSet'TheCircleWorld.AnimSet.blobby_anim'
-		PhysicsAsset = PhysicsAsset'TheCircleWorld.Meshes.blobby1_Physics'		
+		PhysicsAsset = PhysicsAsset'TheCircleWorld.Pawns.blobby1_Physics'		
 		CastShadow=true
 		bCastDynamicShadow=true
 		bOwnerNoSee=false

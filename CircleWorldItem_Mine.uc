@@ -140,7 +140,7 @@ defaultproperties
 	BaseLightClass = class'CircleWorldProjectileLight'
 	ExplosionLightClass = class'CircleWorldExplosionLight'  
 	
-	ExplosionSound = SoundCue'Rock.Sound.chickenhurt1_Cue'
+	ExplosionSound = SoundCue'TheCircleWorld.Sounds.explosionfireball'
 	
 	Begin Object Class=CylinderComponent Name=CollisionCylinder
 		CollisionRadius=64.000000

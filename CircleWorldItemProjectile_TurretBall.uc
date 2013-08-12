@@ -39,7 +39,7 @@ defaultproperties
 	ProjectileParticleSystem=ParticleSystem'TheCircleWorld.FX.laser2'
 	ProjectileExplosionSystem=ParticleSystem'TheCircleWorld.FX.turret_exp1'
 	
-	ExplosionSound = SoundCue'Rock.Sound.chickenhurt1_Cue'
+	ExplosionSound = SoundCue'TheCircleWorld.Sounds.explosionfireball'
 	
 	//FlightLightClass = class'CircleWorldProjectileLight'
 	ExplosionLightClass = class'CircleWorldExplosionLight'

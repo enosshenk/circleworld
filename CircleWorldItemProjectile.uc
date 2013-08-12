@@ -167,7 +167,7 @@ function Explode(vector HitLocation)
 	// Spawn explosion light if applicable
 	if (ExplosionLightClass != none)
 	{
-		ExplosionLight = spawn(ExplosionLightClass, self, , Location, Rotation);
+		ExplosionLight = spawn(ExplosionLightClass, self, , Location, Rotation,, true);
 	}
 	
 	// Damage radius!
@@ -203,7 +203,7 @@ defaultproperties
 	ProjectileParticleSystem=ParticleSystem'TheCircleWorld.FX.laser2'
 	ProjectileExplosionSystem=ParticleSystem'TheCircleWorld.FX.lobber_exp1'
 	
-	ExplosionSound = SoundCue'Rock.Sound.chickenhurt1_Cue'
+	ExplosionSound = SoundCue'TheCircleWorld.Sounds.explosionlaser'
 	
 	TickGroup=TG_PreAsyncWork
 	bNoDelete = false

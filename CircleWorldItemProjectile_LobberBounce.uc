@@ -3,6 +3,7 @@ class CircleWorldItemProjectile_LobberBounce extends CircleWorldItemProjectile;
 var bool IsArmed;
 var bool RandomizeVector;
 var float RandomFactor;
+var SoundCue BounceSound;
 
 event PostBeginPlay()
 {
@@ -37,6 +38,7 @@ event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vect
 		{
 			// Bounce
 			ProjectileVelocity.Z *= -1;
+			PlaySound(BounceSound);
 		}
 		else
 		{
@@ -72,7 +74,8 @@ defaultproperties
 	ProjectileParticleSystem=ParticleSystem'TheCircleWorld.FX.fireball'
 	ProjectileExplosionSystem=ParticleSystem'TheCircleWorld.FX.lobber_exp1'
 	
-	ExplosionSound = SoundCue'Rock.Sound.chickenhurt1_Cue'
+	ExplosionSound = SoundCue'TheCircleWorld.Sounds.explosionfireball'
+	BounceSound = SoundCue'TheCircleWorld.Sounds.explosionlaser'
 
 	//FlightLightClass = class'CircleWorldProjectileLight'
 	ExplosionLightClass = class'CircleWorldExplosionLight'

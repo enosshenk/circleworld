@@ -108,13 +108,12 @@ defaultproperties
 	TickGroup=TG_PreAsyncWork
 	
 	PrePivot = (X=0, Y=0, Z=-64)
-	DrawScale3D = (X=3, Y=3, Z=3)
 
 	Begin Object Class=SkeletalMeshComponent Name=CirclePawnSkeletalMeshComponent		
-		SkeletalMesh = SkeletalMesh'TheCircleWorld.Meshes.blobby1'
-		AnimTreeTemplate = AnimTree'TheCircleWorld.blobby_tree2'
-		AnimSets(0) = AnimSet'TheCircleWorld.AnimSet.blobby_anim'
-		PhysicsAsset = PhysicsAsset'TheCircleWorld.Meshes.blobby1_Physics'		
+        SkeletalMesh = SkeletalMesh'TheCircleWorld.Player.elephant1'
+        AnimTreeTemplate = AnimTree'TheCircleWorld.Animtree.elephant1_tree'
+        AnimSets(0) = AnimSet'TheCircleWorld.AnimSet.elephant1_anim'
+        PhysicsAsset = PhysicsAsset'TheCircleWorld.Player.elephant1_Physics'  	
 		CastShadow=true
 		bCastDynamicShadow=true
 		bOwnerNoSee=false
@@ -125,6 +124,8 @@ defaultproperties
 		bIgnoreControllersWhenNotRendered=TRUE
 		bUpdateSkelWhenNotRendered=FALSE
 		bHasPhysicsAssetInstance=true
+		AbsoluteScale = true
+		Scale3D = (X=3, Y=3, Z=3)
 	End Object
 	Mesh=CirclePawnSkeletalMeshComponent
 	Components.Add(CirclePawnSkeletalMeshComponent) 
