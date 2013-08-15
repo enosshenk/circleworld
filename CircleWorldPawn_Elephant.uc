@@ -147,7 +147,7 @@ defaultproperties
 		bUpdateSkelWhenNotRendered=FALSE
 		bHasPhysicsAssetInstance=true
 		AbsoluteScale = true
-		Scale3D = (X=3, Y=3, Z=3)
+		Scale3D = (X=24, Y=24, Z=24)
 	End Object
 	Mesh=CirclePawnSkeletalMeshComponent
 	Components.Add(CirclePawnSkeletalMeshComponent) 

@@ -63,6 +63,7 @@ var bool CirclePawnJumpDown;								// True when the character is falling
 var bool Sprinting;											// True when the sprint key is held
 var bool LedgeHanging;										// True when we're hanging on a ledge.
 var bool UsingBoost;										// True while we're using our jetpack
+var bool BoostSoundOn;
 var bool WasUsingBoost;										// True if we used boost any time before we land on solid ground
 var bool BoostLand;											// True if we should play a boost landing animation
 var bool CirclePawnBoostUp;									// Boosting and ascending
@@ -97,6 +98,11 @@ var CircleWorldItem_Lift RiddenLift;						// Lift we're riding on, if any
 var CircleWorldWeapons CircleWorldWeapons;					// Ref to our weapons component
 var DynamicLightEnvironmentComponent MyLightEnvironment;
 var CircleWorldPawn_Elephant Elephant;						// Ref to the elephant
+
+var SoundCue JumpSound;										// Sound played when we jump
+var SoundCue JumpLandSound;									// Sound played when we land
+var SoundCue JetpackOnSound;								// Sound played when jetpack activates
+var AudioComponent JetpackSound;							// Looping jetpack sound
 
 var enum EPrimaryUpgrades
 {
@@ -133,6 +139,10 @@ event PostBeginPlay()
 	AttachComponent(GroundEffectsParticleSystem);
 	Mesh.AttachComponentToSocket(BoostLight, 'BoostSocket');
 	BoostLight.SetEnabled(false);
+	
+	// Attach jetpack sound component
+	Mesh.AttachComponentToSocket(JetpackSound, 'BoostSocket');
+	JetpackSound.SetFloatParameter('JetpackVolume', 0);
 	
 	// attach muzzleflash light
 	Mesh.AttachComponentToSocket(MuzzleFlashLight, 'FireSocket');
@@ -465,12 +475,30 @@ event Tick(float DeltaTime)
 		{
 			GroundEffectsParticleSystem.SetActive(false);
 		}
+		
+		// Jetpack light on
 		BoostLight.SetEnabled(true);
+		
+		// Update jetpack sounds
+		if (!BoostSoundOn)
+		{
+			// Turn on the sound
+			PlaySound(JetpackOnSound);
+			SetTimer(0.1, false, 'EnableBoostSound');
+			BoostSoundOn = true;
+		}
 	}
 	else
 	{
 		GroundEffectsParticleSystem.SetActive(false);
 		BoostLight.SetEnabled(false);
+		
+		if (BoostSoundOn)
+		{
+			JetpackSound.SetFloatParameter('JetpackVolume', 0);
+			BoostSoundOn = false;
+			ClearTimer('EnableBoostSound');
+		}
 	}
 	
 	if (!UsingBoost && !BoostRegenerating && !IsTimerActive('BeginBoostRegenerate'))
@@ -504,6 +532,14 @@ event Landed(vector HitNormal, Actor FloorActor)
 	WasUsingBoost = false;
 	BoostLand = false;
 	Controller.GotoState('PlayerWalking');
+	PlaySound(JumpLandSound);
+}
+
+function bool DoJump( bool bUpdating )
+{
+	PlaySound(JumpSound);
+	
+	return super.DoJump(bUpdating);
 }
 
 //
@@ -597,6 +633,11 @@ function vector JetpackGroundCheck()
 	{
 		return vect(0,0,0);
 	}	
+}
+
+function EnableBoostSound()
+{
+	JetpackSound.SetFloatParameter('JetpackVolume', 1);
 }
 
 function bool RidingLift()
@@ -1246,6 +1287,18 @@ defaultproperties
 	HurtAnimationName = hurt
 	PrimaryFireAnimationName = punch_stand1
 	SecondaryFireAnimationName = punch_stand2
+	
+	JumpSound = SoundCue'Rock.Sound.chicken1_Cue'
+	JumpLandSound = SoundCue'Rock.Sound.chicken1_Cue'
+	JetpackOnSound = SoundCue'Rock.Sound.chicken1_Cue'
+	
+	Begin Object Class=AudioComponent Name=JetpackSound0
+		SoundCue=SoundCue'CircleJetpack.jetpack_cue'
+		bAutoPlay = true
+		bStopWhenOwnerDestroyed = true
+	End Object
+	JetpackSound=JetpackSound0
+	Components.Add(JetpackSound0);
 	
 	WalkingPhysics=PHYS_Walking
 	bCollideActors=true

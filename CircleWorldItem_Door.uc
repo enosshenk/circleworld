@@ -28,6 +28,7 @@ var() bool IsLocked;									// True if door requires a key
 var() EDoorKeys KeyRequired;							// The key required to open this door
 var() SoundCue OpenSound;								// Sound played when door opens
 var() SoundCue CloseSound;								// Sound played when door closes
+var() bool DoorKills;									// Should the door kill player when in motion and player encroaches
 
 // Internal Variables
 var float DoorStayOpenTimeElapsed;						// Elapsed time open
@@ -170,7 +171,7 @@ function CloseDoor()
 
 event bool EncroachingOn(Actor Other)
 {
-	if (DoorState == D_Closed && CircleWorldPawn(Other) != none)
+	if (DoorState == D_Closed && CircleWorldPawn(Other) != none && DoorKills)
 	{
 		Other.TakeDamage(500, CircleWorldPawn(Other).Controller, Other.Location, VRand(), class'DmgType_Crushed');
 	}
