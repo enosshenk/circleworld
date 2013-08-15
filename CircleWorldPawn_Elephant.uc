@@ -4,6 +4,7 @@ class CircleWorldPawn_Elephant extends Actor
 var CircleWorld_LevelBase LevelBase;				// The level base used
 var vector2d LocationPolar;							// X value is Radial, Y value is Angular
 var vector2d InitialLocationPolar;
+var float InitialRadial;
 var vector InitialLocation;
 
 var() SkeletalMeshComponent	Mesh;
@@ -32,6 +33,7 @@ event PostBeginPlay()
 	LocationPolar.X = InitialLocationPolar.X;
 	LocationPolar.Y = InitialLocationPolar.Y;
 	
+	InitialRadial = InitialLocationPolar.X;
 	
 	super.PostBeginPlay();
 }
@@ -45,8 +47,9 @@ simulated event PostInitAnimTree(SkeletalMeshComponent SkelComp)
 
 event Tick(float DeltaTime)
 {
-	local vector NewLocation;
+	local vector NewLocation, TraceStart, TraceEnd, HitLocation, HitNormal;
 	local rotator NewRotation, TempRot;
+	local actor HitActor;
 
 	// Movement stuff here
 	if (LocationPolar.Y < 16320)
@@ -73,12 +76,30 @@ event Tick(float DeltaTime)
 		PawnWalking = false;
 	}
 	
+	
+	// Adjust height to ground
+	TraceStart.X = InitialLocationPolar.X * cos(LocationPolar.Y * UnrRotToRad);
+	TraceStart.Z = InitialLocationPolar.X * sin(LocationPolar.Y * UnrRotToRad);
+	TraceStart.Y = Location.Y;
+	TraceEnd = Location;
+	TraceEnd += vect(0,0,-2048) >> NewRotation;
+	
+//	if (CircleWorldGameInfo(WorldInfo.Game).DebugHUD)
+//		DrawDebugLine(TraceStart, TraceEnd, 255, 0, 0, true);	
+
+	HitActor = Trace(HitLocation, HitNormal, TraceEnd, TraceStart, true);
+	if (CircleWorld_LevelBase(HitActor) != none)
+	{
+		// Trace hit level mesh, adjust polar radial to drop the elephant to ground level
+		LocationPolar.X = InitialLocationPolar.X - VSize(TraceStart - HitLocation);
+	}
+	
 	// Check the level base for rotation change
 	LocationPolar.Y = (LevelBase.Rotation.Pitch * -1) + InitialLocationPolar.Y;
 
 	// Set new cartesian location based on our polar coordinates
-	NewLocation.X = InitialLocationPolar.X * cos(LocationPolar.Y * UnrRotToRad);
-	NewLocation.Z = InitialLocationPolar.X * sin(LocationPolar.Y * UnrRotToRad);
+	NewLocation.X = LocationPolar.X * cos(LocationPolar.Y * UnrRotToRad);
+	NewLocation.Z = LocationPolar.X * sin(LocationPolar.Y * UnrRotToRad);
 	NewLocation.Y = Location.Y;
 	SetLocation(NewLocation);
 
@@ -93,6 +114,7 @@ event Tick(float DeltaTime)
 		NewRotation.Pitch = LocationPolar.Y - 16384;
 	}
 	SetRotation(NewRotation);
+
 	
 	super.Tick(DeltaTime);
 }

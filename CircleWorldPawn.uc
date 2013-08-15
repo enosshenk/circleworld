@@ -139,7 +139,7 @@ event PostBeginPlay()
 	MuzzleFlashLight.SetEnabled(false);
 	
 	// Spawn the elephant
-	ElephantSpawn = Location - vect(0,160,0);
+	ElephantSpawn = Location + vect(0,256,0);
 	Elephant = Spawn(class'CircleWorldPawn_Elephant', self,, ElephantSpawn, Rotation,, true);
 	Elephant.PlayerPawn = self;
 	

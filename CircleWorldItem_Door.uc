@@ -183,8 +183,8 @@ defaultproperties
 	DoorStayOpenTime = 5
 	DoorState = D_Closed
 	
-	OpenSound = SoundCue'Rock.Sound.chickenhurt1_Cue'
-	CloseSound = SoundCue'Rock.Sound.chickenhurt1_Cue'
+	OpenSound = SoundCue'TheCircleWorld.Sounds.dooropen1a'
+	CloseSound = SoundCue'TheCircleWorld.Sounds.doorclose1a'
 	
 	bWorldGeometry = true
 	bNoDelete = false
@@ -195,10 +195,10 @@ defaultproperties
 
 
 	Begin Object Class=SkeletalMeshComponent Name=CircleSkeletalMeshComponent		
-		SkeletalMesh = SkeletalMesh'door.door2'
-		AnimTreeTemplate = AnimTree'door.door2_tree'
-		AnimSets(0) = AnimSet'door.door2_anim'
-		PhysicsAsset = PhysicsAsset'door.door2_physics'
+		SkeletalMesh = SkeletalMesh'TheCircleWorld.meshes.door1a'
+		AnimTreeTemplate = AnimTree'TheCircleWorld.Animtree.door1a_tree'
+		AnimSets(0) = AnimSet'TheCircleWorld.animset.door1a_anim'
+		PhysicsAsset = PhysicsAsset'TheCircleWorld.meshes.door1a_physics'
 		CastShadow=true
 		bCastDynamicShadow=true
 		bOwnerNoSee=false
