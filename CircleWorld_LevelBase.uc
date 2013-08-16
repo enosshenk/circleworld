@@ -24,6 +24,10 @@ event Tick(float DeltaTime)
 {
 	// We update our rotation rate based on the pawn's fake velocity. Do some trig with it and figure out where the velocity vector takes us.
 	RotationRate.Pitch = (ATan(PawnVelocity.X / PawnLocation.Z) * RadToUnrRot) * -1;
+	
+	// Update rotation value in gameinfo
+	CircleWorldGameInfo(WorldInfo.Game).CircleLevelRotation = Rotation.Pitch;
+	
 	super.Tick(DeltaTime);
 }
 
@@ -41,6 +45,8 @@ defaultproperties
 		CollideActors=true
 		BlockActors=true
 		BlockRigidBody=true
+		bAcceptsStaticDecals=TRUE
+		bAcceptsDecals=TRUE
 	End Object
 	CollisionComponent=CircleStaticMeshComponent
 	StaticMeshComponent=CircleStaticMeshComponent

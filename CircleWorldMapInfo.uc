@@ -18,6 +18,24 @@ var(CircleWorldCamera)	float MaxRotZ_U;			// Maximum rotation on the Z axis, in 
 var(CircleWorldCamera)	float MaxTransX_U;		// Maximum translation on the X axis, in Unreal Units *when underground*
 var(CircleWorldCamera)	float MaxTransZ_U;		// Maximum translation on the Z axis, in Unreal Units *when underground*
 
+struct CircleWorldObjective
+{
+	var(CircleWorldObjectives) string ObjectiveName;				// Objective name, eg "Go to the core"
+	var(CircleWorldObjectives) string ObjectiveOrders;				// Objective orders text, eg "Stan, get to the core before it explodes!"
+	var(CircleWorldObjectives) bool ObjectiveHidden;				// If true, this objective is not called out on HUD
+	var(CircleWorldObjectives) enum ObjectiveTypes					// Type of objective this is
+	{
+		O_Location,
+		O_Timer,
+		O_Kill,
+		O_GetItem
+	} ObjectiveType;
+	var(CircleWorldObjectives) float ObjectiveTime;					// If type is timer, objective completes when this much time passes in seconds
+	var(CircleWorldObjectives) CircleWorldObjectiveMarker Marker;	// Associated objective marker for a location, does not necissarily require location objective type
+};
+
+var(CircleWorldObjectives) array< CircleWorldObjective > Objectives;
+
 defaultproperties
 {
 	CameraOffset = (X=128, Y=-1200, Z=128)

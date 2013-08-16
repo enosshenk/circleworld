@@ -30,6 +30,8 @@ var CircleWorldItem_Emitter PooledExplosionSystem;	// Ref for the explosion effe
 var CircleWorldProjectileLight FlightLight;		// Refs to the lights
 var CircleWorldExplosionLight ExplosionLight;	
 var SoundCue ExplosionSound;
+var MaterialInterface DecalMat;
+var bool HasExploded;
 
 event PostBeginPlay()
 {
@@ -120,11 +122,11 @@ event Tick(float DeltaTime)
 		
 		// Hacky collision check
 		TempVector = Location;
-		TempVector += vect(32,0,0) >> NewRotation;
+		TempVector += vect(64,0,0) >> NewRotation;
 		if (!FastTrace(TempVector, Location))
 		{
 			// FastTrace hit world geometry. Explode.
-			Explode(Location);
+			Explode(TempVector, Location);
 		}
 		
 		// Set real in-engine velocity to hopefully improve collision
@@ -141,7 +143,7 @@ event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vect
 	{
 		// Hit level geometry
 		`log("Projectile " $self$ " impacted " $Other);
-		Explode(HitLocation);
+		Explode(HitLocation, HitNormal);
 	}
 	super.Touch(Other, OtherComp, HitLocation, HitNormal);
 }
@@ -154,29 +156,45 @@ function bool CanExplode(Actor Other)
 		return false;
 }	
 
-function Explode(vector HitLocation)
+function Explode(vector HitLocation, vector HitNormal)
 {
-	// Spawn in our explosion system
-	PooledExplosionSystem = spawn(class'CircleWorldItem_Emitter', self, , HitLocation, self.Rotation);
-	if (PooledExplosionSystem != none)
+	local CircleWorldDecal TheDecal;
+	local rotator DecalRot;
+	
+	if (!HasExploded)
 	{
-		PooledExplosionSystem.ParticleSystemComponent.SetTemplate(ProjectileExplosionSystem);
-		PooledExplosionSystem.ParticleSystemComponent.ActivateSystem();
+		// Spawn in our explosion system
+		PooledExplosionSystem = spawn(class'CircleWorldItem_Emitter', self, , HitLocation, self.Rotation);
+		if (PooledExplosionSystem != none)
+		{
+			PooledExplosionSystem.ParticleSystemComponent.SetTemplate(ProjectileExplosionSystem);
+			PooledExplosionSystem.ParticleSystemComponent.ActivateSystem();
+		}
+		
+		// Spawn explosion light if applicable
+		if (ExplosionLightClass != none)
+		{
+			ExplosionLight = spawn(ExplosionLightClass, self, , Location, Rotation,, true);
+		}
+		
+		// Spawn decal if applicable
+		if (DecalMat != none)
+		{
+			DecalRot = Rotator(HitNormal - HitLocation);
+			TheDecal = spawn(class'CircleWorldDecal', self, , Location, DecalRot,, true);
+			TheDecal.InitDecal(DecalMat, 10);
+		}
+		
+		// Damage radius!
+		HurtRadius(ProjectileDamage, ProjectileDamageRadius, ProjectileDamageType, ProjectileDamageMomentum, Location);
+		
+		// Play sound
+		PlaySound(ExplosionSound);
+		
+		HasExploded = true;
+		
+		self.Destroy();
 	}
-	
-	// Spawn explosion light if applicable
-	if (ExplosionLightClass != none)
-	{
-		ExplosionLight = spawn(ExplosionLightClass, self, , Location, Rotation,, true);
-	}
-	
-	// Damage radius!
-	HurtRadius(ProjectileDamage, ProjectileDamageRadius, ProjectileDamageType, ProjectileDamageMomentum, Location);
-	
-	// Play sound
-	PlaySound(ExplosionSound);
-	
-	self.Destroy();
 }
 
 function CircleOnSystemFinished(ParticleSystemComponent PSC)

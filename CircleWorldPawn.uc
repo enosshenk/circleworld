@@ -523,6 +523,10 @@ event Tick(float DeltaTime)
 	Velocity.Y = 0;
 	Acceleration.Y = 0;
 	
+	// Update values in gameinfo
+	CircleWorldGameInfo(WorldInfo.Game).PlayerHealth = Health;
+	CircleWorldGameInfo(WorldInfo.Game).PlayerBoostFuel = BoostFuel;
+	
 	super.Tick(DeltaTime);
 }
 

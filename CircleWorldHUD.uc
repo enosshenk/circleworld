@@ -17,6 +17,8 @@ simulated function DrawHUD()
 	local CircleWorldEnemyPawn_Turret T;
 	local CircleWorldPawn_Elephant E;
 	local int i;
+	local vector ObjectiveMarker;
+	local rotator ObjectiveRot;
 	
 	foreach WorldInfo.AllActors(class'CircleWorld_LevelBase', C)
 	{
@@ -57,6 +59,8 @@ simulated function DrawHUD()
 		Canvas.DrawText("Pawn Properties -- Rot: " $CircleWorldPawn.Rotation.Yaw$ " -- Velocity: X"$CircleWorldPawn.CircleVelocity.X$ "Z" $CircleWorldPawn.Velocity.Z$ " -- AccelZ: " $CircleWorldPawn.Acceleration.Z$ " -- Boost: " $CircleWorldPawn.UsingBoost$ " -- Fuel: " $CircleWorldPawn.GetBoostFuelPercent()$ "% -- WasUsingBoost: " $CircleWorldPawn.WasUsingBoost$ " -- AimPoint: " $CircleWorldPawn.AimPoint);
 		Canvas.SetPos(Canvas.ClipX * 0.1, Canvas.ClipY * 0.2);
 		Canvas.DrawText("Input - aStrafe: " $CircleWorldPlayerController(PlayerOwner).ThisStrafe$ " -- aForward: " $CircleWorldPlayerController(PlayerOwner).ThisUp$ " -- Control State: " $CircleWorldPlayerController(PlayerOwner).GetStateName()$ " -- IsRidingLift: " $CircleWorldPawn.IsRidingLift$ " -- RiddenLift: " $CircleWorldPawn.RiddenLift);
+		Canvas.SetPos(Canvas.ClipX * 0.1, Canvas.ClipY * 0.25);
+		Canvas.DrawText("Objective Index: " $CircleWorldGameInfo(WorldInfo.Game).CurrentObjectiveIndex$ " - Objective Marker: " $CircleWorldGameInfo(WorldInfo.Game).CurrentObjectiveMarker);
 		
 		ProjectLoc = Canvas.Project(CircleWorldPawn.AimPoint);
 		Canvas.SetPos(ProjectLoc.X - 8, ProjectLoc.Y - 8);
@@ -140,7 +144,33 @@ simulated function DrawHUD()
 			Canvas.SetPos(Canvas.ClipX / 2 + 48, 40);
 			Canvas.DrawTile(Texture2D'CircleWorld.Key', 32,32, 0, 0, 32, 32, MakeLinearColor(0,0,1,1));
 		}
+		
+		// Show objective info		
+		Canvas.SetPos(100, 100);
+		Canvas.DrawColor = RedColor;
+		Canvas.Font = class'Engine'.Static.GetMediumFont();
+		Canvas.DrawText(CircleWorldGameInfo(WorldInfo.Game).CurrentObjectiveName);
+		
+		// Draw objective direction arrow
+		if (CircleWorldGameInfo(WorldInfo.Game).CurrentObjectiveMarker != none)
+		{
+			ObjectiveMarker = CircleWorldGameInfo(WorldInfo.Game).CurrentObjectiveMarker.Location;
+
+			if (VSize(ObjectiveMarker - CircleWorldPawn.Location) > 512)
+			{
+				// Draw the arrow
+				ProjectLoc = Canvas.Project(ObjectiveMarker);
+				ObjectiveRot = Rotator(ProjectLoc - CircleWorldPawn.Location);
+				ObjectiveRot.Yaw += 16384;
+				ObjectiveRot.Pitch = 0;
+				ObjectiveRot.Roll = 0;
+				Canvas.DrawColor = WhiteColor;
+				Canvas.SetPos((Canvas.ClipX * 0.5) - 512, (Canvas.ClipY * 0.5) - 512);
+				Canvas.DrawRotatedTile(Texture2D'CircleObjectives.arrow2', ObjectiveRot, 1024, 1024, 0, 0, 1024, 1024);
+			}
 		}
+		
+	}
 	
 	super.DrawHUD();
 }

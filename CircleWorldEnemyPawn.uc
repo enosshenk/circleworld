@@ -30,6 +30,8 @@ var AnimNodeSlot PriorityAnimSlot;					// Ref to our priority anim slot
 var SoundCue HurtSound;								// Sound to play when hurt
 var SoundCue DeathSound;							// Sound to play when we die
 
+var float DeathHideDelay;							// How long our corpse should remain before hiding it
+
 event PostBeginPlay()
 {
 	local CircleWorld_LevelBase L;
@@ -298,6 +300,15 @@ function Died(Controller Killer, class<DamageType> DamageType, vector HitLocatio
 	}
 
 	PlaySound(DeathSound);
+	
+	SetTimer(DeathHideDelay, false, 'HideBody');
+	
+	SetCollision(false, false);
+}
+
+function HideBody()
+{
+	Mesh.SetHidden(true);
 }
 
 defaultproperties

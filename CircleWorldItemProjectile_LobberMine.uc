@@ -28,7 +28,7 @@ event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vect
 	{
 		// Shot landed on a pawn that isn't the player. Deal damage and don't spawn the mine.
 		Other.TakeDamage(ProjectileDamage, Pawn(Other).Controller, HitLocation, vect(0,0,0), ProjectileDamageType);
-		Explode(Location);
+		Explode(HitLocation, HitNormal);
 	}
 	else if (Other.bWorldGeometry == true && CircleWorldItem_Lift(Other) == none)
 	{
@@ -55,4 +55,6 @@ defaultproperties
 
 	//FlightLightClass = class'CircleWorldProjectileLight'
 	ExplosionLightClass = class'CircleWorldExplosionLight'
+	
+	DecalMat = Material'LeCarMaterials.oil2_mat'
 }

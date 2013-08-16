@@ -19,6 +19,7 @@ defaultproperties
 	DeathParticleSystem = ParticleSystem'TheCircleWorld.FX.gore1'
 	CanDamagePlayer = true 
 	PlayerDamage = 10
+	DeathHideDelay = 1
 
 	HurtAnimationName = hurt
 	AttackAnimationName = attack
