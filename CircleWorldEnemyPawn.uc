@@ -29,6 +29,12 @@ var AnimNodeSlot PriorityAnimSlot;					// Ref to our priority anim slot
 
 var SoundCue HurtSound;								// Sound to play when hurt
 var SoundCue DeathSound;							// Sound to play when we die
+var SoundCue AttackSound;							// Sound when we attack
+
+var MaterialInterface DeathDecal;					// Decal to drop on ground when we die
+var float DeathDecalSize;
+
+var bool PlayedDeath;
 
 var float DeathHideDelay;							// How long our corpse should remain before hiding it
 
@@ -201,6 +207,9 @@ event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vect
 		// Start a timer to prevent instant re-damage
 		CanDamagePlayer = false;
 		SetTimer(0.4, false, 'SetDamagePlayer');
+		
+		// Play a sound
+		PlaySound(AttackSound);
 	}
 	super.Touch(Other, OtherComp, HitLocation, HitNormal);
 }
@@ -287,23 +296,34 @@ simulated function TakeRadiusDamage
 function Died(Controller Killer, class<DamageType> DamageType, vector HitLocation)
 {
 	local CircleWorldItem_Emitter DeathSystem;
-	
-	CanDamagePlayer = false;
-	EnemyPawnVelocity = 0;
-	
-	// Spawn and activate a particle system for death
-	DeathSystem = spawn(class'CircleWorldItem_Emitter', self, , HitLocation, self.Rotation);
-	if (DeathSystem != none)
-	{
-		DeathSystem.ParticleSystemComponent.SetTemplate(DeathParticleSystem);
-		DeathSystem.ParticleSystemComponent.ActivateSystem();
-	}
+	local rotator DecalRot;
 
-	PlaySound(DeathSound);
-	
-	SetTimer(DeathHideDelay, false, 'HideBody');
-	
-	SetCollision(false, false);
+	if (!PlayedDeath)
+	{	
+		CanDamagePlayer = false;
+		EnemyPawnVelocity = 0;
+		
+		// Spawn and activate a particle system for death
+		DeathSystem = spawn(class'CircleWorldItem_Emitter', self, , HitLocation, self.Rotation);
+		if (DeathSystem != none)
+		{
+			DeathSystem.ParticleSystemComponent.SetTemplate(DeathParticleSystem);
+			DeathSystem.ParticleSystemComponent.ActivateSystem();
+		}
+
+		PlaySound(DeathSound);
+		
+		// Spawn death decal if applicable
+		if (DeathDecal != none)
+		{
+			DecalRot = Rotator(vect(0,0,0) - Location);
+			CircleWorldGameInfo(WorldInfo.Game).CircleDecalManager.SpawnDecal(DeathDecal, Location, DecalRot, 20, DeathDecalSize);
+		}
+		
+		SetTimer(DeathHideDelay, false, 'HideBody');
+		
+		SetCollision(false, false);
+	}
 }
 
 function HideBody()

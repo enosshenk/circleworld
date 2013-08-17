@@ -162,7 +162,6 @@ function bool CanExplode(Actor Other)
 
 function Explode(vector HitLocation, vector HitNormal)
 {
-	local CircleWorldDecal TheDecal;
 	local rotator DecalRot;
 	
 	if (!HasExploded)
@@ -185,8 +184,8 @@ function Explode(vector HitLocation, vector HitNormal)
 		if (DecalMat != none)
 		{
 			DecalRot = Rotator(HitLocation - HitNormal);
-			TheDecal = spawn(class'CircleWorldDecal', self, , Location, DecalRot,, true);
-			TheDecal.InitDecal(DecalMat, 10, ProjectileDamageRadius * 0.75);
+			CircleWorldGameInfo(WorldInfo.Game).CircleDecalManager.SpawnDecal(DecalMat, Location, DecalRot, 10, ProjectileDamageRadius * 0.75);
+//			TheDecal.InitDecal(DecalMat, 10, ProjectileDamageRadius * 0.75);
 		}
 		
 		// Damage radius!

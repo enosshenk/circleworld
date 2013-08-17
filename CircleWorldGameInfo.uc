@@ -5,6 +5,8 @@ var int EnergyLevel;
 var int CameraMode;
 var CircleWorldPawn CirclePawn;
 
+var CircleWorldDecalManager CircleDecalManager;
+
 // Vars exposed for future HUD usage
 var float CircleLevelRotation;							// Current rotation value of the level
 var int CurrentObjectiveIndex;
@@ -28,6 +30,13 @@ function Pawn SpawnDefaultPawnFor(Controller NewPlayer, NavigationPoint StartSpo
 {
 
 	return super.SpawnDefaultPawnFor(NewPlayer, StartSpot);
+}
+
+event PreBeginPlay()
+{
+	CircleDecalManager = Spawn(class'CircleWorldDecalManager');
+	
+	super.PreBeginPlay();
 }
 
 function UpdateObjectives(int CurrentObjective)

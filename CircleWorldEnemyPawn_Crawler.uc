@@ -26,7 +26,11 @@ defaultproperties
 	
 	HurtSound = SoundCue'Rock.Sound.chickenhurt1_Cue'
 	DeathSound = SoundCue'Rock.Sound.chickenhurt2_Cue'
+	AttackSound = SoundCue'TheCircleWorld.Sounds.blobbysnarl'
 
+	DeathDecal = DecalMaterial'CircleDecal.decal2_mat'
+	DeathDecalSize = 512
+	
 	Begin Object Name=CollisionCylinder
 		CollisionRadius=128.000000
 		CollisionHeight=64.000000
