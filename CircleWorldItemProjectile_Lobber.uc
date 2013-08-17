@@ -28,11 +28,11 @@ event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vect
 	if (IsArmed && (Pawn(Other) != none || CircleWorldEnemyPawn(Other) != none))
 	{
 		Other.TakeDamage(ProjectileDamage, Pawn(Other).Controller, HitLocation, vect(0,0,0), ProjectileDamageType);
-		Explode(HitLocation, HitNormal);
+		Explode(HitLocation, LastLoc);
 	}
 	else if (IsArmed && CanExplode(Other))
 	{
-		Explode(HitLocation, HitNormal);
+		Explode(HitLocation, LastLoc);
 	}
 }
 
@@ -48,7 +48,7 @@ defaultproperties
 	ProjectileLife = 12
 	ProjectileSpeed = 300
 	ProjectileDamage = 99
-	ProjectileDamageRadius = 300
+	ProjectileDamageRadius = 768
 	ProjectileDamageMomentum = 10
 	ProjectileDamageType = class'DamageType'
 	ProjectileParticleSystem=ParticleSystem'TheCircleWorld.FX.fireball'
@@ -56,7 +56,7 @@ defaultproperties
 	
 	ExplosionSound = SoundCue'TheCircleWorld.Sounds.explosionfireball'
 	
-	DecalMat = Material'LeCarMaterials.oil2_mat'
+	DecalMat = Material'CircleDecal.decal_mat'
 
 	//FlightLightClass = class'CircleWorldProjectileLight'
 	ExplosionLightClass = class'CircleWorldExplosionLight'

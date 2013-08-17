@@ -48,11 +48,11 @@ event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vect
 	else if ((Pawn(Other) != none || CircleWorldEnemyPawn(Other) != none) && IsArmed)
 	{
 		Other.TakeDamage(ProjectileDamage, Pawn(Other).Controller, HitLocation, vect(0,0,0), ProjectileDamageType);
-		Explode(HitLocation, HitNormal);
+		Explode(HitLocation, LastLoc);
 	}
 	else if (IsArmed && CanExplode(Other))
 	{
-		Explode(HitLocation, HitNormal);
+		Explode(HitLocation, LastLoc);
 	}
 }
 

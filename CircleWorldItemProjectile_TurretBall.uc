@@ -16,7 +16,7 @@ event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vect
 	if (IsArmed && CircleWorldEnemyPawn_Turret(Other) == none && CircleWorldEnemyPawn_SimpleTurret(Other) == none)
 	{
 		`log("Projectile " $self$ " impacted " $Other);
-		Explode(HitLocation, HitNormal);
+		Explode(HitLocation, LastLoc);
 	}
 }
 

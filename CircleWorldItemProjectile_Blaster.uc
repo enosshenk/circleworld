@@ -17,12 +17,12 @@ event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vect
 	{
 		// We impacted another pawn directly. Do full damage then explode.
 		Other.TakeDamage(ProjectileDamage, Pawn(Other).Controller, HitLocation, vect(0,0,0), ProjectileDamageType);
-		Explode(HitLocation, HitNormal);
+		Explode(HitLocation, LastLoc);
 	}
 	else if (IsArmed && CanExplode(Other))
 	{
 		// We hit something else, just explode.
-		Explode(HitLocation, HitNormal);
+		Explode(HitLocation, LastLoc);
 	}
 }
 
@@ -47,7 +47,7 @@ defaultproperties
 
 	ExplosionSound = SoundCue'TheCircleWorld.Sounds.explosionlaser'
 	
-	DecalMat = Material'LeCarMaterials.oil2_mat'
+	DecalMat = DecalMaterial'CircleDecal.decal2_mat'
 	
 	// FlightLightClass = class'CircleWorldProjectileLight'
 	ExplosionLightClass = class'CircleWorldExplosionLight'

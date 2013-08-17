@@ -69,11 +69,21 @@ event Tick(float DeltaTime)
 	super.Tick(DeltaTime);
 }
 
-function InitDecal(MaterialInterface Mat, float StayTime)
+function InitDecal(MaterialInterface Mat, float StayTime, float Radius)
 {
-	Decal.SetDecalMaterial(Mat);
+	local float Width, Height;
+	
+	Width = Radius;
+	Height = Radius;
+	Width += (Radius * 0.2 * -1) + Rand(Radius * 0.2);
+	Height += (Radius * 0.2 * -1) + Rand(Radius * 0.2);
+	
 	DecalStayTime = StayTime;
 	DecalTimeElapsed = 0;
+
+	Decal.SetDecalMaterial(Mat);
+	Decal.Width = Width;
+	Decal.Height = Height;
 }
 
 defaultproperties
@@ -86,6 +96,7 @@ defaultproperties
 		DecalTransform=DecalTransform_OwnerAbsolute
 		bStaticDecal=false
 		bMovableDecal=true
+		bDecalMaterialSetAtRunTime=true
 	End Object
 	Decal=NewDecalComponent
 	Components.Add(NewDecalComponent)

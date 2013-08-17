@@ -9,6 +9,7 @@ var rotator ProjectileRotation;						// A fake rotator set at init time, determi
 var vector2d InitialLocationPolar;					// Initial polar coordinates generated from our spawn-in location
 var vector2d LastLocationPolar;						// Last frame polar coordinates, used for gravity
 var rotator InitialLevelRot;						// Initial rotation of the world cylinder set at spawn-in of this projectile
+var vector LastLoc;
 
 var bool ProjectileUseGravity;						// If true this projectile is affected by gravity
 var float ProjectileGravityFactor;					// If UseGravity is on, scale by this value
@@ -97,6 +98,8 @@ event Tick(float DeltaTime)
 	}
 	else
 	{
+		LastLoc = Location;
+		
 		// If we're simulating gravity, modify our velocity each frame
 		if (ProjectileUseGravity)
 		{
@@ -115,6 +118,7 @@ event Tick(float DeltaTime)
 		NewLocation.Z = InitialLocationPolar.X * sin(LocationPolar.Y * UnrRotToRad);
 		SetLocation(NewLocation);
 		
+		
 		// Set new rotation based on our polar angular value, considering our launch angle
 		NewRotation = Rotation;
 		NewRotation.Pitch = (LocationPolar.Y + ProjectileRotation.Pitch) - 16384;		// Subtract 16384 because UnrealEngine sets 0 rotation as 3 oclock position
@@ -126,7 +130,7 @@ event Tick(float DeltaTime)
 		if (!FastTrace(TempVector, Location))
 		{
 			// FastTrace hit world geometry. Explode.
-			Explode(TempVector, Location);
+			Explode(TempVector, LastLoc);
 		}
 		
 		// Set real in-engine velocity to hopefully improve collision
@@ -143,7 +147,7 @@ event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vect
 	{
 		// Hit level geometry
 		`log("Projectile " $self$ " impacted " $Other);
-		Explode(HitLocation, HitNormal);
+		Explode(HitLocation, LastLoc);
 	}
 	super.Touch(Other, OtherComp, HitLocation, HitNormal);
 }
@@ -180,9 +184,9 @@ function Explode(vector HitLocation, vector HitNormal)
 		// Spawn decal if applicable
 		if (DecalMat != none)
 		{
-			DecalRot = Rotator(HitNormal - HitLocation);
+			DecalRot = Rotator(HitLocation - HitNormal);
 			TheDecal = spawn(class'CircleWorldDecal', self, , Location, DecalRot,, true);
-			TheDecal.InitDecal(DecalMat, 10);
+			TheDecal.InitDecal(DecalMat, 10, ProjectileDamageRadius * 0.75);
 		}
 		
 		// Damage radius!
