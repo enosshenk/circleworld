@@ -37,12 +37,12 @@ defaultproperties
 	ProjectileDamageType = class'DamageType'
 
 	ProjectileParticleSystem=ParticleSystem'TheCircleWorld.FX.laser2'
-	ProjectileExplosionSystem=ParticleSystem'TheCircleWorld.FX.turret_exp1'
+	ProjectileExplosionSystem=ParticleSystem'TheCircleWorld.FX.EnemyPawn_exp1'
 	
 	ExplosionSound = SoundCue'TheCircleWorld.Sounds.explosionfireball'
 	
-	DecalMat = Material'LeCarMaterials.oil2_mat'
+	DecalMat = DecalMaterial'TheCircleWorld.Decals.blueglow'
 	
-	//FlightLightClass = class'CircleWorldProjectileLight'
+	//FlightLightClass =  class'CircleWorldProjectileLight'
 	ExplosionLightClass = class'CircleWorldExplosionLight'
 }

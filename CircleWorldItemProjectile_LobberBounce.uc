@@ -75,9 +75,9 @@ defaultproperties
 	ProjectileExplosionSystem=ParticleSystem'TheCircleWorld.FX.lobber_exp1'
 	
 	ExplosionSound = SoundCue'TheCircleWorld.Sounds.explosionfireball'
-	BounceSound = SoundCue'TheCircleWorld.Sounds.explosionlaser'
+	BounceSound = SoundCue'TheCircleWorld.Sounds.bouncey1'
 	
-	DecalMat = Material'LeCarMaterials.oil2_mat'
+	DecalMat = DecalMaterial'TheCircleWorld.Decals.blueglow'
 
 	//FlightLightClass = class'CircleWorldProjectileLight'
 	ExplosionLightClass = class'CircleWorldExplosionLight'

@@ -36,7 +36,7 @@ defaultproperties
 	ProjectileUseGravity = true
 	ProjectileGravityFactor = 0
 	ProjectileLife = 8
-	ProjectileSpeed = 800
+	ProjectileSpeed = 400
 	ProjectileDamage = 15
 	ProjectileDamageRadius = 196
 	ProjectileDamageMomentum = 10
@@ -47,7 +47,7 @@ defaultproperties
 
 	ExplosionSound = SoundCue'TheCircleWorld.Sounds.explosionlaser'
 	
-	DecalMat = DecalMaterial'CircleDecal.decal2_mat'
+	DecalMat = DecalMaterial'TheCircleWorld.Decals.blueglow'
 	
 	// FlightLightClass = class'CircleWorldProjectileLight'
 	ExplosionLightClass = class'CircleWorldExplosionLight'

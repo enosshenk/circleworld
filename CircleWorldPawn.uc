@@ -1258,18 +1258,16 @@ defaultproperties
 {
 	Health = 1000
 	HealthMax = 1000
-	
-	GroundSpeed = 1500
+	GroundSpeed = 1000
 	AirSpeed = 2100
 	MaxJumpHeight = 3500
 	JumpZ = 2000
 	BoostZ = 6000
 	BoostX = 50
 	AirControl = 0.1
-	
 	MaxFallSpeed = 2100
 	JumpMomentum =  .3
-	MomentumFade = .5
+	MomentumFade = 1
 	JumpLaunchTime = .2
 
 	BoostFuel = 200
@@ -1289,15 +1287,15 @@ defaultproperties
 	CanShootSecondary = true
 	
 	HurtAnimationName = hurt
-	PrimaryFireAnimationName = punch_stand1
+	PrimaryFireAnimationName = primaryfire
 	SecondaryFireAnimationName = punch_stand2
 	
-	JumpSound = SoundCue'Rock.Sound.chicken1_Cue'
-	JumpLandSound = SoundCue'Rock.Sound.chicken1_Cue'
-	JetpackOnSound = SoundCue'Rock.Sound.chicken1_Cue'
+	JumpSound = SoundCue'TheCircleWorld.Sounds.stan_jump_cue'
+	JumpLandSound = SoundCue'TheCircleWorld.Sounds.PlayerLand'
+	JetpackOnSound = SoundCue'TheCircleWorld.Sounds.Jetpack1_cue'
 	
 	Begin Object Class=AudioComponent Name=JetpackSound0
-		SoundCue=SoundCue'CircleJetpack.jetpack_cue'
+		SoundCue=SoundCue'TheCircleWorld.Sounds.jetpack1_cue'
 		bAutoPlay = true
 		bStopWhenOwnerDestroyed = true
 	End Object
@@ -1382,8 +1380,8 @@ defaultproperties
 	End Object
 	MuzzleFlashLight = PointLightComponent1
 	
-	MuzzleFlashPrimary = (R=50, G=200, B=255)
-	MuzzleFlashSecondary = (R=200, G=75, B=75)
+	MuzzleFlashPrimary = (R=50, G=170, B=255)
+	MuzzleFlashSecondary = (R=255, G=75, B=0)
 	
 	Begin Object class=CircleWorldWeapons name=CircleWorldWeapons0
 	End Object

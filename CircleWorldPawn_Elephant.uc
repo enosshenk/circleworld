@@ -105,7 +105,7 @@ event Tick(float DeltaTime)
 
 	// Set new rotation based on our polar angular value
 	NewRotation = Rotation;
-	if (PawnFacing == 1)
+	if (PawnFacing == -1)
 	{
 		NewRotation.Pitch = (LocationPolar.Y - 16384) * -1;
 	}
@@ -121,7 +121,7 @@ event Tick(float DeltaTime)
 
 defaultproperties
 {
-	GroundSpeed = 100
+	GroundSpeed = 80
 	Physics=PHYS_Interpolating
 	bCollideActors=true
 	CollisionType=COLLIDE_TouchAll
@@ -150,5 +150,5 @@ defaultproperties
 		Scale3D = (X=24, Y=24, Z=24)
 	End Object
 	Mesh=CirclePawnSkeletalMeshComponent
-	Components.Add(CirclePawnSkeletalMeshComponent) 
+	Components.Add(CirclePawnSkeletalMeshComponent)
 }

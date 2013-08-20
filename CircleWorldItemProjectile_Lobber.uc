@@ -48,7 +48,7 @@ defaultproperties
 	ProjectileLife = 12
 	ProjectileSpeed = 300
 	ProjectileDamage = 99
-	ProjectileDamageRadius = 768
+	ProjectileDamageRadius = 1500
 	ProjectileDamageMomentum = 10
 	ProjectileDamageType = class'DamageType'
 	ProjectileParticleSystem=ParticleSystem'TheCircleWorld.FX.fireball'
@@ -56,8 +56,9 @@ defaultproperties
 	
 	ExplosionSound = SoundCue'TheCircleWorld.Sounds.explosionfireball'
 	
-	DecalMat = Material'CircleDecal.decal_mat'
+	DecalMat = DecalMaterial'TheCircleWorld.Decals.blueglow'
 
-	//FlightLightClass = class'CircleWorldProjectileLight'
+
+	FlightLightClass = class'CircleWorldProjectileLight'
 	ExplosionLightClass = class'CircleWorldExplosionLight'
 }

@@ -257,7 +257,7 @@ defaultproperties
 	SalvoWaitTime = 5
 	
 	TurretProjectile = class'CircleWorldItemProjectile_TurretBall'
-	DeathParticleSystem = ParticleSystem'CircleTurret.explosion_ps'
+	DeathParticleSystem = ParticleSystem'TheCircleWorld.FX.EnemyPawn_exp1'
 	
 	bCollideActors=true
 	CollisionType=COLLIDE_TouchAll
@@ -265,7 +265,7 @@ defaultproperties
 	bBlockActors=false
 	
 	Begin Object Class=StaticMeshComponent Name=StaticMeshComponent0
-		StaticMesh = StaticMesh'CircleSimpleTurret.simpleturret'
+		StaticMesh = StaticMesh'TheCircleWorld.Pawns.TurretSimple1'
 		bUsePrecomputedShadows=FALSE
 	End Object
 	CollisionComponent=StaticMeshComponent0

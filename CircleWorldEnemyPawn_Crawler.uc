@@ -24,8 +24,8 @@ defaultproperties
 	HurtAnimationName = hurt
 	AttackAnimationName = attack
 	
-	HurtSound = SoundCue'Rock.Sound.chickenhurt1_Cue'
-	DeathSound = SoundCue'Rock.Sound.chickenhurt2_Cue'
+	HurtSound = SoundCue'TheCircleWorld.Sounds.blobbyhurt'
+	DeathSound = SoundCue'TheCircleWorld.Sounds.blobbydeath'
 	AttackSound = SoundCue'TheCircleWorld.Sounds.blobbysnarl'
 
 	DeathDecal = DecalMaterial'CircleDecal.decal2_mat'

@@ -72,8 +72,8 @@ defaultproperties
 		HighDetailFrameTime=+0.02
 		Brightness=8
 		Radius=2048
-		LightColor=(R=255,G=255,B=255,A=255)
-		TimeShift=((StartTime=0.0,Radius=256,Brightness=16,LightColor=(R=255,G=255,B=255,A=255)),(StartTime=0.3,Radius=128,Brightness=8,LightColor=(R=255,G=255,B=128,A=255)),(StartTime=0.4,Radius=128,Brightness=0,LightColor=(R=255,G=255,B=64,A=255)))
+		LightColor=( R=255,G=255,B=255,A=255 )
+		TimeShift=((StartTime=0.0,Radius=200,Brightness=333,LightColor=(R=255,G=255,B=255,A=255)),(StartTime=0.1,Radius=2300,Brightness=300,LightColor=(R=255,G=180,B=0,A=255)),(StartTime=0.25,Radius=4500,Brightness=30,LightColor=(R=10,G=0,B=255,A=255)),(StartTime=0.8,Radius=7999,Brightness=0,LightColor=(R=0,G=0B=255,A=255)))
 		OnLightFinished = LightFinished
 	End Object
 	ExplosionLightComponent=ExplosionLight0

@@ -53,8 +53,8 @@ defaultproperties
 	ProjectileParticleSystem=ParticleSystem'TheCircleWorld.FX.fireball'
 	ProjectileExplosionSystem=ParticleSystem'TheCircleWorld.FX.lobber_exp1'
 
-	//FlightLightClass = class'CircleWorldProjectileLight'
+	FlightLightClass = class'CircleWorldProjectileLight'
 	ExplosionLightClass = class'CircleWorldExplosionLight'
 	
-	DecalMat = Material'LeCarMaterials.oil2_mat'
+	DecalMat = Material'TheCircleWorld.Decals.fireball_decal'
 }
