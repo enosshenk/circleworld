@@ -12,6 +12,11 @@ var() float WaitTime;								// Time in seconds to wait before reversing directi
 var() float EnemyPawnGroundSpeed;					// Speed we should walk at
 var() float Health;									// Current health
 var() float HealthMax;								// Max health
+var() enum EStartDirection
+{
+	D_Left,
+	D_Right
+} StartDirection;									// Initial direction
 
 var bool EnemyPawnWalking;							// True if this enemy pawn is "moving"
 var int EnemyPawnDirection;							// -1 for moving left, 1 for moving right
@@ -56,9 +61,21 @@ event PostBeginPlay()
 	
 	LocationPolar.X = InitialLocationPolar.X;
 	LocationPolar.Y = InitialLocationPolar.Y;
+
+	// Set initial facing
+	if (StartDirection == D_Left)
+	{
+		EnemyPawnDirection = -1;
+		// Start moving
+		SetEnemyPawnVelocity(EnemyPawnGroundSpeed * -1);
+	}
+	else
+	{
+		EnemyPawnDirection = 1;
+		// Start moving
+		SetEnemyPawnVelocity(EnemyPawnGroundSpeed);
+	}
 	
-	// Start moving
-	SetEnemyPawnVelocity(EnemyPawnGroundSpeed);
 	
 	super.PostBeginPlay();
 }

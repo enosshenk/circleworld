@@ -1031,18 +1031,13 @@ function bool CannotJumpNow()
 
 function bool CircleCanShoot(int FireMode)
 {
-	if (IsSkidding || IsTurning)
-		return false;
-	else
+	if (FireMode == 0)
 	{
-		if (FireMode == 0)
-		{
-			return CanShootPrimary;
-		}
-		else if (FireMode == 1)
-		{
-			return CanShootSecondary;
-		}
+		return CanShootPrimary;
+	}
+	else if (FireMode == 1)
+	{
+		return CanShootSecondary;
 	}
 }
 
