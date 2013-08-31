@@ -167,6 +167,31 @@ event Tick(float DeltaTime)
 	NewRotation.Pitch = LocationPolar.Y - 16384;		// Subtract 16384 because UnrealEngine sets 0 rotation as 3 oclock position
 	SetRotation(NewRotation);
 }
+
+event bool EncroachingOn(Actor Other)
+{
+	local Pawn P;
+	local vector TempVect;
+	local vector Height, HitLocation, HitNormal;
+	
+	P = Pawn(Other);
+	if (P != none)
+	{
+		Height = P.GetCollisionHeight() * vect(0,0,1);
+		
+		if (TraceComponent(HitLocation, HitNormal, StaticMeshComponent, P.Location - Height, P.Location + Height, P.GetCollisionExtent()))
+		{		
+			if (P.Location.Z < Location.Z)
+			{
+				P.SetLocation(HitLocation + Height);
+				//P.SetPhysics(PHYS_Falling);
+			}
+		}
+	}
+	`log("Encroached on " $Other);
+	
+	return false;
+}
 	
 defaultproperties
 {
