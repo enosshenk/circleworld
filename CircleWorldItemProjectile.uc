@@ -32,7 +32,8 @@ var CircleWorldProjectileLight FlightLight;		// Refs to the lights
 var CircleWorldExplosionLight ExplosionLight;	
 var SoundCue ExplosionSound;
 var MaterialInterface DecalMat;
-var bool HasExploded;
+var bool HasExploded, ShouldExplode, ExplodeTrace;
+var vector ShouldExplodeLoc;
 
 event PostBeginPlay()
 {
@@ -70,12 +71,16 @@ event PostBeginPlay()
 		AttachComponent(FlightLight.LightComponent);
 	}
 	
+	SetTimer(0.1, false, 'SetExplodeTrace');
+	
 	super.PostBeginPlay();
 }
 
 function InitProjectile(rotator NewRotation, float AddSpeed)
 {
 	local vector TempVelocity;
+	local vector HitLocation, HitNormal, TraceEnd, TraceStart;
+	local actor HitActor;
 	
 	// Add to our speed
 	ProjectileSpeed += AddSpeed / 20;
@@ -84,11 +89,26 @@ function InitProjectile(rotator NewRotation, float AddSpeed)
 
 	ProjectileVelocity = TempVelocity >> NewRotation;
 	`log("Init projectile rotator: " $NewRotation$ " -- velocity: " $ProjectileVelocity);
+	
+	// Check for immediate collision
+	TraceStart = Location;
+	TraceEnd = Location + ProjectileVelocity;
+	
+	HitActor = trace(HitLocation, HitNormal, TraceEnd, TraceStart, true);
+	
+	if (CircleWorldGameInfo(WorldInfo.Game).DebugHUD)
+		DrawDebugLine(TraceStart, TraceEnd, 255, 255, 0, false);
+	
+	if (CircleWorld_LevelBase(HitActor) != none)
+	{
+		Explode(HitLocation, Location);
+	}	
+	
 }
 
 event Tick(float DeltaTime)
 {
-	local vector NewLocation, TempVector;
+	local vector NewLocation;
 	local rotator NewRotation;
 	
 	if (ProjectileLifeElapsed >= ProjectileLife)
@@ -124,14 +144,14 @@ event Tick(float DeltaTime)
 		NewRotation.Pitch = (LocationPolar.Y + ProjectileRotation.Pitch) - 16384;		// Subtract 16384 because UnrealEngine sets 0 rotation as 3 oclock position
 		SetRotation(NewRotation);
 		
-		// Hacky collision check
-		TempVector = Location;
-		TempVector += vect(64,0,0) >> NewRotation;
-		if (!FastTrace(TempVector, Location))
+		if (ShouldExplodeLoc != vect(0,0,0))
 		{
-			// FastTrace hit world geometry. Explode.
-			Explode(TempVector, LastLoc);
-		}
+			SetLocation(Location + ProjectileVelocity);
+			Explode(Location, LastLoc);
+		}		
+		
+		// Hacky collision check
+		ShouldExplodeLoc = CheckExplosionTrace();
 		
 		// Set real in-engine velocity to hopefully improve collision
 		Velocity = ProjectileVelocity;
@@ -139,6 +159,27 @@ event Tick(float DeltaTime)
 	
 	ProjectileLifeElapsed += DeltaTime;
 	super.Tick(DeltaTime);
+}
+
+function vector CheckExplosionTrace()
+{
+	local vector TraceEnd, TraceStart, HitLocation, HitNormal;
+	local actor HitActor;
+	
+	TraceStart = Location;
+	TraceEnd = Location + ProjectileVelocity;
+	
+	HitActor = trace(HitLocation, HitNormal, TraceEnd, TraceStart, true);
+	
+	if (CircleWorldGameInfo(WorldInfo.Game).DebugHUD)
+		DrawDebugLine(TraceStart, TraceEnd, 255, 255, 0, false);
+	
+	if (CircleWorld_LevelBase(HitActor) != none && ExplodeTrace)
+	{
+		return HitLocation;
+	}
+	
+	return vect(0,0,0);
 }
 
 event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vector HitNormal )
@@ -208,6 +249,11 @@ function CircleOnSystemFinished(ParticleSystemComponent PSC)
 		WorldInfo.MyEmitterPool.OnParticleSystemFinished(PooledSystem);
 		PooledSystem = none;
 	}
+}
+
+function SetExplodeTrace()
+{
+	ExplodeTrace = true;
 }
 	
 defaultproperties

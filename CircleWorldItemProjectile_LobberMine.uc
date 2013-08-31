@@ -42,6 +42,13 @@ event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vect
 
 defaultproperties
 {
+	Begin Object Name=CollisionCylinder
+		CollisionRadius=+048.000000
+		CollisionHeight=+064.000000
+		HiddenGame=false
+		bDrawNonColliding=true
+	End Object
+	
 	ProjectileUseGravity = true
 	ProjectileGravityFactor = 3
 	ProjectileLife = 12

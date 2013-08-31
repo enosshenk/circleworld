@@ -183,7 +183,9 @@ event bool EncroachingOn(Actor Other)
 		{		
 			if (P.Location.Z < Location.Z)
 			{
-				P.SetLocation(HitLocation + Height);
+				TempVect.Z = P.Mesh.Bounds.BoxExtent.Z;
+				P.SetLocation(HitLocation + Height + TempVect);
+				//P.Velocity.Z += CircleLiftSpeed;
 				//P.SetPhysics(PHYS_Falling);
 			}
 		}

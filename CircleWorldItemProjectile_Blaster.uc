@@ -33,6 +33,13 @@ function SetArm()
 
 defaultproperties
 {
+	Begin Object Name=CollisionCylinder
+		CollisionRadius=+048.000000
+		CollisionHeight=+064.000000
+		HiddenGame=false
+		bDrawNonColliding=true
+	End Object
+	
 	ProjectileUseGravity = true
 	ProjectileGravityFactor = 0
 	ProjectileLife = 8
