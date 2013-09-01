@@ -2,6 +2,18 @@ class CircleWorldEnemyPawn_Crawler extends CircleWorldEnemyPawn
 	ClassGroup(CircleWorld)
 	placeable;
 
+event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vector HitNormal )
+{
+	if (CircleWorldPawn(Other) != none && Normal(Other.Velocity) dot Normal(Location - Other.Location) >= 0.5)
+	{
+		self.TakeDamage(500, Pawn(Other).Controller, Other.Location, Other.Velocity, class'DamageType');
+	}
+	else
+	{	
+		super.Touch(Other, OtherComp, HitLocation, HitNormal);
+	}
+}
+	
 defaultproperties
 {
 	Health = 50

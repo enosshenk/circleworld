@@ -6,6 +6,7 @@ var() StaticMeshComponent StaticMeshComponent;
 	
 defaultproperties
 {
+	bWorldGeometry = true
 	CollisionType = COLLIDE_BlockAll
 
 	Begin Object Class=StaticMeshComponent Name=StaticMeshComponent0
