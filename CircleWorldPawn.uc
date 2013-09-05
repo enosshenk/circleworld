@@ -233,7 +233,7 @@ event Tick(float DeltaTime)
 	// Set our new velocity based on the acceleration given by PlayerController
 	if (Physics == PHYS_Falling || Physics == PHYS_Flying)
 	{
-		NewVelocity += (LastVelocity * 0.95) + (CircleAcceleration * AirControl);
+		NewVelocity += (LastVelocity * 0.99) + (CircleAcceleration * AirControl);
 		CircleVelocity = ClampLength(NewVelocity, AirSpeed);
 		CircleVelocityPreAdjust = CircleVelocity;	
 	
@@ -1258,8 +1258,8 @@ defaultproperties
 	MaxJumpHeight = 3500
 	JumpZ = 2000
 	BoostZ = 6000
-	BoostX = 50
-	AirControl = 0.1
+	BoostX = 5000
+	AirControl = 0.001
 	MaxFallSpeed = 2100
 	JumpMomentum =  .3
 	MomentumFade = 1

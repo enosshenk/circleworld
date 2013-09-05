@@ -1,0 +1,1 @@
+class CircleWorldDamageType_Mine extends DamageType;

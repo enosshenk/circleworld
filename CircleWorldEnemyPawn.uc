@@ -40,6 +40,7 @@ var MaterialInterface DeathDecal;					// Decal to drop on ground when we die
 var float DeathDecalSize;
 
 var bool PlayedDeath;
+var bool Stomped;
 
 var float DeathHideDelay;							// How long our corpse should remain before hiding it
 

@@ -41,7 +41,7 @@ defaultproperties
 	ProjectileDamage = 50
 	ProjectileDamageRadius = 300
 	ProjectileDamageMomentum = 10
-	ProjectileDamageType = class'DamageType'
+	ProjectileDamageType = class'CircleWorldDamageType_TurretBall'
 
 	ProjectileParticleSystem=ParticleSystem'TheCircleWorld.FX.laser2'
 	ProjectileExplosionSystem=ParticleSystem'TheCircleWorld.FX.EnemyPawn_exp1'

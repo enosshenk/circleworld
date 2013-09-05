@@ -1,0 +1,1 @@
+class CircleWorldDamageType_Lobber extends DamageType;

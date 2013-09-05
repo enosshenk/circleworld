@@ -132,7 +132,7 @@ defaultproperties
 	MineTimeout = 120
 	MineDamage = 300
 	MineDamageRadius = 2000
-	MineDamageType = class'DamageType'
+	MineDamageType = class'CircleWorldDamageType_Mine'
 
 
 	ExplosionSystem=ParticleSystem'TheCircleWorld.FX.nuke'

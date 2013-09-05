@@ -56,7 +56,7 @@ defaultproperties
 	ProjectileDamage = 99
 	ProjectileDamageRadius = 300
 	ProjectileDamageMomentum = 10
-	ProjectileDamageType = class'DamageType'
+	ProjectileDamageType = class'CircleWorldDamageType_Mine'
 	ProjectileParticleSystem=ParticleSystem'TheCircleWorld.FX.fireball'
 	ProjectileExplosionSystem=ParticleSystem'TheCircleWorld.FX.lobber_exp1'
 

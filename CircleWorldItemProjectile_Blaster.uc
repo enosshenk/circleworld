@@ -47,7 +47,7 @@ defaultproperties
 	ProjectileDamage = 15
 	ProjectileDamageRadius = 196
 	ProjectileDamageMomentum = 10
-	ProjectileDamageType = class'DamageType'
+	ProjectileDamageType = class'CircleWorldDamageType_Blaster'
 
 	ProjectileParticleSystem=ParticleSystem'TheCircleWorld.FX.laser1'
 	ProjectileExplosionSystem=ParticleSystem'TheCircleWorld.FX.blaster_exp1'

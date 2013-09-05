@@ -1,0 +1,1 @@
+class CircleWorldDamageType_Blaster extends DamageType;
