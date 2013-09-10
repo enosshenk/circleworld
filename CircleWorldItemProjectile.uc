@@ -84,11 +84,14 @@ function InitProjectile(rotator NewRotation, float AddSpeed)
 	
 	// Add to our speed
 	ProjectileSpeed += AddSpeed / 20;
-		
+	
 	TempVelocity.X = ProjectileSpeed;
 
 	ProjectileVelocity = TempVelocity >> NewRotation;
 	`log("Init projectile rotator: " $NewRotation$ " -- velocity: " $ProjectileVelocity);
+	
+	// Modify velocity by world radius
+	ProjectileVelocity *= 2 - (InitialLocationPolar.X / LevelBase.WorldRadius);
 	
 	// Check for immediate collision
 	TraceStart = Location;
