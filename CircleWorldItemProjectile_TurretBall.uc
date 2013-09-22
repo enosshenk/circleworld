@@ -37,7 +37,7 @@ defaultproperties
 	ProjectileUseGravity = false
 	ProjectileGravityFactor = 3
 	ProjectileLife = 6
-	ProjectileSpeed = 600
+	ProjectileSpeed = 1200
 	ProjectileDamage = 50
 	ProjectileDamageRadius = 300
 	ProjectileDamageMomentum = 10

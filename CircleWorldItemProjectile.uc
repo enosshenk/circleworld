@@ -130,8 +130,8 @@ event Tick(float DeltaTime)
 		}
 		
 		// Modify our initial polar with our fake velocity vector
-		InitialLocationPolar.Y = InitialLocationPolar.Y + ((ProjectileVelocity.X * -1) / 10);
-		InitialLocationPolar.X = InitialLocationPolar.X + (ProjectileVelocity.Z / 10);	
+		InitialLocationPolar.Y = InitialLocationPolar.Y + ((ProjectileVelocity.X * -1) * DeltaTime);
+		InitialLocationPolar.X = InitialLocationPolar.X + (ProjectileVelocity.Z * DeltaTime);	
 		
 		// Check the level base for rotation change
 		LocationPolar.Y = (InitialLevelRot.Pitch + LevelBase.Rotation.Pitch * -1) + InitialLocationPolar.Y;
@@ -154,7 +154,7 @@ event Tick(float DeltaTime)
 		}		
 		
 		// Hacky collision check
-		ShouldExplodeLoc = CheckExplosionTrace();
+		ShouldExplodeLoc = CheckExplosionTrace(DeltaTime);
 		
 		// Set real in-engine velocity to hopefully improve collision
 		Velocity = ProjectileVelocity;
@@ -164,13 +164,13 @@ event Tick(float DeltaTime)
 	super.Tick(DeltaTime);
 }
 
-function vector CheckExplosionTrace()
+function vector CheckExplosionTrace(float DeltaTime)
 {
 	local vector TraceEnd, TraceStart, HitLocation, HitNormal;
 	local actor HitActor;
 	
 	TraceStart = Location;
-	TraceEnd = Location + ProjectileVelocity;
+	TraceEnd = Location + (ProjectileVelocity * DeltaTime);
 	
 	HitActor = trace(HitLocation, HitNormal, TraceEnd, TraceStart, true);
 	
