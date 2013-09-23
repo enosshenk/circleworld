@@ -61,7 +61,7 @@ var bool CirclePawnJumping;									// True if the character is jumping at all
 var bool CirclePawnJumpUp;									// True if the character is jumping up (Hasn't hit top of jump yet)
 var bool CirclePawnJumpDown;								// True when the character is falling
 var bool Sprinting;											// True when the sprint key is held
-var bool LedgeHanging;										// True when we're hanging on a ledge.
+var bool IsTeleporting;										// True if we're processing a teleport
 var bool UsingBoost;										// True while we're using our jetpack
 var bool BoostSoundOn;
 var bool WasUsingBoost;										// True if we used boost any time before we land on solid ground
@@ -85,7 +85,6 @@ var bool HasBlueKey;
 var bool HasGreenKey;
 
 var CircleWorld_LevelBase LevelBase;						// Ref to the cylinder base
-var array<CircleWorld_LevelBackground> LevelBackgrounds;	// Array of background items to rotate with the cylinder
 var AnimNodeSlot PriorityAnimSlot;							// Ref to our AnimNodeSlot for playing one-shot animations
 var ParticleSystemComponent BoostParticleSystem;			// Particle system component for our boost effects
 var ParticleSystemComponent GroundEffectsParticleSystem;	// Particle system used when our boost exhaust is hitting the ground
@@ -119,19 +118,12 @@ var enum ESecondaryUpgrades
 event PostBeginPlay()
 {
 	local CircleWorld_LevelBase C;
-	local CircleWorld_LevelBackground B;
 	local vector ElephantSpawn;
 	
 	// Get our reference to the level cylinder
 	foreach WorldInfo.AllActors(class'CircleWorld_LevelBase', C)
 	{
 		LevelBase = C;
-	}
-	
-	// Fill the background items array with any LevelBackground actors
-	foreach WorldInfo.AllActors(class'CircleWorld_LevelBackground', B)
-	{
-		LevelBackgrounds.AddItem(B);
 	}
 	
 	// attach the jetpack effect
@@ -149,9 +141,12 @@ event PostBeginPlay()
 	MuzzleFlashLight.SetEnabled(false);
 	
 	// Spawn the elephant
-	ElephantSpawn = Location + vect(0,256,0);
-	Elephant = Spawn(class'CircleWorldPawn_Elephant', self,, ElephantSpawn, Rotation,, true);
-	Elephant.PlayerPawn = self;
+	if (Elephant == none)
+	{
+		ElephantSpawn = Location + vect(0,256,0);
+		Elephant = Spawn(class'CircleWorldPawn_Elephant', self,, ElephantSpawn, Rotation,, true);
+		Elephant.PlayerPawn = self;
+	}
 	
 	// Collect camera settings from MapInfo, if any
 	if (CircleWorldMapInfo(WorldInfo.GetMapInfo()) != none)
@@ -212,320 +207,315 @@ simulated event PostInitAnimTree(SkeletalMeshComponent SkelComp)
 event Tick(float DeltaTime)
 {
 	local vector NewVelocity, TempVector, TranslateVector;
-	local CircleWorld_LevelBackground B;
 
-	// Find out if we're on a lift
-	if (RidingLift() == true)
+	if (!IsTeleporting)
 	{
-		IsRidingLift = true;
-		if (IsTimerActive('DisableRidingOnLift'));
-			ClearTimer('DisableRidingOnLift');
-	}
-	else
-	{
-		if (!IsTimerActive('DisableRidingOnLift'));
-			SetTimer(0.1, false, 'DisableRidingOnLift');
-	}
-	
-	// Set underground flag
-	IsUnderground = CheckUnderground();
-
-	// Set our new velocity based on the acceleration given by PlayerController
-	if (Physics == PHYS_Falling || Physics == PHYS_Flying)
-	{
-		NewVelocity += (LastVelocity * 0.99) + (CircleAcceleration * AirControl);
-		CircleVelocity = ClampLength(NewVelocity, AirSpeed);
-		CircleVelocityPreAdjust = CircleVelocity;	
-	
-	}
-	else
-	{
-		NewVelocity += (LastVelocity * 0.5) + CircleAcceleration;
-		CircleVelocity = ClampLength(NewVelocity, GroundSpeed);
-		CircleVelocityPreAdjust = CircleVelocity;	
-	}
-
-	if (IsRidingLift && RiddenLift.CircleLiftType == CW_Horizontal)
-	{
-		`log("Riding horizontal lift");
-		// Riding a horizontal lift. Add the lift speed to our velocity
-		if (RiddenLift.TravelDirection == 1 && !RiddenLift.IsWaiting)
+		// Find out if we're on a lift
+		if (RidingLift() == true)
 		{
-			
-			CircleVelocity.X -= ((RiddenLift.CircleLiftSpeed / 32768) * RadToDeg) * 2.3 * Pi * RiddenLift.Location.Z;
-		}
-		if (RiddenLift.TravelDirection == -1 && !RiddenLift.IsWaiting)
-		{
-			CircleVelocity.X += ((RiddenLift.CircleLiftSpeed / 32768) * RadToDeg) * 2.3 * Pi * RiddenLift.Location.Z;
-		}
-	}
-	else if (IsRidingLift && RiddenLift.CircleLiftType == CW_ContinuousHorizontal)
-	{
-		// Riding a continuous horizontal lift. Add the lift speed to our velocity
-		if (RiddenLift.ContDirection == D_Left)
-		{
-			
-			CircleVelocity.X += ((RiddenLift.CircleLiftSpeed / 32768) * RadToDeg) * 2.3 * Pi * RiddenLift.Location.Z;
-		}
-		if (RiddenLift.ContDirection == D_Right)
-		{
-			CircleVelocity.X -= ((RiddenLift.CircleLiftSpeed / 32768) * RadToDeg) * 2.3 * Pi * RiddenLift.Location.Z;
-		}	
-	}
-	
-	// Check our forward collision
-	if (CollisionCheckForward() == true)
-	{
-		// Collision trace says we're hitting a wall. Stop our motion.
-		if (CircleVelocity.X > 0)
-		{
-			CircleVelocity.X = -10;
-			LevelBase.PawnVelocity.X = -10;
-			LastVelocity.X = -10;
+			IsRidingLift = true;
+			if (IsTimerActive('DisableRidingOnLift'));
+				ClearTimer('DisableRidingOnLift');
 		}
 		else
 		{
-			CircleVelocity.X = 10;
-			LevelBase.PawnVelocity.X = 10;
-			LastVelocity.X = 10;		
+			if (!IsTimerActive('DisableRidingOnLift'));
+				SetTimer(0.1, false, 'DisableRidingOnLift');
 		}
-	}
+		
+		// Set underground flag
+		IsUnderground = CheckUnderground();
 
-	if (!Sprinting && !CirclePawnJumping && !UsingBoost && !WasUsingBoost && !IsRidingLift)
-	{
-		// Check our below feet collision
-		if (CollisionCheckFeet() == true)
+		// Set our new velocity based on the acceleration given by PlayerController
+		if (Physics == PHYS_Falling || Physics == PHYS_Flying)
 		{
-			// Collision trace says we need to fall
-			WasUsingBoost = false;
-			Controller.GotoState('PlayerWalking');
-			SetPhysics(PHYS_Falling);
-//			Velocity.Z -= 16;			
-		}
-	}
-	else if (WasUsingBoost && !UsingBoost && !IsRidingLift)
-	{
-		if (CollisionCheckFeet() == false)
-		{
-			`log("Resetting walking collision");
-			WasUsingBoost = false;
-			BoostLand = true;
-			// Reset us to walking on solid ground
-			Controller.GotoState('PlayerWalking');
-			SetPhysics(PHYS_Walking);
-		}	
-	}
-	
-	// Set sensitivity for the following checks
-	if (WasUsingBoost)
-		VerticalSensitivity = 150;
-	else
-		VerticalSensitivity = 100;
-	
-	// Set some flags
-	if (Velocity.Z > VerticalSensitivity)
-	{
-		if (!UsingBoost)
-		{
-			// We are jumping up! Tell the AnimTree
-			CirclePawnJumpUp = true;
-			CirclePawnJumpDown = false;
-			CirclePawnJumping = true;
+			NewVelocity += (LastVelocity * 0.99) + (CircleAcceleration * AirControl);
+			CircleVelocity = ClampLength(NewVelocity, AirSpeed);
+			CircleVelocityPreAdjust = CircleVelocity;	
+		
 		}
 		else
 		{
-			// We are boosting up
-			CirclePawnBoostUp = true;
-			CirclePawnBoostDown = false;
+			NewVelocity += (LastVelocity * 0.5) + CircleAcceleration;
+			CircleVelocity = ClampLength(NewVelocity, GroundSpeed);
+			CircleVelocityPreAdjust = CircleVelocity;	
 		}
-	}
-	else if (Velocity.Z < VerticalSensitivity * -1)
-	{
-		if (!WasUsingBoost)
+
+		if (IsRidingLift && RiddenLift.CircleLiftType == CW_Horizontal)
 		{
-			// We're falling straight down
+			`log("Riding horizontal lift");
+			// Riding a horizontal lift. Add the lift speed to our velocity
+			if (RiddenLift.TravelDirection == 1 && !RiddenLift.IsWaiting)
+			{
+				
+				CircleVelocity.X -= ((RiddenLift.CircleLiftSpeed / 32768) * RadToDeg) * 2.3 * Pi * RiddenLift.Location.Z;
+			}
+			if (RiddenLift.TravelDirection == -1 && !RiddenLift.IsWaiting)
+			{
+				CircleVelocity.X += ((RiddenLift.CircleLiftSpeed / 32768) * RadToDeg) * 2.3 * Pi * RiddenLift.Location.Z;
+			}
+		}
+		else if (IsRidingLift && RiddenLift.CircleLiftType == CW_ContinuousHorizontal)
+		{
+			// Riding a continuous horizontal lift. Add the lift speed to our velocity
+			if (RiddenLift.ContDirection == D_Left)
+			{
+				
+				CircleVelocity.X += ((RiddenLift.CircleLiftSpeed / 32768) * RadToDeg) * 2.3 * Pi * RiddenLift.Location.Z;
+			}
+			if (RiddenLift.ContDirection == D_Right)
+			{
+				CircleVelocity.X -= ((RiddenLift.CircleLiftSpeed / 32768) * RadToDeg) * 2.3 * Pi * RiddenLift.Location.Z;
+			}	
+		}
+		
+		// Check our forward collision
+		if (CollisionCheckForward() == true)
+		{
+			// Collision trace says we're hitting a wall. Stop our motion.
+			if (CircleVelocity.X > 0)
+			{
+				CircleVelocity.X = -10;
+				LevelBase.PawnVelocity.X = -10;
+				LastVelocity.X = -10;
+			}
+			else
+			{
+				CircleVelocity.X = 10;
+				LevelBase.PawnVelocity.X = 10;
+				LastVelocity.X = 10;		
+			}
+		}
+
+		if (!Sprinting && !CirclePawnJumping && !UsingBoost && !WasUsingBoost && !IsRidingLift)
+		{
+			// Check our below feet collision
+			if (CollisionCheckFeet() == true)
+			{
+				// Collision trace says we need to fall
+				WasUsingBoost = false;
+				Controller.GotoState('PlayerWalking');
+				SetPhysics(PHYS_Falling);
+	//			Velocity.Z -= 16;			
+			}
+		}
+		else if (WasUsingBoost && !UsingBoost && !IsRidingLift)
+		{
+			if (CollisionCheckFeet() == false)
+			{
+				`log("Resetting walking collision");
+				WasUsingBoost = false;
+				BoostLand = true;
+				// Reset us to walking on solid ground
+				Controller.GotoState('PlayerWalking');
+				SetPhysics(PHYS_Walking);
+			}	
+		}
+		
+		// Set sensitivity for the following checks
+		if (WasUsingBoost)
+			VerticalSensitivity = 150;
+		else
+			VerticalSensitivity = 100;
+		
+		// Set some flags
+		if (Velocity.Z > VerticalSensitivity)
+		{
+			if (!UsingBoost)
+			{
+				// We are jumping up! Tell the AnimTree
+				CirclePawnJumpUp = true;
+				CirclePawnJumpDown = false;
+				CirclePawnJumping = true;
+			}
+			else
+			{
+				// We are boosting up
+				CirclePawnBoostUp = true;
+				CirclePawnBoostDown = false;
+			}
+		}
+		else if (Velocity.Z < VerticalSensitivity * -1)
+		{
+			if (!WasUsingBoost)
+			{
+				// We're falling straight down
+				CirclePawnJumpUp = false;
+				CirclePawnJumpDown = true;
+				CirclePawnJumping = true;
+			}
+			else
+			{
+				// We are falling in boost mode
+				CirclePawnBoostUp = false;
+				CirclePawnBoostDown = true;		
+			}
+		}	
+		else
+		{
 			CirclePawnJumpUp = false;
-			CirclePawnJumpDown = true;
-			CirclePawnJumping = true;
-		}
-		else
-		{
-			// We are falling in boost mode
+			CirclePawnJumpDown = false;	
+			CirclePawnJumping = false;
 			CirclePawnBoostUp = false;
-			CirclePawnBoostDown = true;		
+			CirclePawnBoostDown = false;	
 		}
-	}	
-	else
-	{
-		CirclePawnJumpUp = false;
-		CirclePawnJumpDown = false;	
-		CirclePawnJumping = false;
-		CirclePawnBoostUp = false;
-		CirclePawnBoostDown = false;	
-	}
-	
-	if (VSize(Velocity) > 10 || VSize(CircleVelocityPreAdjust) > 10)
-	{
-		// We are moving on the X axis, flag our movement state for AnimTree handling
-		CirclePawnMoving = true;
-	}
-	else
-	{
-		CirclePawnMoving = false;
-	}
-
-	if (!CirclePawnJumping && !UsingBoost)
-	{
-		if (VSize(CircleVelocity) >= GroundSpeed - 20)	// We're moving near top speed, we can skid if we stop suddenly.
+		
+		if (VSize(Velocity) > 10 || VSize(CircleVelocityPreAdjust) > 10)
 		{
-			// We want to delay changing our skid status to allow the animations to play out
-			// This is also hacky and stupid, but it works
-			ResetSkid = false;
-			if (!IsTimerActive('SetSkid'))
-				SetTimer(0.3, false, 'SetSkid');
+			// We are moving on the X axis, flag our movement state for AnimTree handling
+			CirclePawnMoving = true;
 		}
 		else
 		{
-			ResetSkid = true;
-			if (!IsTimerActive('SetSkid'))
-				SetTimer(0.1, false, 'SetSkid');
+			CirclePawnMoving = false;
 		}
 
-		if (Abs(CircleVelocity.X) < Abs(LastVelocity.X) * 0.95 && CanSkid && !IsTurning && !IsSkidding)
+		if (!CirclePawnJumping && !UsingBoost)
 		{
-			// Play our running skid-and-stop animation
-			IsSkidding = true;
-			ResetSkid = false;
-			if (!IsTimerActive('SetSkid'))
-				SetTimer(0.1, false, 'SetSkid');
-			SetTimer(0.45, false, 'ClearSkid');
-			PriorityAnimSlot.PlayCustomAnim('turn_run', 1, 0.1, 0.1, false, true);	
-		}
-		
-		if (Rotation.Yaw == 0 && !IsTurning && !IsSkidding)
-		{
-			// We are facing left
-			if (LastRot == 32768 && !CanSkid)
+			if (VSize(CircleVelocity) >= GroundSpeed - 20)	// We're moving near top speed, we can skid if we stop suddenly.
 			{
-				// We have reversed facing since last frame. Play our turn in place animation
-				IsTurning = true;
-				SetTimer(0.45, false, 'ResetTurning');
-				PriorityAnimSlot.PlayCustomAnim('turn_idle', 1, 0.1, 0.1, false, true);
+				// We want to delay changing our skid status to allow the animations to play out
+				// This is also hacky and stupid, but it works
+				ResetSkid = false;
+				if (!IsTimerActive('SetSkid'))
+					SetTimer(0.3, false, 'SetSkid');
 			}
-			LastRot = 0;			
-		}
-		else if (Rotation.Yaw == 32768 && !IsTurning && !IsSkidding)
-		{
-			// We are facing right
-			if (LastRot == 0 && !CanSkid)
+			else
 			{
-				// We have reversed facing since last frame.
-				IsTurning = true;
-				SetTimer(0.45, false, 'ResetTurning');
-				PriorityAnimSlot.PlayCustomAnim('turn_idle', 1, 0.1, 0.1, false, true);			
+				ResetSkid = true;
+				if (!IsTimerActive('SetSkid'))
+					SetTimer(0.1, false, 'SetSkid');
 			}
-			LastRot = 32768;
-		}
-	}
 
-	// Send the data to the cylinder world actor
-	LevelBase.PawnVelocity = CircleVelocity;
-	LevelBase.PawnLocation = Location;
-	
-	// Send the data to any level background actors
-	foreach LevelBackgrounds(B)
-	{
-		B.PawnVelocity = CircleVelocity;
-		B.PawnLocation = Location;
-	}
-	
-	if (Sprinting)
-	{
-		// We are sprinting. Use old floor detection and modify our groundspeed.
-		bForceFloorCheck = true;
-		GroundSpeed = default.GroundSpeed * 2;
-	}
-	else
-	{
-		bForceFloorCheck = false;
-		GroundSpeed = default.GroundSpeed;	
-	}
-	
-	// Check our boost fuel stuff
-	if (UsingBoost)
-	{
-		// We're using our jetpack. Reduce the fuel supply.
-		BoostFuel -= BoostConsumeRate;
-		if (BoostFuel < 0)
-			BoostFuel = 0;
+			if (Abs(CircleVelocity.X) < Abs(LastVelocity.X) * 0.95 && CanSkid && !IsTurning && !IsSkidding)
+			{
+				// Play our running skid-and-stop animation
+				IsSkidding = true;
+				ResetSkid = false;
+				if (!IsTimerActive('SetSkid'))
+					SetTimer(0.1, false, 'SetSkid');
+				SetTimer(0.45, false, 'ClearSkid');
+				PriorityAnimSlot.PlayCustomAnim('turn_run', 1, 0.1, 0.1, false, true);	
+			}
+			
+			if (Rotation.Yaw == 0 && !IsTurning && !IsSkidding)
+			{
+				// We are facing left
+				if (LastRot == 32768 && !CanSkid)
+				{
+					// We have reversed facing since last frame. Play our turn in place animation
+					IsTurning = true;
+					SetTimer(0.45, false, 'ResetTurning');
+					PriorityAnimSlot.PlayCustomAnim('turn_idle', 1, 0.1, 0.1, false, true);
+				}
+				LastRot = 0;			
+			}
+			else if (Rotation.Yaw == 32768 && !IsTurning && !IsSkidding)
+			{
+				// We are facing right
+				if (LastRot == 0 && !CanSkid)
+				{
+					// We have reversed facing since last frame.
+					IsTurning = true;
+					SetTimer(0.45, false, 'ResetTurning');
+					PriorityAnimSlot.PlayCustomAnim('turn_idle', 1, 0.1, 0.1, false, true);			
+				}
+				LastRot = 32768;
+			}
+		}
+
+		// Send the data to the cylinder world actor
+		LevelBase.PawnVelocity = CircleVelocity;
+		LevelBase.PawnLocation = Location;
 		
-		// Make sure regen gets disabled
-		BoostRegenerating = false;
-		ClearTimer('BeginBoostRegenerate');
-		
-		// Trace below us for detecting ground effects
-		TempVector = JetpackGroundCheck();
-		if (TempVector != vect(0,0,0))
+		if (Sprinting)
 		{
-			GroundEffectsParticleSystem.SetActive(true);
-			TranslateVector = TempVector - Location;
-			GroundEffectsParticleSystem.SetTranslation(TranslateVector);
+			// We are sprinting. Use old floor detection and modify our groundspeed.
+			bForceFloorCheck = true;
+			GroundSpeed = default.GroundSpeed * 2;
+		}
+		else
+		{
+			bForceFloorCheck = false;
+			GroundSpeed = default.GroundSpeed;	
+		}
+		
+		// Check our boost fuel stuff
+		if (UsingBoost)
+		{
+			// We're using our jetpack. Reduce the fuel supply.
+			BoostFuel -= BoostConsumeRate;
+			if (BoostFuel < 0)
+				BoostFuel = 0;
+			
+			// Make sure regen gets disabled
+			BoostRegenerating = false;
+			ClearTimer('BeginBoostRegenerate');
+			
+			// Trace below us for detecting ground effects
+			TempVector = JetpackGroundCheck();
+			if (TempVector != vect(0,0,0))
+			{
+				GroundEffectsParticleSystem.SetActive(true);
+				TranslateVector = TempVector - Location;
+				GroundEffectsParticleSystem.SetTranslation(TranslateVector);
+			}
+			else
+			{
+				GroundEffectsParticleSystem.SetActive(false);
+			}
+			
+			// Jetpack light on
+			BoostLight.SetEnabled(true);
+			
+			// Update jetpack sounds
+			if (!BoostSoundOn)
+			{
+				// Turn on the sound
+				PlaySound(JetpackOnSound);
+				SetTimer(0.1, false, 'EnableBoostSound');
+				BoostSoundOn = true;
+			}
 		}
 		else
 		{
 			GroundEffectsParticleSystem.SetActive(false);
+			BoostLight.SetEnabled(false);
+			
+			if (BoostSoundOn)
+			{
+				JetpackSound.SetFloatParameter('JetpackVolume', 0);
+				BoostSoundOn = false;
+				ClearTimer('EnableBoostSound');
+			}
 		}
 		
-		// Jetpack light on
-		BoostLight.SetEnabled(true);
-		
-		// Update jetpack sounds
-		if (!BoostSoundOn)
+		if (!UsingBoost && !BoostRegenerating && !IsTimerActive('BeginBoostRegenerate'))
 		{
-			// Turn on the sound
-			PlaySound(JetpackOnSound);
-			SetTimer(0.1, false, 'EnableBoostSound');
-			BoostSoundOn = true;
+			// We're on the ground, but we haven't begun to regenerate fuel yet
+			// Set a timer to begin the regeneration.
+			SetTimer(BoostRegenTime, false, 'BeginBoostRegenerate');
 		}
-	}
-	else
-	{
-		GroundEffectsParticleSystem.SetActive(false);
-		BoostLight.SetEnabled(false);
 		
-		if (BoostSoundOn)
+		if (!UsingBoost && BoostRegenerating && BoostFuel < BoostFuelMax)
 		{
-			JetpackSound.SetFloatParameter('JetpackVolume', 0);
-			BoostSoundOn = false;
-			ClearTimer('EnableBoostSound');
+			BoostFuel += BoostRegenRate;
+			if (BoostFuel > BoostFuelMax)
+				BoostFuel = BoostFuelMax;
 		}
+		
+		// Set the values as the previous accel and velocity for the next tick
+		LastAcceleration = CircleAcceleration;
+		LastVelocity = CircleVelocityPreAdjust;
+		
+		// Make sure we don't go anywhere on Y
+		Velocity.Y = 0;
+		Acceleration.Y = 0;
+		
+		// Update values in gameinfo
+		CircleWorldGameInfo(WorldInfo.Game).PlayerHealth = Health;
+		CircleWorldGameInfo(WorldInfo.Game).PlayerBoostFuel = BoostFuel;
 	}
-	
-	if (!UsingBoost && !BoostRegenerating && !IsTimerActive('BeginBoostRegenerate'))
-	{
-		// We're on the ground, but we haven't begun to regenerate fuel yet
-		// Set a timer to begin the regeneration.
-		SetTimer(BoostRegenTime, false, 'BeginBoostRegenerate');
-	}
-	
-	if (!UsingBoost && BoostRegenerating && BoostFuel < BoostFuelMax)
-	{
-		BoostFuel += BoostRegenRate;
-		if (BoostFuel > BoostFuelMax)
-			BoostFuel = BoostFuelMax;
-	}
-	
-	// Set the values as the previous accel and velocity for the next tick
-	LastAcceleration = CircleAcceleration;
-	LastVelocity = CircleVelocityPreAdjust;
-	
-	// Make sure we don't go anywhere on Y
-	Velocity.Y = 0;
-	Acceleration.Y = 0;
-	
-	// Update values in gameinfo
-	CircleWorldGameInfo(WorldInfo.Game).PlayerHealth = Health;
-	CircleWorldGameInfo(WorldInfo.Game).PlayerBoostFuel = BoostFuel;
 	
 	super.Tick(DeltaTime);
 }
@@ -1020,6 +1010,12 @@ event TakeDamage(int Damage, Controller InstigatedBy, vector HitLocation, vector
 	super.TakeDamage(Damage, InstigatedBy, HitLocation, Momentum, DamageType, HitInfo, DamageCauser);
 }
 
+function bool Died(Controller Killer, class<DamageType> DamageType, vector HitLocation)
+{
+	Elephant.Destroy();
+	return super.Died(Killer, DamageType, HitLocation);
+}
+
 // Null function to disable fall damage
 function TakeFallingDamage();
 
@@ -1251,8 +1247,8 @@ simulated singular event Rotator GetBaseAimRotation()
 	
 defaultproperties
 {
-	Health = 1000
-	HealthMax = 1000
+	Health = 100
+	HealthMax = 100
 	GroundSpeed = 1000
 	AirSpeed = 2100
 	MaxJumpHeight = 3500
@@ -1327,7 +1323,6 @@ defaultproperties
 		AnimTreeTemplate=AnimTree'TheCircleWorld.AnimTree.Player1_tree'
 		PhysicsAsset = PhysicsAsset'TheCircleWorld.Player.Stanley_ref_Physics'
 		AnimSets(0)=AnimSet'TheCircleWorld.AnimSet.Player1_anim'
-		PhysicsAsset = PhysicsAsset'CircleWorldContent.Player.Player1_Physics'	
 		CastShadow=true
 		bCastDynamicShadow=true
 		bOwnerNoSee=false

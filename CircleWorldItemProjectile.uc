@@ -50,7 +50,6 @@ event PostBeginPlay()
 	// Get our initial polar coordinates from our cartesian coordinates
 	InitialLocationPolar.X = Sqrt(Location.X ** 2 + Location.Z ** 2);
 	InitialLocationPolar.Y = atan2(Location.Z, Location.X) * RadToUnrRot;
-	`log("Initial Polar: R" $InitialLocationPolar.X$ " A" $InitialLocationPolar.Y);
 	
 	InitialLevelRot = LevelBase.Rotation;
 	
@@ -88,7 +87,6 @@ function InitProjectile(rotator NewRotation, float AddSpeed)
 	TempVelocity.X = ProjectileSpeed;
 
 	ProjectileVelocity = TempVelocity >> NewRotation;
-	`log("Init projectile rotator: " $NewRotation$ " -- velocity: " $ProjectileVelocity);
 	
 	// Modify velocity by world radius
 	ProjectileVelocity *= 2 - (InitialLocationPolar.X / LevelBase.WorldRadius);

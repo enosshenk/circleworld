@@ -4,6 +4,7 @@ var bool DebugHUD;
 var int EnergyLevel;
 var int CameraMode;
 var CircleWorldPawn CirclePawn;
+var CircleWorld_LevelBase LevelBase;
 
 var CircleWorldDecalManager CircleDecalManager;
 
@@ -19,17 +20,114 @@ var float PlayerBoostFuel;								// Current player jetpack fuel
 // This function is called to respawn the player when dead. We need to modify it.
 function RestartPlayer(Controller NewPlayer)
 {
+	local NavigationPoint startSpot;
+	local int TeamNum, Idx;
+	local array<SequenceObject> Events;
+	local SeqEvent_PlayerSpawned SpawnedEvent;
+	local LocalPlayer LP; 
+	local PlayerController PC; 
+
+	if( bRestartLevel && WorldInfo.NetMode!=NM_DedicatedServer && WorldInfo.NetMode!=NM_ListenServer )
+	{
+		`warn("bRestartLevel && !server, abort from RestartPlayer"@WorldInfo.NetMode);
+		return;
+	}
+	// figure out the team number and find the start spot
+	TeamNum = ((NewPlayer.PlayerReplicationInfo == None) || (NewPlayer.PlayerReplicationInfo.Team == None)) ? 255 : NewPlayer.PlayerReplicationInfo.Team.TeamIndex;
+	StartSpot = FindPlayerStart(NewPlayer, TeamNum);
+
+	// if a start spot wasn't found,
+	if (startSpot == None)
+	{
+		// check for a previously assigned spot
+		if (NewPlayer.StartSpot != None)
+		{
+			StartSpot = NewPlayer.StartSpot;
+			`warn("Player start not found, using last start spot");
+		}
+		else
+		{
+			// otherwise abort
+			`warn("Player start not found, failed to restart player");
+			return;
+		}
+	}
+	
+	// Force levelbase rotation
+	LevelBase.ForceRotation(0);
+	
+	// try to create a pawn to use of the default class for this player
+	if (NewPlayer.Pawn == None)
+	{
+		NewPlayer.Pawn = SpawnDefaultPawnFor(NewPlayer, StartSpot);
+	}
+	if (NewPlayer.Pawn == None)
+	{
+		`log("failed to spawn player at "$StartSpot);
+		NewPlayer.GotoState('Dead');
+		if ( PlayerController(NewPlayer) != None )
+		{
+			PlayerController(NewPlayer).ClientGotoState('Dead','Begin');
+		}
+	}
+	else
+	{
+		// initialize and start it up
+		NewPlayer.Pawn.SetAnchor(startSpot);
+		if ( PlayerController(NewPlayer) != None )
+		{
+			PlayerController(NewPlayer).TimeMargin = -0.1;
+			startSpot.AnchoredPawn = None; // SetAnchor() will set this since IsHumanControlled() won't return true for the Pawn yet
+		}
+		NewPlayer.Pawn.LastStartSpot = PlayerStart(startSpot);
+		NewPlayer.Pawn.LastStartTime = WorldInfo.TimeSeconds;
+		NewPlayer.Possess(NewPlayer.Pawn, false);
+		NewPlayer.Pawn.PlayTeleportEffect(true, true);
+		NewPlayer.ClientSetRotation(NewPlayer.Pawn.Rotation, TRUE);
+
+		if (!WorldInfo.bNoDefaultInventoryForPlayer)
+		{
+			AddDefaultInventory(NewPlayer.Pawn);
+		}
+		SetPlayerDefaults(NewPlayer.Pawn);
+
+		// activate spawned events
+		if (WorldInfo.GetGameSequence() != None)
+		{
+			WorldInfo.GetGameSequence().FindSeqObjectsByClass(class'SeqEvent_PlayerSpawned',TRUE,Events);
+			for (Idx = 0; Idx < Events.Length; Idx++)
+			{
+				SpawnedEvent = SeqEvent_PlayerSpawned(Events[Idx]);
+				if (SpawnedEvent != None &&
+					SpawnedEvent.CheckActivate(NewPlayer,NewPlayer))
+				{
+					SpawnedEvent.SpawnPoint = startSpot;
+					SpawnedEvent.PopulateLinkedVariableValues();
+				}
+			}
+		}
+	}
+
+	// To fix custom post processing chain when not running in editor or PIE.
+	PC = PlayerController(NewPlayer);
+	if (PC != none)
+	{
+		LP = LocalPlayer(PC.Player); 
+		if(LP != None) 
+		{ 
+			LP.RemoveAllPostProcessingChains(); 
+			LP.InsertPostProcessingChain(LP.Outer.GetWorldPostProcessChain(),INDEX_NONE,true); 
+			if(PC.myHUD != None)
+			{
+				PC.myHUD.NotifyBindPostProcessEffects();
+			}
+		} 
+	}
+	
 	// Temp hack to make objectives show
 	UpdateObjectives(0);
 	
 	super.RestartPlayer(NewPlayer);
-}
-
-// Function to spawn a new pawn for the player
-function Pawn SpawnDefaultPawnFor(Controller NewPlayer, NavigationPoint StartSpot)
-{
-
-	return super.SpawnDefaultPawnFor(NewPlayer, StartSpot);
 }
 
 event PreBeginPlay()
@@ -37,6 +135,18 @@ event PreBeginPlay()
 	CircleDecalManager = Spawn(class'CircleWorldDecalManager');
 	
 	super.PreBeginPlay();
+}
+
+event PostBeginPlay()
+{
+	local CircleWorld_LevelBase LB;
+	
+	foreach WorldInfo.AllActors(class'CircleWorld_LevelBase', LB)
+	{
+		LevelBase = LB;
+	}
+	
+	super.PostBeginPlay();
 }
 
 function UpdateObjectives(int CurrentObjective)
