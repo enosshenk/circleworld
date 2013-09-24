@@ -51,10 +51,16 @@ var float BoostConsumeRate;									// Fuel consumed per tick when boosting
 var float BoostRegenRate;									// Fuel regenerated per tick when not boosting
 var float BoostRegenTime;									// Time we must be on the ground before our fuel begins to regenerate
 var float JumpLaunchTime;									// How long to play our jump launch animation
+var float TurnGroundTime;
+var float TurnJumpTime;
+var float TurnFlyTime;
 var float VerticalSensitivity;								// A variable used to determine if we're ascending or descending for animations.
 var name HurtAnimationName;									// Animation sequence used for taking damage
 var name PrimaryFireAnimationName;							// AnimSequence used for shooting primary fire
 var name SecondaryFireAnimationName;						// Secondary fire
+var name TurnGround;
+var name TurnJump;
+var name TurnFly;
 
 var bool CirclePawnMoving;									// True if the character is moving
 var bool CirclePawnJumping;									// True if the character is jumping at all
@@ -69,10 +75,7 @@ var bool BoostLand;											// True if we should play a boost landing animatio
 var bool CirclePawnBoostUp;									// Boosting and ascending
 var bool CirclePawnBoostDown;								// Boosting and descending
 var bool BoostRegenerating;									// True if we're regenerating fuel
-var bool CanSkid;											// True if we are moving at top speed.
-var bool IsSkidding;										// True while playing turn-skid animation. Prevents jumping and firing.
 var bool IsTurning;											// True while playing idle turn animation. Prevents jumping and firing.
-var bool ResetSkid;	
 var bool IsRidingLift;										// True while the player is riding on a lift
 var bool IsUnderground;										// True while player location on Z is less than the radius of the level world surface.
 var bool CanShootPrimary;									// Seperate weapon cooldowns for primary and secondary fire
@@ -370,58 +373,51 @@ event Tick(float DeltaTime)
 			CirclePawnMoving = false;
 		}
 
-		if (!CirclePawnJumping && !UsingBoost)
+		if (Rotation.Yaw == 0 && LastRot == 32768 && !IsTurning)
 		{
-			if (VSize(CircleVelocity) >= GroundSpeed - 20)	// We're moving near top speed, we can skid if we stop suddenly.
+			if (!CirclePawnJumping && !UsingBoost)
 			{
-				// We want to delay changing our skid status to allow the animations to play out
-				// This is also hacky and stupid, but it works
-				ResetSkid = false;
-				if (!IsTimerActive('SetSkid'))
-					SetTimer(0.3, false, 'SetSkid');
+				// We have reversed facing since last frame. Play our turn in place animation
+				IsTurning = true;
+				SetTimer(TurnGroundTime, false, 'ResetTurning');
+				PriorityAnimSlot.PlayCustomAnim(TurnGround, 1, 0.1, 0.1, false, true);	
 			}
-			else
+			else if (CirclePawnJumping && !UsingBoost)
 			{
-				ResetSkid = true;
-				if (!IsTimerActive('SetSkid'))
-					SetTimer(0.1, false, 'SetSkid');
+				IsTurning = true;
+				SetTimer(TurnJumpTime, false, 'ResetTurning');
+				PriorityAnimSlot.PlayCustomAnim(TurnJump, 1, 0.1, 0.1, false, true);				
 			}
-
-			if (Abs(CircleVelocity.X) < Abs(LastVelocity.X) * 0.95 && CanSkid && !IsTurning && !IsSkidding)
+			else if (!CirclePawnJumping && UsingBoost)
 			{
-				// Play our running skid-and-stop animation
-				IsSkidding = true;
-				ResetSkid = false;
-				if (!IsTimerActive('SetSkid'))
-					SetTimer(0.1, false, 'SetSkid');
-				SetTimer(0.45, false, 'ClearSkid');
-				PriorityAnimSlot.PlayCustomAnim('turn_run', 1, 0.1, 0.1, false, true);	
+				IsTurning = true;
+				SetTimer(TurnFlyTime, false, 'ResetTurning');
+				PriorityAnimSlot.PlayCustomAnim(TurnFly, 1, 0.1, 0.1, false, true);				
 			}
-			
-			if (Rotation.Yaw == 0 && !IsTurning && !IsSkidding)
+			LastRot = 0;
+		}
+		else if (Rotation.Yaw == 32768 && LastRot == 0 && !IsTurning)
+		{
+			if (!CirclePawnJumping && !UsingBoost)
 			{
-				// We are facing left
-				if (LastRot == 32768 && !CanSkid)
-				{
-					// We have reversed facing since last frame. Play our turn in place animation
-					IsTurning = true;
-					SetTimer(0.45, false, 'ResetTurning');
-					PriorityAnimSlot.PlayCustomAnim('turn_idle', 1, 0.1, 0.1, false, true);
-				}
-				LastRot = 0;			
+				// We have reversed facing since last frame.
+				IsTurning = true;
+				SetTimer(TurnGroundTime, false, 'ResetTurning');
+				PriorityAnimSlot.PlayCustomAnim('turn_idle', 1, 0.1, 0.1, false, true);			
 			}
-			else if (Rotation.Yaw == 32768 && !IsTurning && !IsSkidding)
+			else if (CirclePawnJumping && !UsingBoost)
 			{
-				// We are facing right
-				if (LastRot == 0 && !CanSkid)
-				{
-					// We have reversed facing since last frame.
-					IsTurning = true;
-					SetTimer(0.45, false, 'ResetTurning');
-					PriorityAnimSlot.PlayCustomAnim('turn_idle', 1, 0.1, 0.1, false, true);			
-				}
-				LastRot = 32768;
+				IsTurning = true;
+				SetTimer(TurnJumpTime, false, 'ResetTurning');
+				PriorityAnimSlot.PlayCustomAnim(TurnJump, 1, 0.1, 0.1, false, true);			
 			}
+			else if (!CirclePawnJumping && UsingBoost)
+			{
+				IsTurning = true;
+				SetTimer(TurnFlyTime, false, 'ResetTurning');
+				PriorityAnimSlot.PlayCustomAnim(TurnFly, 1, 0.1, 0.1, false, true);				
+			}
+			LastRot = 32768;
 		}
 
 		// Send the data to the cylinder world actor
@@ -579,8 +575,8 @@ function bool CollisionCheckFeet()
 	local vector TraceExtent, TraceStart, TraceEnd;
 	
 	// Set up some trace extents
-	TraceExtent.X = 64;
-	TraceExtent.Y = 64;	
+	TraceExtent.X = 32;
+	TraceExtent.Y = 32;	
 	
 	// Set up for our below feet trace.
 	TraceStart = Location;
@@ -1013,6 +1009,9 @@ event TakeDamage(int Damage, Controller InstigatedBy, vector HitLocation, vector
 function bool Died(Controller Killer, class<DamageType> DamageType, vector HitLocation)
 {
 	Elephant.Destroy();
+	JetpackSound.SetFloatParameter('JetpackVolume', 0);
+	BoostLight.SetEnabled(false);
+	GroundEffectsParticleSystem.SetActive(false);
 	return super.Died(Killer, DamageType, HitLocation);
 }
 
@@ -1020,10 +1019,7 @@ function bool Died(Controller Killer, class<DamageType> DamageType, vector HitLo
 function TakeFallingDamage();
 
 // Replacement of a stock checking function.
-function bool CannotJumpNow()
-{
-	return IsSkidding;	
-}
+function bool CannotJumpNow();
 
 function bool CircleCanShoot(int FireMode)
 {
@@ -1037,26 +1033,9 @@ function bool CircleCanShoot(int FireMode)
 	}
 }
 
-function ClearSkid()
-{
-	IsSkidding = false;
-}
-
 function ResetTurning()
 {
 	IsTurning = false;
-}
-
-function SetSkid()
-{
-	if (ResetSkid)
-	{
-		CanSkid = false;
-	}
-	else
-	{
-		CanSkid = true;
-	}
 }
 
 function BeginBoostRegenerate()
@@ -1277,9 +1256,19 @@ defaultproperties
 	CanShootPrimary = true
 	CanShootSecondary = true
 	
+	// Animation names
 	HurtAnimationName = hurt
 	PrimaryFireAnimationName = primaryfire
 	SecondaryFireAnimationName = punch_stand2
+	
+	// Turn animation names
+	TurnGround = turn_idle
+	TurnJump = turn_jump
+	TurnFly = turn_fly
+	// Time until turn animation can play again
+	TurnGroundTime = 0.3
+	TurnJumpTime = 0.3
+	TurnFlyTime = 0.3
 	
 	JumpSound = SoundCue'TheCircleWorld.Sounds.stan_jump_cue'
 	JumpLandSound = SoundCue'TheCircleWorld.Sounds.PlayerLand'

@@ -3,7 +3,7 @@ class CircleWorldHUD extends HUD;
 var CircleWorldPawn CircleWorldPawn;
 var CircleWorld_LevelBase LevelBase;
 var array<CircleWorldEnemyPawn_Turret> Turrets;
-var array<CircleWorldEnemyPawn> Enemies;
+var array<CircleWorldItem_DoorKey> Keys;
 var CircleWorldPawn_Elephant Elephant;
 var Vector2D PlayerPos;
 
@@ -13,7 +13,7 @@ simulated function DrawHUD()
 	local CircleWorldPawn P;
 	local vector ProjectLoc;
 	local rotator MapRot;
-	local CircleWorldEnemyPawn EP;
+	local CircleWorldItem_DoorKey K;
 	local CircleWorldEnemyPawn_Turret T;
 	local CircleWorldPawn_Elephant E;
 	local int i;
@@ -36,9 +36,9 @@ simulated function DrawHUD()
 	}
 	
 	i = 0;
-	foreach WorldInfo.AllActors(class'CircleWorldEnemyPawn', EP)
+	foreach WorldInfo.AllActors(class'CircleWorldItem_DoorKey', K)
 	{
-		Enemies[i] = EP;
+		Keys[i] = K;
 		i += 1;
 	}
 
@@ -66,11 +66,11 @@ simulated function DrawHUD()
 		Canvas.SetPos(ProjectLoc.X - 8, ProjectLoc.Y - 8);
 		Canvas.DrawTile(Texture2D'CircleWorld.velocityvector', 16, 16, 0, 0, 16, 16, MakeLinearColor(1,0,0,1));
 		
-		foreach Enemies(EP)
+		foreach Keys(K)
 		{
-			ProjectLoc = Canvas.Project(EP.Location);
+			ProjectLoc = Canvas.Project(K.Location);
 			Canvas.SetPos(ProjectLoc.X, ProjectLoc.Y);
-			Canvas.DrawText("PawnVelocity: " $EP.EnemyPawnVelocity$ " -- Obstructed: " $EP.ObstructedForward$ " -- HoleForward: " $EP.HoleForward$ " -- Pitch: " $EP.Rotation.Pitch$ " -- Yaw: " $EP.Rotation.Yaw$ " -- EnemyPawnDirection: " $EP.EnemyPawnDirection);
+			Canvas.DrawText("Initial Angular: " $K.InitialLocationPolar.Y);
 		}		
 
 		foreach Turrets(T)

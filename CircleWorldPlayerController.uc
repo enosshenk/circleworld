@@ -231,12 +231,12 @@ ignores SeePlayer, HearNoise, Bump;
 
 		tempRot.Pitch = Pawn.Rotation.Pitch;
 		tempRot.Roll = 0;
-		if(Normal(CircleWorldPawn(Pawn).CircleAcceleration) Dot Vect(1,0,0) > 0 && !CircleWorldPawn(Pawn).IsSkidding)
+		if(Normal(CircleWorldPawn(Pawn).CircleAcceleration) Dot Vect(1,0,0) > 0)
 		{
 			tempRot.Yaw = 0;
 			Pawn.SetRotation(tempRot);
 		}
-		else if(Normal(CircleWorldPawn(Pawn).CircleAcceleration) Dot Vect(1,0,0) < 0 && !CircleWorldPawn(Pawn).IsSkidding)
+		else if(Normal(CircleWorldPawn(Pawn).CircleAcceleration) Dot Vect(1,0,0) < 0)
 		{
 			tempRot.Yaw = 32768;
 			Pawn.SetRotation(tempRot);
@@ -350,15 +350,12 @@ function UpdateRotation( float DeltaTime )
 {
    local Rotator   DeltaRot, ViewRotation;
 
-	if (!CircleWorldPawn(Pawn).IsSkidding)
-	{
-		ViewRotation = Rotation;
+	ViewRotation = Rotation;
 
-		// Calculate Delta to be applied on ViewRotation
-		DeltaRot.Yaw = Pawn.Rotation.Yaw;
-		DeltaRot.Pitch   = PlayerInput.aLookUp;
+	// Calculate Delta to be applied on ViewRotation
+	DeltaRot.Yaw = Pawn.Rotation.Yaw;
+	DeltaRot.Pitch   = PlayerInput.aLookUp;
 
-		ProcessViewRotation( DeltaTime, ViewRotation, DeltaRot );
-		SetRotation(ViewRotation);
-	}
+	ProcessViewRotation( DeltaTime, ViewRotation, DeltaRot );
+	SetRotation(ViewRotation);
 } 

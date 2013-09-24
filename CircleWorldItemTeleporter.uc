@@ -96,7 +96,7 @@ event Tick(float DeltaTime)
 		DestVect.Z = Destination.InitialLocationPolar.X;
 		DestVect.Y = Destination.Location.Y;
 		
-		`log("Teleporting to " $DestVect);
+		`log("Teleporting to " $Destination.LocationPolar.Y * -1);
 		CircleWorldGameInfo(WorldInfo.Game).CirclePawn.SetLocation(DestVect);
 		CircleWorldGameInfo(WorldInfo.Game).CirclePawn.IsTeleporting = false;
 		
@@ -114,18 +114,11 @@ event Touch(Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vecto
 	if (CircleWorldPawn(Other) != none && !TeleporterDisabled && Destination != none && (TeleporterType == T_TwoWay || TeleporterType == T_Source))
 	{	
 		// Force level rotation to put destination at 0 rot
-	/*	if (Destination.InitialLocationPolar.Y > 32768)
-		{
-			LevelBase.ForceRotation(LevelBase.Rotation.Pitch - abs(Destination.InitialLocationPolar.Y));
-		}
-		else
-		{
-			LevelBase.ForceRotation(LevelBase.Rotation.Pitch + abs(Destination.InitialLocationPolar.Y));
-		} */
-		LevelBase.ForceRotation(Destination.LocationPolar.Y);
+		LevelBase.ForceRotation(Destination.LocationPolar.Y * -1);
+		
 		CircleWorldPawn(Other).IsTeleporting = true;
 		pendingTeleport = true;
-		`log("Destination angular is " $Destination.LocationPolar.Y);
+		`log("Destination angular is " $Destination.LocationPolar.Y * -1);
 	}
 }
 
@@ -141,8 +134,8 @@ event UnTouch(Actor Other)
 
 function NotifyArrival()
 {
-	//UpdateLocation();
-	Destination.NotifyArrival();
+	UpdateLocation();
+	TeleporterDisabled = true;
 }
 
 function UpdateLocation()
