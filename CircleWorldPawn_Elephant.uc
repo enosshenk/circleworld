@@ -10,6 +10,10 @@ var vector InitialLocation;
 var() SkeletalMeshComponent	Mesh;
 var AnimNodeSlot PriorityAnimSlot;
 var int PawnFacing;									// 1 is facing right, -1 is facing left
+var int PawnFacingLast;
+var bool IsTurning;
+var float TurnTime;
+var name TurnAnim;
 var float GroundSpeed;
 var bool PawnWalking;
 var CircleWorldPawn PlayerPawn;
@@ -55,27 +59,50 @@ event Tick(float DeltaTime)
 	if (LocationPolar.Y < 16320)
 	{
 		// We need to move right to get to the player
-		PawnWalking = true;
 		PawnFacing = 1;
-		TempRot.Yaw = 0;
-		SetRotation(TempRot);
-		InitialLocationPolar.Y += GroundSpeed / 50;
+		
+		if (PawnFacing != PawnFacingLast && !IsTurning)
+		{
+			IsTurning = true;
+			SetTimer(TurnTime, false, 'ResetTurning');
+			PriorityAnimSlot.PlayCustomAnim(TurnAnim, 1, 0.1, 0.1, false, true);			
+		}
+		
+		if (!IsTurning)
+		{
+			PawnWalking = true;			
+			TempRot.Yaw = 0;
+			SetRotation(TempRot);
+			InitialLocationPolar.Y += GroundSpeed / 50;
+		}
+		PawnFacingLast = 1;
 	}
 	else if (LocationPolar.Y > 16448)
 	{
 		// We need to move left to get to the player
-		PawnWalking = true;
 		PawnFacing = -1;
-		TempRot.Yaw = 32768;
-		SetRotation(TempRot);
-		InitialLocationPolar.Y -= GroundSpeed / 50;	
+
+		if (PawnFacing != PawnFacingLast && !IsTurning)
+		{
+			IsTurning = true;
+			SetTimer(TurnTime, false, 'ResetTurning');
+			PriorityAnimSlot.PlayCustomAnim(TurnAnim, 1, 0.1, 0.1, false, true);			
+		}
+		
+		if (!IsTurning)
+		{
+			PawnWalking = true;			
+			TempRot.Yaw = 32768;
+			SetRotation(TempRot);
+			InitialLocationPolar.Y -= GroundSpeed / 50;	
+		}
+		PawnFacingLast = -1;
 	}
 	else
 	{
 		// No movement
 		PawnWalking = false;
-	}
-	
+	}	
 	
 	// Adjust height to ground
 	TraceStart.X = InitialLocationPolar.X * cos(LocationPolar.Y * UnrRotToRad);
@@ -119,6 +146,11 @@ event Tick(float DeltaTime)
 	super.Tick(DeltaTime);
 }
 
+function ResetTurning()
+{
+	IsTurning = false;
+}
+
 defaultproperties
 {
 	GroundSpeed = 80
@@ -128,6 +160,10 @@ defaultproperties
 	bCollideWorld=false
 	bBlockActors=false
 	TickGroup=TG_PreAsyncWork
+	
+	TurnTime = 0.5
+	TurnAnim = elephant_turn
+	
 	
 	PrePivot = (X=0, Y=0, Z=-64)
 
