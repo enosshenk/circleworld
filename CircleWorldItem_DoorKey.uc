@@ -10,6 +10,8 @@ var() enum EDoorKeys
 	K_Green
 } KeyGiven;													// Key given to the player when this pickup is touched
 
+var() SoundCue PickupSound;									// Sound played when picked up
+
 var bool PickupUnavailable;
 	
 event PostBeginPlay()
@@ -89,12 +91,15 @@ event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vect
 		
 		PickupUnavailable = true;
 		SetHidden(true);
+		PlaySound(PickupSound);
 	}
 	super.Touch(Other, OtherComp, HitLocation, HitNormal);
 }	
 	
 defaultproperties
 {
+	PickupSound = SoundCue'TheCircleWorld.Sounds.PlayerLand'
+	
 	Begin Object Class=CylinderComponent Name=CollisionCylinder
 		CollisionRadius=64.000000
 		CollisionHeight=128.000000

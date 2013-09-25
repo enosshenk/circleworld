@@ -3,6 +3,8 @@ class CircleWorldItem_Energy extends CircleWorldItem
 	placeable;
 
 var() ParticleSystemComponent ParticleSystemComponent;
+var() SoundCue PickupSound;
+
 var float EnergyGiven;
 	
 event PostBeginPlay()
@@ -18,6 +20,7 @@ event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vect
 	{
 		// Touched by a player. Increase energy in GameInfo
 		CircleWorldGameInfo(WorldInfo.Game).EnergyLevel += EnergyGiven;
+		PlaySound(PickupSound);
 		self.Destroy();
 	}
 	super.Touch(Other, OtherComp, HitLocation, HitNormal);
@@ -25,6 +28,7 @@ event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vect
 	
 defaultproperties
 {
+	PickupSound = SoundCue'TheCircleWorld.Sounds.PlayerLand'
 	EnergyGiven = 25
 	
 	Begin Object Class=CylinderComponent Name=CollisionCylinder

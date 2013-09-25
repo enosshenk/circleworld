@@ -6,6 +6,7 @@ var() ParticleSystemComponent ParticleSystemComponent;
 var() bool PickupRespawn;									// Can this pickup respawn
 var() float PickupRespawnTime;								// Time in seconds for pickup to respawn
 var() float HealAmount;										// Amount the pawn is healed when this pickup is taken
+var() SoundCue PickupSound;
 
 var float PickupRespawnTimeElapsed;
 var bool PickupUnavailable;	
@@ -42,9 +43,11 @@ event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vect
 		{
 			PickupUnavailable = true;
 			SetHidden(true);
+			PlaySound(PickupSound);
 		}
 		else
 		{
+			PlaySound(PickupSound);
 			self.Destroy();
 		}
 	}
@@ -54,6 +57,7 @@ event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vect
 defaultproperties
 {
 	HealAmount = 50
+	PickupSound = SoundCue'TheCircleWorld.Sounds.PlayerLand'
 	
 	Begin Object Class=CylinderComponent Name=CollisionCylinder
 		CollisionRadius=64.000000

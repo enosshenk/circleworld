@@ -3,7 +3,7 @@ class CircleWorldItem_Static extends CircleWorldItem
 	placeable;
 
 var() StaticMeshComponent StaticMeshComponent;
-	
+
 defaultproperties
 {
 	bWorldGeometry = true

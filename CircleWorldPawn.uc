@@ -100,6 +100,7 @@ var CircleWorldItem_Lift RiddenLift;						// Lift we're riding on, if any
 var CircleWorldWeapons CircleWorldWeapons;					// Ref to our weapons component
 var DynamicLightEnvironmentComponent MyLightEnvironment;
 var CircleWorldPawn_Elephant Elephant;						// Ref to the elephant
+var ParticleSystem TombstoneParticle;	
 
 var SoundCue JumpSound;										// Sound played when we jump
 var SoundCue JumpLandSound;									// Sound played when we land
@@ -1008,10 +1009,22 @@ event TakeDamage(int Damage, Controller InstigatedBy, vector HitLocation, vector
 
 function bool Died(Controller Killer, class<DamageType> DamageType, vector HitLocation)
 {
+	local CircleWorldItem_Emitter Emitter;
+	
 	Elephant.Destroy();
 	JetpackSound.SetFloatParameter('JetpackVolume', 0);
 	BoostLight.SetEnabled(false);
 	GroundEffectsParticleSystem.SetActive(false);
+	Mesh.SetHidden(true);
+	SetCollision(false,false);
+	CanShootPrimary = false;
+	CanShootSecondary = false;
+	SetTimer(5, false, 'Destroy');
+	
+	// Poop out an emitter
+	Emitter = Spawn(class'CircleWorldItem_Emitter', self,, Location, Rotation,, true);
+	Emitter.SetTemplate(TombstoneParticle);
+	
 	return super.Died(Killer, DamageType, HitLocation);
 }
 
@@ -1269,6 +1282,9 @@ defaultproperties
 	TurnGroundTime = 0.3
 	TurnJumpTime = 0.3
 	TurnFlyTime = 0.3
+	
+	// Particle to poop out when dead
+	TombstoneParticle = ParticleSystem'TheCircleWorld.FX.jetfire1'
 	
 	JumpSound = SoundCue'TheCircleWorld.Sounds.stan_jump_cue'
 	JumpLandSound = SoundCue'TheCircleWorld.Sounds.PlayerLand'

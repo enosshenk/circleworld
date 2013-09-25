@@ -5,6 +5,7 @@ class CircleWorldItem_JetpackUpgrade extends CircleWorldItem
 var() ParticleSystemComponent ParticleSystemComponent;
 var() bool PickupRespawn;									// Can this pickup respawn
 var() float PickupRespawnTime;								// Time in seconds for pickup to respawn
+var() SoundCue PickupSound;
 
 var float PickupRespawnTimeElapsed;
 var bool PickupUnavailable;	
@@ -37,6 +38,7 @@ event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vect
 	{
 		// Touched by player. Call the boost upgrade function
 		CircleWorldPawn(Other).UpgradeBoost();
+		PlaySound(PickupSound);
 		
 		if (PickupRespawn)
 		{
@@ -53,6 +55,8 @@ event Touch( Actor Other, PrimitiveComponent OtherComp, vector HitLocation, vect
 	
 defaultproperties
 {
+	PickupSound = SoundCue'TheCircleWorld.Sounds.PlayerLand'
+	
 	Begin Object Class=CylinderComponent Name=CollisionCylinder
 		CollisionRadius=64.000000
 		CollisionHeight=128.000000
