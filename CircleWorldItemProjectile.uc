@@ -82,14 +82,17 @@ function InitProjectile(rotator NewRotation, float AddSpeed)
 	local actor HitActor;
 	
 	// Add to our speed
-	ProjectileSpeed += AddSpeed / 20;
+	ProjectileSpeed += AddSpeed / 10;
 	
 	TempVelocity.X = ProjectileSpeed;
 
 	ProjectileVelocity = TempVelocity >> NewRotation;
 	
 	// Modify velocity by world radius
-	ProjectileVelocity *= 2 - (InitialLocationPolar.X / LevelBase.WorldRadius);
+	if (InitialLocationPolar.X < LevelBase.WorldRadius)
+	{
+		ProjectileVelocity *= 2 - (InitialLocationPolar.X / LevelBase.WorldRadius);
+	}
 	
 	// Check for immediate collision
 	TraceStart = Location;
