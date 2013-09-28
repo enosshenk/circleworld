@@ -13,7 +13,9 @@ var int PawnFacing;									// 1 is facing right, -1 is facing left
 var int PawnFacingLast;
 var bool IsTurning;
 var float TurnTime;
-var name TurnAnim;
+var float LerpTime;
+var float DesiredYaw;
+var float CurrentYaw;
 var float GroundSpeed;
 var bool PawnWalking;
 var CircleWorldPawn PlayerPawn;
@@ -55,6 +57,8 @@ event Tick(float DeltaTime)
 	local rotator NewRotation, TempRot;
 	local actor HitActor;
 
+	LerpTime = 1 / TurnTime / 60;
+	
 	// Movement stuff here
 	if (LocationPolar.Y < 16320)
 	{
@@ -65,7 +69,17 @@ event Tick(float DeltaTime)
 		{
 			IsTurning = true;
 			SetTimer(TurnTime, false, 'ResetTurning');
-			PriorityAnimSlot.PlayCustomAnim(TurnAnim, 1, 0.1, 0.1, false, true);			
+			DesiredYaw = 0;		
+		}
+		
+		if (IsTurning)
+		{
+			if (CurrentYaw != DesiredYaw)
+			{
+				CurrentYaw = Lerp(CurrentYaw, DesiredYaw, LerpTime);
+			}
+			TempRot.Yaw = CurrentYaw;
+			SetRotation(TempRot);
 		}
 		
 		if (!IsTurning)
@@ -85,8 +99,18 @@ event Tick(float DeltaTime)
 		if (PawnFacing != PawnFacingLast && !IsTurning)
 		{
 			IsTurning = true;
-			SetTimer(TurnTime, false, 'ResetTurning');
-			PriorityAnimSlot.PlayCustomAnim(TurnAnim, 1, 0.1, 0.1, false, true);			
+			DesiredYaw = 32768;
+			SetTimer(TurnTime, false, 'ResetTurning');			
+		}
+		
+		if (IsTurning)
+		{
+			if (CurrentYaw != DesiredYaw)
+			{
+				CurrentYaw = Lerp(CurrentYaw, DesiredYaw, LerpTime);
+			}
+			TempRot.Yaw = CurrentYaw;
+			SetRotation(TempRot);
 		}
 		
 		if (!IsTurning)
@@ -136,7 +160,7 @@ event Tick(float DeltaTime)
 	{
 		NewRotation.Pitch = (LocationPolar.Y - 16384) * -1;
 	}
-	else
+	else if (PawnFacing == 1)
 	{
 		NewRotation.Pitch = LocationPolar.Y - 16384;
 	}
@@ -161,17 +185,15 @@ defaultproperties
 	bBlockActors=false
 	TickGroup=TG_PreAsyncWork
 	
-	TurnTime = 0.5
-	TurnAnim = elephant_turn
-	
+	TurnTime = 3.4	
 	
 	PrePivot = (X=0, Y=0, Z=-64)
 
 	Begin Object Class=SkeletalMeshComponent Name=CirclePawnSkeletalMeshComponent		
-        SkeletalMesh = SkeletalMesh'TheCircleWorld.Player.elephant1'
-        AnimTreeTemplate = AnimTree'TheCircleWorld.Animtree.elephant1_tree'
-        AnimSets(0) = AnimSet'TheCircleWorld.AnimSet.elephant1_anim'
-        PhysicsAsset = PhysicsAsset'TheCircleWorld.Player.elephant1_Physics'  	
+        SkeletalMesh = SkeletalMesh'RAD.Player.Elephant'
+        AnimTreeTemplate = AnimTree'RAD.AnimTree.elephant_tree'
+        AnimSets(0) = AnimSet'RAD.AnimSet.elephant_anim'
+        PhysicsAsset = PhysicsAsset'RAD.Player.elephant_Physics'  	
 		CastShadow=true
 		bCastDynamicShadow=true
 		bOwnerNoSee=false
