@@ -82,7 +82,7 @@ function InitProjectile(rotator NewRotation, float AddSpeed)
 	local actor HitActor;
 	
 	// Add to our speed
-	ProjectileSpeed += AddSpeed / 10;
+	ProjectileSpeed += AddSpeed;
 	
 	TempVelocity.X = ProjectileSpeed;
 

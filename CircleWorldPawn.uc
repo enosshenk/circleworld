@@ -1019,6 +1019,11 @@ function bool Died(Controller Killer, class<DamageType> DamageType, vector HitLo
 	SetCollision(false,false);
 	CanShootPrimary = false;
 	CanShootSecondary = false;
+	PrimaryFireDown = false;
+	SecondaryFireDown = false;
+	ClearTimer('RepeatShootPrimary');
+	ClearTimer('RepeatShootSecondary');
+	
 	SetTimer(5, false, 'Destroy');
 	
 	// Poop out an emitter

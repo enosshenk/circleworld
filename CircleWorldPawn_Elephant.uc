@@ -13,9 +13,7 @@ var int PawnFacing;									// 1 is facing right, -1 is facing left
 var int PawnFacingLast;
 var bool IsTurning;
 var float TurnTime;
-var float LerpTime;
-var float DesiredYaw;
-var float CurrentYaw;
+var name TurnAnim;
 var float GroundSpeed;
 var bool PawnWalking;
 var CircleWorldPawn PlayerPawn;
@@ -57,29 +55,17 @@ event Tick(float DeltaTime)
 	local rotator NewRotation, TempRot;
 	local actor HitActor;
 
-	LerpTime = 1 / TurnTime / 60;
-	
 	// Movement stuff here
 	if (LocationPolar.Y < 16320)
 	{
 		// We need to move right to get to the player
-		PawnFacing = 1;
-		
+				
 		if (PawnFacing != PawnFacingLast && !IsTurning)
 		{
+			PawnFacing = 1;
 			IsTurning = true;
 			SetTimer(TurnTime, false, 'ResetTurning');
-			DesiredYaw = 0;		
-		}
-		
-		if (IsTurning)
-		{
-			if (CurrentYaw != DesiredYaw)
-			{
-				CurrentYaw = Lerp(CurrentYaw, DesiredYaw, LerpTime);
-			}
-			TempRot.Yaw = CurrentYaw;
-			SetRotation(TempRot);
+			PriorityAnimSlot.PlayCustomAnim(TurnAnim, 1, 0, 0, false, true);			
 		}
 		
 		if (!IsTurning)
@@ -94,23 +80,13 @@ event Tick(float DeltaTime)
 	else if (LocationPolar.Y > 16448)
 	{
 		// We need to move left to get to the player
-		PawnFacing = -1;
 
 		if (PawnFacing != PawnFacingLast && !IsTurning)
 		{
+			PawnFacing = -1;
 			IsTurning = true;
-			DesiredYaw = 32768;
-			SetTimer(TurnTime, false, 'ResetTurning');			
-		}
-		
-		if (IsTurning)
-		{
-			if (CurrentYaw != DesiredYaw)
-			{
-				CurrentYaw = Lerp(CurrentYaw, DesiredYaw, LerpTime);
-			}
-			TempRot.Yaw = CurrentYaw;
-			SetRotation(TempRot);
+			SetTimer(TurnTime, false, 'ResetTurning');
+			PriorityAnimSlot.PlayCustomAnim(TurnAnim, 1, 0, 0, false, true);			
 		}
 		
 		if (!IsTurning)
@@ -160,7 +136,7 @@ event Tick(float DeltaTime)
 	{
 		NewRotation.Pitch = (LocationPolar.Y - 16384) * -1;
 	}
-	else if (PawnFacing == 1)
+	else
 	{
 		NewRotation.Pitch = LocationPolar.Y - 16384;
 	}
@@ -185,7 +161,9 @@ defaultproperties
 	bBlockActors=false
 	TickGroup=TG_PreAsyncWork
 	
-	TurnTime = 3.4	
+	TurnTime = 3.4
+	TurnAnim = elephant_turn
+	
 	
 	PrePivot = (X=0, Y=0, Z=-64)
 
@@ -193,7 +171,7 @@ defaultproperties
         SkeletalMesh = SkeletalMesh'RAD.Player.Elephant'
         AnimTreeTemplate = AnimTree'RAD.AnimTree.elephant_tree'
         AnimSets(0) = AnimSet'RAD.AnimSet.elephant_anim'
-        PhysicsAsset = PhysicsAsset'RAD.Player.elephant_Physics'  	
+        PhysicsAsset = PhysicsAsset'RAD.Player.elephant_Physics'
 		CastShadow=true
 		bCastDynamicShadow=true
 		bOwnerNoSee=false
