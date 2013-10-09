@@ -907,7 +907,7 @@ function ShootSecondary()
 	Mesh.GetSocketWorldLocationAndRotation('FireSocket', ProjectileLocation);
 		
 	// Set projectile rotation based on aim point and current location
-	ProjectileRotation = Rotator(Normal((AimPoint + vect(0,0,64)) - Location));
+	ProjectileRotation = Rotator(Normal((AimPoint + vect(0,0,128)) - Location));
 	
 	// Play an animation to "shoot"
 	PriorityAnimSlot.PlayCustomAnim(SecondaryFireAnimationName, 1, 0.1, 0.1, false, true);

@@ -51,9 +51,9 @@ defaultproperties
 	End Object
 	
 	ProjectileUseGravity = true
-	ProjectileGravityFactor = 3
+	ProjectileGravityFactor = 4
 	ProjectileLife = 12
-	ProjectileSpeed = 900
+	ProjectileSpeed = 1000
 	ProjectileDamage = 99
 	ProjectileDamageRadius = 1500
 	ProjectileDamageMomentum = 10

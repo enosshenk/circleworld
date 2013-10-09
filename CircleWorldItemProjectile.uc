@@ -96,7 +96,7 @@ function InitProjectile(rotator NewRotation, float AddSpeed)
 	
 	// Check for immediate collision
 	TraceStart = Location;
-	TraceEnd = Location + ProjectileVelocity;
+	TraceEnd = Location + (ProjectileVelocity / 10);
 	
 	HitActor = trace(HitLocation, HitNormal, TraceEnd, TraceStart, true);
 	
@@ -145,7 +145,15 @@ event Tick(float DeltaTime)
 		
 		// Set new rotation based on our polar angular value, considering our launch angle
 		NewRotation = Rotation;
-		NewRotation.Pitch = (LocationPolar.Y + ProjectileRotation.Pitch) - 16384;		// Subtract 16384 because UnrealEngine sets 0 rotation as 3 oclock position
+		if (LocationPolar.Y > 16448)
+		{
+			NewRotation.Pitch = (LocationPolar.Y + ProjectileRotation.Pitch) * -1;
+		}
+		else
+		{
+			NewRotation.Pitch = (LocationPolar.Y + ProjectileRotation.Pitch) - 16384;
+		}
+		
 		SetRotation(NewRotation);
 		
 		if (ShouldExplodeLoc != vect(0,0,0))
